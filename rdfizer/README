@@ -1,0 +1,13 @@
+Create virtual environment and activate it (optional):
+	$ virtualenv env -p python3
+	$ source env/bin/activate
+
+Install requirements:
+	$ (env) pip3 install -r requirements.txt
+
+Run the rdfizer:
+	1. As a script itself:
+		$ (env) python3 rdfizer/semantify.py -c configfile.ini
+
+	2. As a package inside another script:
+		$ (env) python3 run_rdfizer.py
