@@ -214,7 +214,7 @@ def string_substitution(string, pattern, row, term):
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if re.search("^[\s|\t]*$", row[match]) is None:
-				new_string = new_string[:start] + row[match].strip() + new_string[end:]
+				new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
 				new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
 			else:
 				return None
