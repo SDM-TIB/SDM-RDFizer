@@ -353,7 +353,7 @@ def semantify(config_path):
 
 	for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 		if not os.path.exists(config["datasets"]["output_folder"]):
-            os.mkdir(config["datasets"]["output_folder"])
+			os.mkdir(config["datasets"]["output_folder"])
 		dataset_i = "dataset" + str(int(dataset_number) + 1)
 		triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 		output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
@@ -361,12 +361,14 @@ def semantify(config_path):
 		
 		with open(output_file, "w") as output_file_descriptor:
 			for triples_map in triples_map_list:
+				print(str(triples_map.file_format).lower())
+				print(config[dataset_i]["format"].lower())
 				if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
 					semantify_csv(triples_map, triples_map_list, ",", output_file_descriptor)
-				"""elif str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "tsv":
-					semantify_csv(triples_map, triples_map_list, "\t", output_file_descriptor)
-				elif triples_map.file_format == "JSONPath":
-					semantify_json(triples_map, triples_map_list, output_file_descriptor)"""
+				#elif str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "tsv":
+				#	semantify_csv(triples_map, triples_map_list, "\t", output_file_descriptor)
+				#elif triples_map.file_format == "JSONPath":
+				#	semantify_json(triples_map, triples_map_list, output_file_descriptor)
 				else:
 					print("Invalid reference formulation or format")
 					print("Aborting...")
