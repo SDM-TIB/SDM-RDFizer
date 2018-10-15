@@ -16,6 +16,24 @@ except:
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
 
+def string_separetion(string):
+	if ("{" in string) and ("[" in string):
+		prefix = string.split("{")[0]
+		condition = string.split("{")[1].split("}")[0]
+		postfix = string.split("{")[1].split("}")[1]
+		field = prefix + "*" + postfix
+	elif "[" in string:
+		return string, string
+	else:
+		return string, ""
+	return string, condition
+
+def condition_separetor(string):
+	condition_field = string.split("[")
+	field = condition_field[1][:len(condition_field[1])-1].split("=")[0]
+	value = condition_field[1][:len(condition_field[1])-1].split("=")[1]
+	return field, value
+
 def mapping_parser(mapping_file):
 
 	"""
@@ -39,6 +57,7 @@ def mapping_parser(mapping_file):
 	try:
 		mapping_graph.load(mapping_file, format='n3')
 	except Exception as n3_mapping_parse_exception:
+		print(n3_mapping_parse_exception)
 		print('Could not parse {} as a mapping file'.format(mapping_file))
 		print('Aborting...')
 		sys.exit(1)
@@ -123,9 +142,11 @@ def mapping_parser(mapping_file):
 		
 		if not triples_map_exists:
 			if result_triples_map.rdf_class is None:
-				subject_map = tm.SubjectMap(str(result_triples_map.subject_template), result_triples_map.rdf_class)
+				reference, condition = string_separetion(str(result_triples_map.subject_template))
+				subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, result_triples_map.rdf_class)
 			else:
-				subject_map = tm.SubjectMap(str(result_triples_map.subject_template), str(result_triples_map.rdf_class))
+				reference, condition = string_separetion(str(result_triples_map.subject_template))
+				subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, str(result_triples_map.rdf_class))
 				
 			mapping_query_prepared = prepareQuery(mapping_query)
 			mapping_query_prepared_results = mapping_graph.query(mapping_query_prepared, initBindings={'triples_map_id': result_triples_map.triples_map_id})
@@ -134,13 +155,15 @@ def mapping_parser(mapping_file):
 
 			for result_predicate_object_map in mapping_query_prepared_results:
 				if result_predicate_object_map.predicate_constant is not None:
-					predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant))
+					predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "")
 				elif result_predicate_object_map.predicate_constant_shortcut is not None:
-					predicate_map = tm.PredicateMap("constant shortcut", str(result_predicate_object_map.predicate_constant_shortcut))
+					predicate_map = tm.PredicateMap("constant shortcut", str(result_predicate_object_map.predicate_constant_shortcut), "")
 				elif result_predicate_object_map.predicate_template is not None:
-					predicate_map = tm.PredicateMap("template", str(result_predicate_object_map.predicate_template))
+					template, condition = string_separetion(str(result_predicate_object_map.predicate_template))
+					predicate_map = tm.PredicateMap("template", template, condition)
 				elif result_predicate_object_map.predicate_reference is not None:
-					predicate_map = tm.PredicateMap("reference", str(result_predicate_object_map.predicate_reference))
+					reference, condition = string_separetion(str(result_predicate_object_map.predicate_reference))
+					predicate_map = tm.PredicateMap("reference", reference, condition)
 				else:
 					print("Invalid predicate map")
 					print("Aborting...")
@@ -198,7 +221,7 @@ def string_substitution(string, pattern, row, term):
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
-			match = reference_match.group(1)
+			match = reference_match.group(1).split("[")[0]
 			if re.search("^[\s|\t]*$", row[match]) is None:
 				new_string = new_string[:start + offset_current_substitution] + row[match].strip().replace(" ", "_") + new_string[end + offset_current_substitution:]
 				offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
@@ -256,11 +279,20 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 	with open(str(triples_map.data_source), "r") as input_file_descriptor:
 		reader = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 		for row in reader:
-
-			try:
-				subject = "<" + string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") + ">"
-			except:
-				subject = None
+			if triples_map.subject_map.condition == "":
+				try:
+					subject = "<" + string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") + ">"
+				except:
+					subject = None
+			else:
+				field, condition = condition_separetor(triples_map.subject_map.condition)
+				if row[field] == condition:
+					try:
+						subject = "<" + string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") + ">"
+					except:
+						subject = None
+				else:
+					subject = None
 
 			if subject is None:
 				continue
@@ -268,17 +300,34 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 			if triples_map.subject_map.rdf_class is not None:
 				output_file_descriptor.write(subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class))
 
-			for predicate_object_map in triples_map.predicate_object_maps_list:
 
+			for predicate_object_map in triples_map.predicate_object_maps_list:
 				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
 					predicate = "<" + predicate_object_map.predicate_map.value + ">"
 				elif predicate_object_map.predicate_map.mapping_type == "template":
-					try:
-						predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-					except:
-						predicate = None
+					if predicate_object_map.predicate_map.condition != "":
+							field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							if row[field] == condition:
+								try:
+									predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+								except:
+									predicate = None
+							else:
+								predicate = None
+					else:
+						try:
+							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+						except:
+							predicate = None
 				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+						if predicate_object_map.predicate_map.condition != "":
+							field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							if row[field] == condition:
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+							else:
+								predicate = None
+						else:
+							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
 				else:
 					print("Invalid predicate mapping type")
 					print("Aborting...")
@@ -361,9 +410,8 @@ def semantify(config_path):
 		
 		with open(output_file, "w") as output_file_descriptor:
 			for triples_map in triples_map_list:
-				print(str(triples_map.file_format).lower())
-				print(config[dataset_i]["format"].lower())
 				if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
+					print("hola")
 					semantify_csv(triples_map, triples_map_list, ",", output_file_descriptor)
 				#elif str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "tsv":
 				#	semantify_csv(triples_map, triples_map_list, "\t", output_file_descriptor)
