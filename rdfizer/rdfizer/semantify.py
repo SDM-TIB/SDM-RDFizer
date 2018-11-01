@@ -8,6 +8,9 @@ import getopt
 import subprocess
 from rdflib.plugins.sparql import prepareQuery
 from configparser import ConfigParser, ExtendedInterpolation
+from rdfizer.triples_map import TriplesMap as tm
+import traceback
+
 try:
 	from triples_map import TriplesMap as tm
 except:
@@ -15,6 +18,16 @@ except:
 
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
+
+def clean_URL_suffix(URL_suffix):
+    cleaned_URL=""
+    for c in URL_suffix:
+        if c.isalpha() or c.isnumeric() or c =='_' or c=='-' or c == '(' or c == ')':
+            cleaned_URL= cleaned_URL+c
+        if c == "/" or c == "\\":
+            cleaned_URL = cleaned_URL+"-"
+
+    return cleaned_URL
 
 def string_separetion(string):
 	if ("{" in string) and ("[" in string):
@@ -222,11 +235,12 @@ def string_substitution(string, pattern, row, term):
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
-			if re.search("^[\s|\t]*$", row[match]) is None:
-				new_string = new_string[:start + offset_current_substitution] + row[match].strip().replace(" ", "_") + new_string[end + offset_current_substitution:]
-				offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-			else:
-				return None
+			if row[match] is not None:
+				if re.search("^[\s|\t]*$", row[match]) is None:
+					new_string = new_string[:start + offset_current_substitution] + clean_URL_suffix(row[match].strip()) + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+				else:
+					return None
 				# To-do:
 				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
 				#if term == "subject":
@@ -236,17 +250,116 @@ def string_substitution(string, pattern, row, term):
 				#	return None
 		elif pattern == ".+":
 			match = reference_match.group(0)
-			if re.search("^[\s|\t]*$", row[match]) is None:
-				new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
-				new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
-			else:
-				return None
+			if row[match] is not None:
+				if re.search("^[\s|\t]*$", row[match]) is None:
+					new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
+					new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+				else:
+					return None
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
 			sys.exit(1)
 
 	return new_string
+
+def semantify_json(triples_map, triples_map_list, output_file_descriptor):
+	
+	with open(str(triples_map.data_source), "rb") as input_file_descriptor:
+		data = json.load(input_file_descriptor)
+		for row in data:
+			if triples_map.subject_map.condition == "":
+				try:
+					subject = "<" + string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") + ">"
+				except:
+					subject = None
+			else:
+				field, condition = condition_separetor(triples_map.subject_map.condition)
+				if row[field] == condition:
+					try:
+						subject = "<" + string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") + ">"
+					except:
+						subject = None
+				else:
+					subject = None
+
+			if subject is None:
+				continue
+
+			if triples_map.subject_map.rdf_class is not None:
+				output_file_descriptor.write(subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class))
+
+
+			for predicate_object_map in triples_map.predicate_object_maps_list:
+				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+					predicate = "<" + predicate_object_map.predicate_map.value + ">"
+				elif predicate_object_map.predicate_map.mapping_type == "template":
+					if predicate_object_map.predicate_map.condition != "":
+							field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							if row[field] == condition:
+								try:
+									predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+								except:
+									predicate = None
+							else:
+								predicate = None
+					else:
+						try:
+							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+						except:
+							predicate = None
+				elif predicate_object_map.predicate_map.mapping_type == "reference":
+						if predicate_object_map.predicate_map.condition != "":
+							field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							if row[field] == condition:
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+							else:
+								predicate = None
+						else:
+							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+				else:
+					print("Invalid predicate mapping type")
+					print("Aborting...")
+					sys.exit(1)
+
+				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
+					object = "<" + predicate_object_map.object_map.value + ">"
+				elif predicate_object_map.object_map.mapping_type == "template":
+					try:
+						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					except TypeError:
+						object = None
+				elif predicate_object_map.object_map.mapping_type == "reference":
+					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
+				elif predicate_object_map.object_map.mapping_type == "parent triples map":
+					for triples_map_element in triples_map_list:
+						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+							if triples_map_element.data_source != triples_map.data_source:
+								print("Warning: Join condition between different data sources is not implemented yet,")
+								print("         triples for this triples-map will be generated without the predicate-object-maps")
+								print("         that require a join condition between data sources")
+								object = None
+							else:
+								try:
+									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+								except TypeError:
+									object = None
+							break
+						else:
+							continue
+				else:
+					print("Invalid object mapping type")
+					print("Aborting...")
+					sys.exit(1)
+
+				if object is not None and predicate_object_map.object_map.datatype is not None:
+					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+
+				if predicate is not None and object is not None:
+					triple = subject + " " + predicate + " " + object + " .\n"
+					output_file_descriptor.write(triple)
+				else:
+					continue
 
 def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descriptor):
 
@@ -415,8 +528,8 @@ def semantify(config_path):
 					semantify_csv(triples_map, triples_map_list, ",", output_file_descriptor)
 				#elif str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "tsv":
 				#	semantify_csv(triples_map, triples_map_list, "\t", output_file_descriptor)
-				#elif triples_map.file_format == "JSONPath":
-				#	semantify_json(triples_map, triples_map_list, output_file_descriptor)
+				elif triples_map.file_format == "JSONPath":
+					semantify_json(triples_map, triples_map_list, output_file_descriptor)
 				else:
 					print("Invalid reference formulation or format")
 					print("Aborting...")
@@ -493,10 +606,5 @@ def json_generator(file_descriptor, iterator):
 	else:
 		yield file_descriptor
 
-def semantify_json(triples_map, triples_map_list, output_file_descriptor):
-	
-	with open(str(triples_map.data_source), "rb") as input_file_descriptor:
-		json_parser = ijson.parse(file)
-		for prefix, event, value in parser:
-			print (prefix, event, value)
+
 """
