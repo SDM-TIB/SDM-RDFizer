@@ -10,6 +10,7 @@ from rdflib.plugins.sparql import prepareQuery
 from configparser import ConfigParser, ExtendedInterpolation
 from rdfizer.triples_map import TriplesMap as tm
 import traceback
+from mysql import connector
 
 try:
 	from triples_map import TriplesMap as tm
@@ -19,8 +20,18 @@ except:
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
 
+def count_characters(string):
+	count = 0
+	for s in string:
+		if s == "{":
+			count += 1
+	return count
+
 def clean_URL_suffix(URL_suffix):
     cleaned_URL=""
+    if "http" in URL_suffix:
+    	return URL_suffix
+
     for c in URL_suffix:
         if c.isalpha() or c.isnumeric() or c =='_' or c=='-' or c == '(' or c == ')':
             cleaned_URL= cleaned_URL+c
@@ -263,6 +274,79 @@ def string_substitution(string, pattern, row, term):
 
 	return new_string
 
+def string_substitution_array(string, pattern, row, row_headers, term):
+
+	"""
+	(Private function, not accessible from outside this package)
+
+	Takes a string and a pattern, matches the pattern against the string and perform the substitution
+	in the string from the respective value in the row.
+
+	Parameters
+	----------
+	string : string
+		String to be matched
+	triples_map_list : string
+		Pattern containing a regular expression to match
+	row : dictionary
+		Dictionary with CSV headers as keys and fields of the row as values
+
+	Returns
+	-------
+	A string with the respective substitution if the element to be subtitued is not invalid
+	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
+	returns None
+	"""
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			if match in row_headers:
+				if row[row_headers.index(match)] is not None:
+					value = row[row_headers.index(match)]
+					if type(value) is int:
+						value = str(value)
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+					else:
+						return None
+			else:
+				return None
+				# To-do:
+				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
+				#if term == "subject":
+				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
+				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+				#else:
+				#	return None
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			if match in row_headers:
+				if row[row_headers.index(match)] is not None:
+					value = row[row_headers.index(match)]
+					if type(value) is int:
+						value = str(value)
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+				else:
+					return None
+			else:
+				return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
+
 def semantify_json(triples_map, triples_map_list, output_file_descriptor):
 	
 	with open(str(triples_map.data_source), "rb") as input_file_descriptor:
@@ -485,6 +569,168 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 				else:
 					continue
 
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor):
+
+	"""
+	(Private function, not accessible from outside this package)
+
+	Takes a triples-map rule and applies it to each one of the rows of its CSV data
+	source
+
+	Parameters
+	----------
+	triples_map : TriplesMap object
+		Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
+		(refer to the TriplesMap.py file in the triplesmap folder)
+	triples_map_list : list of TriplesMap objects
+		List of triples-maps parsed from current mapping being used for the semantification of a
+		dataset (mainly used to perform rr:joinCondition mappings)
+	delimiter : string
+		Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
+	output_file_descriptor : file object 
+		Descriptor to the output file (refer to the Python 3 documentation)
+
+	Returns
+	-------
+	An .nt file per each dataset mentioned in the configuration file semantified.
+	If the duplicates are asked to be removed in main memory, also returns a -min.nt
+	file with the triples sorted and with the duplicates removed.
+	"""
+
+
+	if triples_map.subject_map.condition == "":
+		try:
+			subject = "<" + string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject") + ">"
+		except:
+			subject = None
+	else:
+		try:
+			subject = "<" + string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject") + ">"
+		except:
+			subject = None
+
+	if subject is None:
+		pass
+
+	if triples_map.subject_map.rdf_class is not None and subject is not None:
+		output_file_descriptor.write(subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class))
+
+
+	for predicate_object_map in triples_map.predicate_object_maps_list:
+		if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+			predicate = "<" + predicate_object_map.predicate_map.value + ">"
+		elif predicate_object_map.predicate_map.mapping_type == "template":
+			if predicate_object_map.predicate_map.condition != "":
+				try:
+					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate") + ">"
+				except:
+					predicate = None
+			else:
+				try:
+					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate") + ">"
+				except:
+					predicate = None
+		elif predicate_object_map.predicate_map.mapping_type == "reference":
+				if predicate_object_map.predicate_map.condition != "":
+					predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate")
+		else:
+			print("Invalid predicate mapping type")
+			print("Aborting...")
+			sys.exit(1)
+
+		if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
+			object = "<" + predicate_object_map.object_map.value + ">"
+		elif predicate_object_map.object_map.mapping_type == "template":
+			try:
+				object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
+			except TypeError:
+				object = None
+		elif predicate_object_map.object_map.mapping_type == "reference":
+			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
+		elif predicate_object_map.object_map.mapping_type == "parent triples map":
+			for triples_map_element in triples_map_list:
+				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+					if triples_map_element.data_source != triples_map.data_source:
+						print("Warning: Join condition between different data sources is not implemented yet,")
+						print("         triples for this triples-map will be generated without the predicate-object-maps")
+						print("         that require a join condition between data sources")
+						object = None
+					else:
+						try:
+							object = "<" + string_substitution_array(triples_map_element.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">"
+						except TypeError:
+							object = None
+					break
+				else:
+					continue
+		else:
+			print("Invalid object mapping type")
+			print("Aborting...")
+			sys.exit(1)
+
+		if object is not None and predicate_object_map.object_map.datatype is not None:
+			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+
+		if predicate is not None and object is not None and subject is not None:
+			triple = subject + " " + predicate + " " + object + " .\n"
+			output_file_descriptor.write(triple)
+		else:
+			continue
+
+
+def translate_sql(triples_map_list):
+
+	query_list = []
+	
+	for triples_map in triples_map_list:
+		proyections = []
+
+		
+		if "{" in triples_map.subject_map.value:
+			subject = triples_map.subject_map.value
+			count = count_characters(subject)
+			if (count == 1) and (subject.split("{")[1].split("}")[0] not in proyections):
+				subject = subject.split("{")[1].split("}")[0]
+				if "[" in subject:
+					subject = subject.split("[")[0]
+				proyections.append(subject)
+			elif count > 1:
+				subject_list = subject.split("{")
+				for s in subject_list:
+					if "}" in s:
+						subject = s.split("}")[0]
+						if "[" in subject:
+							subject = subject.split("[")
+						if subject not in proyections:
+							proyections.append(subject)
+
+		for po in triples_map.predicate_object_maps_list:
+			if "{" in po.object_map.value:
+				predicate = po.object_map.value.split("{")[1].split("}")[0]
+				if "[" in predicate:
+					predicate = predicate.split("[")[0]
+			elif "#" in po.object_map.value:
+				pass
+			else:
+				predicate = po.object_map.value 
+				if "[" in predicate:
+					predicate = predicate.split("[")[0]
+
+			if predicate not in proyections:
+				proyections.append(predicate)
+
+		temp_query = "SELECT "
+		for p in proyections:
+			if p == proyections[len(proyections)-1]:
+			  	temp_query += p
+			else:
+				temp_query += p + ", "   
+
+		temp_query = temp_query + " FROM " + triples_map.data_source + ";"
+		query_list.append(temp_query)
+
+	return triples_map.iterator, query_list
+
 def semantify(config_path):
 
 	"""
@@ -519,17 +765,29 @@ def semantify(config_path):
 		dataset_i = "dataset" + str(int(dataset_number) + 1)
 		triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 		output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
-		print("Semantifying {}.{}...".format(config[dataset_i]["name"], config[dataset_i]["format"]))
+		if config[dataset_i]["format"] != "MySQL": 
+			print("Semantifying {}.{}...".format(config[dataset_i]["name"], config[dataset_i]["format"]))
+		else:
+			print("Semantifying MySQL data")
 		
 		with open(output_file, "w") as output_file_descriptor:
 			for triples_map in triples_map_list:
 				if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
-					print("hola")
 					semantify_csv(triples_map, triples_map_list, ",", output_file_descriptor)
 				#elif str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "tsv":
 				#	semantify_csv(triples_map, triples_map_list, "\t", output_file_descriptor)
 				elif triples_map.file_format == "JSONPath":
 					semantify_json(triples_map, triples_map_list, output_file_descriptor)
+				elif config[dataset_i]["format"] == "MySQL":
+					database, query_list = translate_sql(triples_map_list)
+					db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
+					cursor = db.cursor()
+					cursor.execute("use " + database)
+					for query in query_list:
+						cursor.execute(query)
+						row_headers=[x[0] for x in cursor.description]
+						for row in cursor:
+							semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor)
 				else:
 					print("Invalid reference formulation or format")
 					print("Aborting...")

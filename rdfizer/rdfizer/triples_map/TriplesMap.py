@@ -62,7 +62,7 @@ class TriplesMap:
 
 class SubjectMap:
 	
-	def __init__(self, subject_value, rdf_class=None):
+	def __init__(self, subject_value, condition,rdf_class=None):
 
 		"""
 		Constructor of a SubjectMap object
@@ -77,6 +77,7 @@ class SubjectMap:
 		"""
 
 		self.value = subject_value
+		self.condition = condition 
 		self.rdf_class = rdf_class
 
 class PredicateObjectMap:
@@ -100,7 +101,7 @@ class PredicateObjectMap:
 
 class PredicateMap:
 
-	def __init__(self, predicate_mapping_type, predicate_value):
+	def __init__(self, predicate_mapping_type, predicate_value, predicate_condition):
 
 		"""
 		Constructor of a PredicateMap object
@@ -117,6 +118,7 @@ class PredicateMap:
 
 		self.value = predicate_value
 		self.mapping_type = predicate_mapping_type
+		self.condition = predicate_condition
 
 class ObjectMap:
 

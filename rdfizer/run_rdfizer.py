@@ -1,2 +1,2 @@
 from rdfizer.semantify import semantify
-semantify("configfile.ini")
+semantify("config_test.ini")
