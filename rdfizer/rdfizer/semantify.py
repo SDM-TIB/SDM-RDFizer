@@ -861,7 +861,7 @@ def semantify(config_path):
 		global start_time
 		start_time = time.time()
 
-		with open(config["datasets"]["output_folder"] + "/" + "datasets_stats.csv", 'w') as myfile:
+		with open(config["datasets"]["output_folder"] + "/" +  config[dataset_i]["name"] + "_datasets_stats.csv", 'w') as myfile:
 			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 			wr.writerow(["Dataset", "Number of the triple", "Time"])
 			with ThreadPoolExecutor(max_workers=10) as executor:
@@ -877,13 +877,13 @@ def semantify(config_path):
 					
 					with open(output_file, "w") as output_file_descriptor:
 						for triples_map in triples_map_list:
-							if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
+							if str(triples_map.file_format).lower() == "csv":
 								global number_triple
 								number_triple += executor.submit(semantify_csv, triples_map, triples_map_list, ",", output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
 							elif triples_map.file_format == "JSONPath":
 								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
-							elif config[dataset_i]["format"] == "MySQL":
+							else:
 								database, query_list = translate_sql(triples_map_list)
 								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
 								cursor = db.cursor()
@@ -937,7 +937,7 @@ def semantify(config_path):
 							elif triples_map.file_format == "JSONPath":
 								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).results()
-							elif config[dataset_i]["format"] == "MySQL":
+							else:
 								database, query_list = translate_sql(triples_map_list)
 								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
 								cursor = db.cursor()
