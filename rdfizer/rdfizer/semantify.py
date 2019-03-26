@@ -884,7 +884,7 @@ def semantify(config_path):
 								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
 							else:
-								database, query_list = translate_sql(triples_map_list)
+								database, query_list = translate_sql(triples_map)
 								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
 								cursor = db.cursor()
 								cursor.execute("use " + database)
@@ -938,7 +938,7 @@ def semantify(config_path):
 								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).results()
 							else:
-								database, query_list = translate_sql(triples_map_list)
+								database, query_list = translate_sql(triples_map)
 								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
 								cursor = db.cursor()
 								cursor.execute("use " + database)
