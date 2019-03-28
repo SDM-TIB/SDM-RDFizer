@@ -399,7 +399,7 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 		data = json.load(input_file_descriptor)
 		for row in data:
 			subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
-			if duplicate == "no":
+			if duplicate == "yes":
 				triple_entry = {subject_value: dictionary_maker(row)}
 				if subject_value in triples_map_triples:
 					if shared_items(triples_map_triples[subject_value], row) == len(triples_map_triples[subject_value]):
@@ -568,9 +568,9 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 		i = 0
 		for row in reader:
 			subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
-			if duplicate == "no":
+			if duplicate == "yes":
 				triple_entry = {subject_value: dictionary_maker(row)}	
-				if triples_map.subject_map.value in triples_map_triples:
+				if subject_value in triples_map_triples:
 					if shared_items(triples_map_triples[subject_value], row) == len(triples_map_triples[subject_value]):
 						subject = None
 					else:
@@ -734,7 +734,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 	triples_map_triples = {}
 	subject_value = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject")
 	i = 0
-	if duplicate == "no":
+	if duplicate == "yes":
 		triple_entry = {subject_value: dictionary_maker_array(row, row_headers)}
 		if subject_value in triples_map_triples:
 			if shared_items(triples_map_triples[subject_value], triple_entry) == len(triples_map_triples[subject_value]):
@@ -932,7 +932,7 @@ def semantify(config_path):
 	config.read(config_path)
 
 	global duplicate
-	duplicate = config["datasets"]["duplicate"]
+	duplicate = config["datasets"]["remove_duplicate"]
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
 			os.mkdir(config["datasets"]["output_folder"])
@@ -949,7 +949,6 @@ def semantify(config_path):
 				for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 					dataset_i = "dataset" + str(int(dataset_number) + 1)
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
-					print(len(triples_map_list))
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
 					if config[dataset_i]["format"] != "MySQL": 
 						print("Semantifying {}.{}...".format(config[dataset_i]["name"], config[dataset_i]["format"]))
