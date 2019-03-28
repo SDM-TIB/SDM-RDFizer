@@ -957,12 +957,10 @@ def semantify(config_path):
 					
 					with open(output_file, "w") as output_file_descriptor:
 						for triples_map in triples_map_list:
-							print(triples_map.file_format)
+							global number_triple
 							if str(triples_map.file_format).lower() == "csv":
-								global number_triple
 								number_triple += executor.submit(semantify_csv, triples_map, triples_map_list, ",", output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
 							elif triples_map.file_format == "JSONPath":
-								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								database, query_list = translate_sql(triples_map)
@@ -973,7 +971,6 @@ def semantify(config_path):
 									cursor.execute(query)
 									row_headers=[x[0] for x in cursor.description]
 									for row in cursor:
-										global number_triple
 										number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 										
 							else:
@@ -1012,11 +1009,10 @@ def semantify(config_path):
 						triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 
 						for triples_map in triples_map_list:
+							global number_triple
 							if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
-								global number_triple
 								number_triple += executor.submit(semantify_csv, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"]).results()
 							elif triples_map.file_format == "JSONPath":
-								global number_triple
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).results()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								database, query_list = translate_sql(triples_map)
@@ -1027,7 +1023,6 @@ def semantify(config_path):
 									cursor.execute(query)
 									row_headers=[x[0] for x in cursor.description]
 									for row in cursor:
-										global number_triple
 										number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr,config[dataset_i]["name"])
 							else:
 								print("Invalid reference formulation or format")
