@@ -937,8 +937,9 @@ def semantify(config_path):
 	if not os.path.exists(config["datasets"]["output_folder"]):
 			os.mkdir(config["datasets"]["output_folder"])
 
+	global start_time
 	if config["datasets"]["all_in_one_file"] == "no":
-		global start_time
+		
 		start_time = time.time()
 
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
@@ -997,7 +998,6 @@ def semantify(config_path):
 		else:
 			print("Semantifying MySQL data")
 
-		global start_time
 		start_time = time.time()
 		with open(output_file, "w") as output_file_descriptor:
 			with open(config["datasets"]["output_folder"] + "/" + "datasets_stats.csv", 'w') as myfile:
