@@ -122,7 +122,7 @@ class PredicateMap:
 
 class ObjectMap:
 
-	def __init__(self, object_mapping_type, object_value, object_datatype):
+	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent):
 
 		"""
 		Constructor of ObjectMap object
@@ -139,3 +139,5 @@ class ObjectMap:
 		self.value = object_value
 		self.datatype = object_datatype if object_datatype != "None" else None 
 		self.mapping_type = object_mapping_type
+		self.child = object_child if object_child != "None" else None
+		self.parent = object_parent if object_parent != "None" else None

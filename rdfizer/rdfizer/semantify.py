@@ -27,6 +27,27 @@ number_triple = 0
 triples = []
 duplicate = ""
 start_time = 0
+user, password, port, host = "", "", "", ""
+
+def hash_maker(parent_data, child_data, parent_subject, child_object, child):
+	hash_table = {}
+	for row in parent_data:
+		if row[child_object.parent] in hash_table:
+			hash_table[row[child_object.parent]] = hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject, "{(.+?)}", row, "object") + ">")
+		else:
+			hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject, "{(.+?)}", row, "object") + ">"]}) 
+	return hash_table[child]
+
+def hash_maker_array(parent_data, child_data, parent_subject, child_object, child):
+	hash_table = {}
+	row_headers=[x[0] for x in parent_data.description]
+	for row in parent_data:
+		if row[row_headers.index(child_object.parent)] in hash_table:
+			hash_table[row[row_headers.index(child_object.parent)]] = hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject, "{(.+?)}", row, "object") + ">")
+		else:
+			hash_table.update({row[row_headers.index(child_object.parent)] : ["<" + string_substitution_array(parent_subject, "{(.+?)}", row, "object") + ">"]}) 
+	return hash_table[child]
+
 
 def shared_items(dic1, dic2):
 	i = 0
@@ -188,6 +209,11 @@ def mapping_parser(mapping_file):
 			OPTIONAL {
 				?_predicate_object_map rr:objectMap ?_object_map .
 				?_object_map rr:parentTriplesMap ?object_parent_triples_map .
+				OPTIONAL {
+					?_object_map rr:joinCondition ?join_condition .
+					?join_condition rr:child ?child_value;
+								 rr:parent ?parent_value.
+				}
 			}
 			OPTIONAL {
 				?_predicate_object_map rr:object ?object_constant_shortcut .
@@ -235,15 +261,16 @@ def mapping_parser(mapping_file):
 					sys.exit(1)
 
 				if result_predicate_object_map.object_constant is not None:
-					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype))
+					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype), "None", "None")
 				elif result_predicate_object_map.object_template is not None:
-					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype))
+					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype), "None", "None")
 				elif result_predicate_object_map.object_reference is not None:
-					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype))
+					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype), "None", "None")
 				elif result_predicate_object_map.object_parent_triples_map is not None:
-					object_map = tm.ObjectMap("parent triples map", str(result_predicate_object_map.object_parent_triples_map), str(result_predicate_object_map.object_datatype))
+					print(result_predicate_object_map.child_value)
+					object_map = tm.ObjectMap("parent triples map", str(result_predicate_object_map.object_parent_triples_map), str(result_predicate_object_map.object_datatype), str(result_predicate_object_map.child_value), str(result_predicate_object_map.parent_value))
 				elif result_predicate_object_map.object_constant_shortcut is not None:
-					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype))
+					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype), "None", "None")
 				else:
 					print("Invalid object map")
 					print("Aborting...")
@@ -506,9 +533,22 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 					for triples_map_element in triples_map_list:
 						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 							if triples_map_element.data_source != triples_map.data_source:
-								print("Warning: Join condition between different data sources is not implemented yet,")
-								print("         triples for this triples-map will be generated without the predicate-object-maps")
-								print("         that require a join condition between data sources")
+								object_list = []
+								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										if str(triples_map_element.file_format).lower() == "csv":
+											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+										else:
+											data = json.load(input_file_descriptor)
+										object_list = hash_maker(data, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[predicate_object_map.object_map.child])								
+								else:
+									database, query_list = translate_sql(triples_map)
+									db = connector.connect(host=host, port=port, user=user, password=password)
+									cursor = db.cursor()
+									cursor.execute("use " + database)
+									for query in query_list:
+										cursor.execute(query)
+									object_list = hash_maker_array(cursor, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[predicate_object_map.object_map.child])
 								object = None
 							else:
 								try:
@@ -531,6 +571,12 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 					output_file_descriptor.write(triple)
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
+				elif predicate is not None and subject is not None and object_list:
+					for obj in object_list:
+						triple = subject + " " + predicate + " " + obj + " .\n"
+						output_file_descriptor.write(triple)
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 				else:
 					continue
 		return i
@@ -672,21 +718,37 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
-					for triples_map_element in triples_map_list:
-						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-							if triples_map_element.data_source != triples_map.data_source:
-								print("Warning: Join condition between different data sources is not implemented yet,")
-								print("         triples for this triples-map will be generated without the predicate-object-maps")
-								print("         that require a join condition between data sources")
-								object = None
-							else:
-								try:
-									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-								except TypeError:
+					if subject is not None:
+						for triples_map_element in triples_map_list:
+							if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+								if triples_map_element.data_source != triples_map.data_source:
+									object_list = []
+									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											if str(triples_map_element.file_format).lower() == "csv":
+												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+											else:
+												data = json.load(input_file_descriptor)
+											object_list = hash_maker(data, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[predicate_object_map.object_map.child])								
+									else:
+										database, query_list = translate_sql(triples_map)
+										db = connector.connect(host=host, port=port ,user=user, password=password)
+										cursor = db.cursor()
+										cursor.execute("use " + database)
+										for query in query_list:
+											cursor.execute(query)
+										object_list = hash_maker_array(cursor, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[predicate_object_map.object_map.child])
 									object = None
-							break
-						else:
-							continue
+								else:
+									try:
+										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+									except TypeError:
+										object = None
+								break
+							else:
+								continue
+					else:
+						object = None
 				else:
 					print("Invalid object mapping type")
 					print("Aborting...")
@@ -700,6 +762,12 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 					output_file_descriptor.write(triple)
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
+				elif predicate is not None and subject is not None and object_list:
+					for obj in object_list:
+						triple = subject + " " + predicate + " " + obj + " .\n"
+						output_file_descriptor.write(triple)
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 				else:
 					continue
 		return i
@@ -820,9 +888,22 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 					if triples_map_element.data_source != triples_map.data_source:
-						print("Warning: Join condition between different data sources is not implemented yet,")
-						print("         triples for this triples-map will be generated without the predicate-object-maps")
-						print("         that require a join condition between data sources")
+						object_list = []
+						if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+							with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+								if str(triples_map_element.file_format).lower() == "csv":
+									data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+								else:
+									data = json.load(input_file_descriptor)
+								object_list = hash_maker(data, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[row_headers.index(predicate_object_map.object_map.child)])								
+						else:
+							database, query_list = translate_sql(triples_map)
+							db = connector.connect(host=host, port=port, user=user, password=password)
+							cursor = db.cursor()
+							cursor.execute("use " + database)
+							for query in query_list:
+								cursor.execute(query)
+							object_list = hash_maker_array(cursor, row, triples_map_element.subject_map.value, predicate_object_map.object_map, row[row_headers.index(predicate_object_map.object_map.child)])
 						object = None
 					else:
 						try:
@@ -950,10 +1031,8 @@ def semantify(config_path):
 					dataset_i = "dataset" + str(int(dataset_number) + 1)
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
-					if config[dataset_i]["format"] != "MySQL": 
-						print("Semantifying {}.{}...".format(config[dataset_i]["name"], config[dataset_i]["format"]))
-					else:
-						print("Semantifying MySQL data")
+
+					print("Semantifying {}...".format(config[dataset_i]["name"]))
 					
 					with open(output_file, "w") as output_file_descriptor:
 						for triples_map in triples_map_list:
@@ -963,8 +1042,10 @@ def semantify(config_path):
 							elif triples_map.file_format == "JSONPath":
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
+								global user, password, port, host
+								user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
 								database, query_list = translate_sql(triples_map)
-								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
+								db = connector.connect(host = host, port = port, user = user, password = password)
 								cursor = db.cursor()
 								cursor.execute("use " + database)
 								for query in query_list:
@@ -978,7 +1059,7 @@ def semantify(config_path):
 								print("Aborting...")
 								sys.exit(1)
 
-					print("Successfully semantified {}.{}\n".format(config[dataset_i]["name"], config[dataset_i]["format"]))
+					print("Successfully semantified {}\n".format(config[dataset_i]["name"]))
 
 					if config[dataset_i]["remove_duplicate_triples_in_memory"].lower() == "yes":
 						output_file_name = output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"]
@@ -991,11 +1072,8 @@ def semantify(config_path):
 			wr.writerow([number_triple, time.time()-start_time])
 
 	else:
-		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
-		if config[dataset_i]["format"] != "MySQL": 
-			print("Semantifying {}.{}...".format(config[dataset_i]["name"], config[dataset_i]["format"]))
-		else:
-			print("Semantifying MySQL data")
+		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt" 
+		print("Semantifying {}.{}...".format(config[dataset_i]["name"]))
 
 		start_time = time.time()
 		with open(output_file, "w") as output_file_descriptor:
@@ -1015,7 +1093,9 @@ def semantify(config_path):
 								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).results()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								database, query_list = translate_sql(triples_map)
-								db = connector.connect(host=config[dataset_i]["host"], port=int(config[dataset_i]["port"]),user=config[dataset_i]["user"], password=config[dataset_i]["password"])
+								global user, password, port, host
+								user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
+								db = connector.connect(host=host, port=port, user=user, password=password)
 								cursor = db.cursor()
 								cursor.execute("use " + database)
 								for query in query_list:
@@ -1034,7 +1114,7 @@ def semantify(config_path):
 			wr.writerow([number_triple, time.time()-start_time])
 
 
-		print("Successfully semantified {}.{}\n".format(config[dataset_i]["name"], config[dataset_i]["format"]))
+		print("Successfully semantified {}.{}\n".format(config[dataset_i]["name"]))
 
 		if config[dataset_i]["remove_duplicate_triples_in_memory"].lower() == "yes":
 			output_file_name = output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"]
