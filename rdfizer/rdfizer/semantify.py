@@ -39,10 +39,9 @@ join_table = {}
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
-		if row[child_object.parent] in hash_table: #and hash_table[row[child_object.parent]] is not None:
-			#if ("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]):
-			if hash_table[row[child_object.parent]] is not None:
-				hash_table[row[child_object.parent]] = hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+		if row[child_object.parent] in hash_table:
+			if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+				hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 		else:
 			hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
@@ -51,10 +50,8 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
 	for row in parent_data:
-		if row[row_headers.index(child_object.parent)] in hash_table: #and hash_table[row[child_object.parent]] is not None:
-			#if ("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]):
-			if hash_table[row[row_headers.index(child_object.parent)]] is not None:
-				hash_table[row[row_headers.index(child_object.parent)]] = hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+		if row[row_headers.index(child_object.parent)] in hash_table: 
+			hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 			
 		else:
 			hash_table.update({row[row_headers.index(child_object.parent)] : ["<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
@@ -580,16 +577,30 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + " .\n"
-					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + " .\n"
+					triple = subject + " " + predicate + " " + object + ".\n"
+					if duplicate == "yes":
+						if triple not in generated_triples:
+							output_file_descriptor.write(triple)
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							i += 1
+					else:
 						output_file_descriptor.write(triple)
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
+				elif predicate is not None and subject is not None and object_list:
+					for obj in object_list:
+						triple = subject + " " + predicate + " " + obj + ".\n"
+						if duplicate == "yes":
+							if triple not in generated_triples:
+								output_file_descriptor.write(triple)
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								i += 1
+						else:
+							output_file_descriptor.write(triple)
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							i += 1
 					object_list = []
 				else:
 					continue
@@ -745,9 +756,7 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 												else:
 													data = json.load(input_file_descriptor)
-												hash_maker(data, triples_map_element, predicate_object_map.object_map)
-												if predicate_object_map.object_map.parent == "shape_id":
-													print(join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]])								
+												hash_maker(data, triples_map_element, predicate_object_map.object_map)							
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
@@ -756,7 +765,6 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									print(predicate_object_map.object_map.child)
 									object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
 									object = None
 								else:
@@ -778,16 +786,27 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + " .\n"
-					if triple not in generated_triples:
+					triple = subject + " " + predicate + " " + object + ".\n"
+					if duplicate == "yes":
+						if triple not in generated_triples:
+							output_file_descriptor.write(triple)
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							i += 1
+					else:
 						output_file_descriptor.write(triple)
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						generated_triples.update({triple : number_triple})
 						i += 1
 				elif predicate is not None and subject is not None and object_list:
 					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + " .\n"
-						if triple not in generated_triples:
+						triple = subject + " " + predicate + " " + obj + ".\n"
+						if duplicate == "yes":
+							if triple not in generated_triples:
+								output_file_descriptor.write(triple)
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								i += 1
+						else:
 							output_file_descriptor.write(triple)
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
@@ -947,10 +966,31 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
-			triple = subject + " " + predicate + " " + object + " .\n"
-			output_file_descriptor.write(triple)
-			csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-			i += 1
+			triple = subject + " " + predicate + " " + object + ".\n"
+			if duplicate == "yes":
+				if triple not in generated_triples:
+					output_file_descriptor.write(triple)
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					generated_triples.update({triple : number_triple})
+					i += 1
+			else:
+				output_file_descriptor.write(triple)
+				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				i += 1
+		elif predicate is not None and subject is not None and object_list:
+			for obj in object_list:
+				triple = subject + " " + predicate + " " + obj + ".\n"
+				if duplicate == "yes":
+					if triple not in generated_triples:
+						output_file_descriptor.write(triple)
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						generated_triples.update({triple : number_triple})
+						i += 1
+				else:
+					output_file_descriptor.write(triple)
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					i += 1
+			object_list = []
 		else:
 			continue
 	return i
