@@ -633,6 +633,7 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 	If the duplicates are asked to be removed in main memory, also returns a -min.nt
 	file with the triples sorted and with the duplicates removed.
 	"""
+	object = None
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
@@ -765,7 +766,10 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+									if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
+										object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+									else:
+										object_list = []
 									object = None
 								else:
 									try:
@@ -782,6 +786,7 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 					print("Aborting...")
 					sys.exit(1)
 
+				
 				if object is not None and predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
