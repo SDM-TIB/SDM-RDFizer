@@ -183,7 +183,9 @@ def mapping_parser(mapping_file):
 			OPTIONAL { ?_subject_map rr:class ?rdf_class . }
 
 	# Predicate -----------------------------------------------------------------------
+			OPTIONAL {
 			?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
+			}
 			OPTIONAL {
 				?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
 				?_predicate_object_map rr:predicateMap ?_predicate_map .
@@ -230,6 +232,11 @@ def mapping_parser(mapping_file):
 					?_object_map rr:joinCondition ?join_condition .
 					?join_condition rr:child ?child_value;
 								 rr:parent ?parent_value.
+				}
+				OPTIONAL {
+					?_object_map rr:joinCondition ?join_condition .
+					?join_condition rr:child ?child_value;
+								 rr:parent ?parent_value;
 				}
 			}
 			OPTIONAL {
