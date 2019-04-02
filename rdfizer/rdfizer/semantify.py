@@ -40,8 +40,12 @@ def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
 		if row[child_object.parent] in hash_table:
-			if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+			if duplicate == "yes":
+				if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+					hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+			else:
 				hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+
 		else:
 			hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
@@ -50,8 +54,12 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
 	for row in parent_data:
-		if row[row_headers.index(child_object.parent)] in hash_table: 
-			hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+		if row[row_headers.index(child_object.parent)] in hash_table:
+			if duplicate == "yes":
+				if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+					hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+			else:
+				hash_table[row[row_headers.index(child_object.parent)]].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 			
 		else:
 			hash_table.update({row[row_headers.index(child_object.parent)] : ["<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
@@ -337,6 +345,8 @@ def string_substitution(string, pattern, row, term):
 					#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 					#else:
 					#	return None
+			else:
+				return None
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if match in row.keys():
@@ -346,6 +356,9 @@ def string_substitution(string, pattern, row, term):
 						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
 					else:
 						return None
+					#	return None
+			else:
+				return None
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
@@ -633,7 +646,6 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 	If the duplicates are asked to be removed in main memory, also returns a -min.nt
 	file with the triples sorted and with the duplicates removed.
 	"""
-	object = None
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
@@ -735,7 +747,6 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 					print("Invalid predicate mapping type")
 					print("Aborting...")
 					sys.exit(1)
-
 				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 					object = "<" + predicate_object_map.object_map.value + ">"
 				elif predicate_object_map.object_map.mapping_type == "template":

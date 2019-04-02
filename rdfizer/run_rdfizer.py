@@ -1,2 +1,3 @@
 from rdfizer.semantify import semantify
-semantify("config_test.ini")
+import sys
+semantify(str(sys.argv[1]))
