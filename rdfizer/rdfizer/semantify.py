@@ -35,6 +35,34 @@ global user, password, port, host
 user, password, port, host = "", "", "", ""
 global join_table 
 join_table = {}
+global po_table
+po_table = {}
+
+def exist_po(mapping_file):
+	with open(mapping_file, "r") as mappings:
+		maps = []
+		m = ""
+		for line in mappings:
+			if "@" not in line:
+				if "]." in line:
+					m += line
+					maps.append(m)
+					m = ""
+				else:
+					m += line
+		for tm in maps:
+			if "rr:predicateObjectMap" in tm:
+				components = tm.split("\n")
+				for line in components:
+					if "@" not in line:
+						if "rml:source" in line:
+							po_table.update({line.split("\"")[1] : "yes"})
+			else:
+				components = tm.split("\n")
+				for line in components:
+					if "@" not in line:
+						if "rml:source" in line:
+							po_table.update({line.split("\"")[1] : "no"})
 
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
@@ -181,7 +209,6 @@ def mapping_parser(mapping_file):
 			?triples_map_id rr:subjectMap ?_subject_map .
 			?_subject_map rr:template ?subject_template .
 			OPTIONAL { ?_subject_map rr:class ?rdf_class . }
-
 	# Predicate -----------------------------------------------------------------------
 			OPTIONAL {
 			?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
@@ -250,6 +277,7 @@ def mapping_parser(mapping_file):
 	mapping_query_results = mapping_graph.query(mapping_query)
 	triples_map_list = []
 
+
 	for result_triples_map in mapping_query_results:
 		triples_map_exists = False
 		for triples_map in triples_map_list:
@@ -264,9 +292,15 @@ def mapping_parser(mapping_file):
 				subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, str(result_triples_map.rdf_class))
 				
 			mapping_query_prepared = prepareQuery(mapping_query)
+
+
 			mapping_query_prepared_results = mapping_graph.query(mapping_query_prepared, initBindings={'triples_map_id': result_triples_map.triples_map_id})
 
+
+
+
 			predicate_object_maps_list = []
+
 
 			for result_predicate_object_map in mapping_query_prepared_results:
 				if result_predicate_object_map.predicate_constant is not None:
@@ -515,102 +549,89 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
-
-			for predicate_object_map in triples_map.predicate_object_maps_list:
-				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				elif predicate_object_map.predicate_map.mapping_type == "template":
-					if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
+			if po_table[str(triples_map.data_source)] == "yes":
+				for predicate_object_map in triples_map.predicate_object_maps_list:
+					if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+						predicate = "<" + predicate_object_map.predicate_map.value + ">"
+					elif predicate_object_map.predicate_map.mapping_type == "template":
+						if predicate_object_map.predicate_map.condition != "":
+								#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+								#if row[field] == condition:
+								try:
+									predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+								except:
+									predicate = None
+								#else:
+								#	predicate = None
+						else:
 							try:
 								predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
 							except:
 								predicate = None
-							#else:
-							#	predicate = None
-					else:
-						try:
-							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-						except:
-							predicate = None
-				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-							#else:
-							#	predicate = None
-						else:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-				else:
-					print("Invalid predicate mapping type")
-					print("Aborting...")
-					sys.exit(1)
-
-				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-					object = "<" + predicate_object_map.object_map.value + ">"
-				elif predicate_object_map.object_map.mapping_type == "template":
-					try:
-						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
-					except TypeError:
-						object = None
-				elif predicate_object_map.object_map.mapping_type == "reference":
-					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				elif predicate_object_map.object_map.mapping_type == "parent triples map":
-					for triples_map_element in triples_map_list:
-						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-							if triples_map_element.data_source != triples_map.data_source:
-								object_list = []
-								if triples_map_element.triples_map_id not in join_table:
-									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-											else:
-												data = json.load(input_file_descriptor)
-											hash_maker(data, triples_map_element, predicate_object_map.object_map)								
-									else:
-										database, query_list = translate_sql(triples_map)
-										db = connector.connect(host=host, port=port, user=user, password=password)
-										cursor = db.cursor()
-										cursor.execute("use " + database)
-										for query in query_list:
-											cursor.execute(query)
-											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-								object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
-								object = None
+					elif predicate_object_map.predicate_map.mapping_type == "reference":
+							if predicate_object_map.predicate_map.condition != "":
+								#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+								#if row[field] == condition:
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+								#else:
+								#	predicate = None
 							else:
-								try:
-									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-								except TypeError:
-									object = None
-							break
-						else:
-							continue
-				else:
-					print("Invalid object mapping type")
-					print("Aborting...")
-					sys.exit(1)
-
-				if object is not None and predicate_object_map.object_map.datatype is not None:
-					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
-
-				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + ".\n"
-					if duplicate == "yes":
-						if triple not in generated_triples:
-							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							generated_triples.update({triple : number_triple})
-							i += 1
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
 					else:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + ".\n"
+						print("Invalid predicate mapping type")
+						print("Aborting...")
+						sys.exit(1)
+
+					if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
+						object = "<" + predicate_object_map.object_map.value + ">"
+					elif predicate_object_map.object_map.mapping_type == "template":
+						try:
+							object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+						except TypeError:
+							object = None
+					elif predicate_object_map.object_map.mapping_type == "reference":
+						object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
+					elif predicate_object_map.object_map.mapping_type == "parent triples map":
+						for triples_map_element in triples_map_list:
+							if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+								if triples_map_element.data_source != triples_map.data_source:
+									object_list = []
+									if triples_map_element.triples_map_id not in join_table:
+										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												if str(triples_map_element.file_format).lower() == "csv":
+													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+												else:
+													data = json.load(input_file_descriptor)
+												hash_maker(data, triples_map_element, predicate_object_map.object_map)								
+										else:
+											database, query_list = translate_sql(triples_map)
+											db = connector.connect(host=host, port=port, user=user, password=password)
+											cursor = db.cursor()
+											cursor.execute("use " + database)
+											for query in query_list:
+												cursor.execute(query)
+												hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+									object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+									object = None
+								else:
+									try:
+										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+									except TypeError:
+										object = None
+								break
+							else:
+								continue
+					else:
+						print("Invalid object mapping type")
+						print("Aborting...")
+						sys.exit(1)
+
+					if object is not None and predicate_object_map.object_map.datatype is not None:
+						object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+
+					if predicate is not None and object is not None and subject is not None:
+						triple = subject + " " + predicate + " " + object + ".\n"
 						if duplicate == "yes":
 							if triple not in generated_triples:
 								output_file_descriptor.write(triple)
@@ -621,9 +642,22 @@ def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_fi
 							output_file_descriptor.write(triple)
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
-					object_list = []
-				else:
-					continue
+					elif predicate is not None and subject is not None and object_list:
+						for obj in object_list:
+							triple = subject + " " + predicate + " " + obj + ".\n"
+							if duplicate == "yes":
+								if triple not in generated_triples:
+									output_file_descriptor.write(triple)
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									generated_triples.update({triple : number_triple})
+									i += 1
+							else:
+								output_file_descriptor.write(triple)
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						object_list = []
+					else:
+						continue
 		return i
 
 def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name):
@@ -722,107 +756,94 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
-
-			for predicate_object_map in triples_map.predicate_object_maps_list:
-				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				elif predicate_object_map.predicate_map.mapping_type == "template":
-					if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
+			if po_table[str(triples_map.data_source)] == "yes":
+				for predicate_object_map in triples_map.predicate_object_maps_list:
+					if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+						predicate = "<" + predicate_object_map.predicate_map.value + ">"
+					elif predicate_object_map.predicate_map.mapping_type == "template":
+						if predicate_object_map.predicate_map.condition != "":
+								#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+								#if row[field] == condition:
+								try:
+									predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+								except:
+									predicate = None
+								#else:
+								#	predicate = None
+						else:
 							try:
 								predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
 							except:
 								predicate = None
-							#else:
-							#	predicate = None
-					else:
-						try:
-							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-						except:
-							predicate = None
-				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-							#else:
-							#	predicate = None
-						else:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-				else:
-					print("Invalid predicate mapping type")
-					print("Aborting...")
-					sys.exit(1)
-				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-					object = "<" + predicate_object_map.object_map.value + ">"
-				elif predicate_object_map.object_map.mapping_type == "template":
-					try:
-						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
-					except TypeError:
-						object = None
-				elif predicate_object_map.object_map.mapping_type == "reference":
-					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				elif predicate_object_map.object_map.mapping_type == "parent triples map":
-					if subject is not None:
-						for triples_map_element in triples_map_list:
-							if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-								if triples_map_element.data_source != triples_map.data_source:
-									if triples_map_element.triples_map_id not in join_table:
-										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												else:
-													data = json.load(input_file_descriptor)
-												hash_maker(data, triples_map_element, predicate_object_map.object_map)							
-										else:
-											database, query_list = translate_sql(triples_map)
-											db = connector.connect(host=host, port=port, user=user, password=password)
-											cursor = db.cursor()
-											cursor.execute("use " + database)
-											for query in query_list:
-												cursor.execute(query)
-											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
-										object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
-									else:
-										object_list = []
-									object = None
-								else:
-									try:
-										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-									except TypeError:
-										object = None
-								break
+					elif predicate_object_map.predicate_map.mapping_type == "reference":
+							if predicate_object_map.predicate_map.condition != "":
+								#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+								#if row[field] == condition:
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+								#else:
+								#	predicate = None
 							else:
-								continue
+								predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
 					else:
-						object = None
-				else:
-					print("Invalid object mapping type")
-					print("Aborting...")
-					sys.exit(1)
-
-				
-				if object is not None and predicate_object_map.object_map.datatype is not None:
-					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
-
-				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + ".\n"
-					if duplicate == "yes":
-						if triple not in generated_triples:
-							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							generated_triples.update({triple : number_triple})
-							i += 1
+						print("Invalid predicate mapping type")
+						print("Aborting...")
+						sys.exit(1)
+					if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
+						object = "<" + predicate_object_map.object_map.value + ">"
+					elif predicate_object_map.object_map.mapping_type == "template":
+						try:
+							object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+						except TypeError:
+							object = None
+					elif predicate_object_map.object_map.mapping_type == "reference":
+						object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
+					elif predicate_object_map.object_map.mapping_type == "parent triples map":
+						if subject is not None:
+							for triples_map_element in triples_map_list:
+								if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+									if triples_map_element.data_source != triples_map.data_source:
+										if triples_map_element.triples_map_id not in join_table:
+											if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+													else:
+														data = json.load(input_file_descriptor)
+													hash_maker(data, triples_map_element, predicate_object_map.object_map)							
+											else:
+												database, query_list = translate_sql(triples_map)
+												db = connector.connect(host=host, port=port, user=user, password=password)
+												cursor = db.cursor()
+												cursor.execute("use " + database)
+												for query in query_list:
+													cursor.execute(query)
+												hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+										if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
+											object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+										else:
+											object_list = []
+										object = None
+									else:
+										try:
+											object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+										except TypeError:
+											object = None
+									break
+								else:
+									continue
+						else:
+							object = None
 					else:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + ".\n"
+						print("Invalid object mapping type")
+						print("Aborting...")
+						sys.exit(1)
+
+					
+					if object is not None and predicate_object_map.object_map.datatype is not None:
+						object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+
+					if predicate is not None and object is not None and subject is not None:
+						triple = subject + " " + predicate + " " + object + ".\n"
 						if duplicate == "yes":
 							if triple not in generated_triples:
 								output_file_descriptor.write(triple)
@@ -833,9 +854,22 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 							output_file_descriptor.write(triple)
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
-					object_list = []
-				else:
-					continue
+					elif predicate is not None and subject is not None and object_list:
+						for obj in object_list:
+							triple = subject + " " + predicate + " " + obj + ".\n"
+							if duplicate == "yes":
+								if triple not in generated_triples:
+									output_file_descriptor.write(triple)
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									generated_triples.update({triple : number_triple})
+									i += 1
+							else:
+								output_file_descriptor.write(triple)
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						object_list = []
+					else:
+						continue
 		return i
 
 def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
@@ -1118,6 +1152,7 @@ def semantify(config_path):
 				for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 					dataset_i = "dataset" + str(int(dataset_number) + 1)
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
+					exist_po(config[dataset_i]["mapping"])
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
 
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
