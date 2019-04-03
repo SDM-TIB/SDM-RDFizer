@@ -44,25 +44,23 @@ def exist_po(mapping_file):
 		m = ""
 		for line in mappings:
 			if "@" not in line:
-				if "]." in line:
-					m += line
+				if ("rr:ObjectMap;" in line) or ("]." in line):
 					maps.append(m)
-					m = ""
+					m = line
 				else:
 					m += line
+
 		for tm in maps:
 			if "rr:predicateObjectMap" in tm:
 				components = tm.split("\n")
 				for line in components:
-					if "@" not in line:
-						if "rml:source" in line:
-							po_table.update({line.split("\"")[1] : "yes"})
+					if "rml:source" in line:
+						po_table.update({line.split("\"")[1] : "yes"})
 			else:
 				components = tm.split("\n")
-				for line in components:
-					if "@" not in line:
-						if "rml:source" in line:
-							po_table.update({line.split("\"")[1] : "no"})
+				for line in components:	
+					if "rml:source" in line:
+						po_table.update({line.split("\"")[1] : "no"})
 
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
