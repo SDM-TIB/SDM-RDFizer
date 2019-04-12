@@ -22,16 +22,23 @@ localhost:4000/graph_creation/path/to/config/file
 
 ```
 [default]
-main_directory: /home/guillermobet/Documentos/Fraunhofer/ProjectIASIS/SemanticEnrichment
+main_directory: /Users/maria-esthervidal/Documents/docker/rdfizer/rdfizer/1-csv
 
 [datasets]
 number_of_datasets: 1
 output_folder: ${default:main_directory}/graph
+all_in_one_file: no
+remove_duplicate: yes
+name: 1-csv
 
 [dataset1]
-name: ADSampleDataWP4CO
-format: csv
-path: ${default:main_directory}/data/csv/ADSampleDataWP4CO.csv
-mapping: ${default:main_directory}/mappings/AD_CO.ttl
-remove_duplicate_triples_in_memory: yes
+name: 1-csv
+mapping: ${default:main_directory}/gtfs-csv.rml.ttl
+remove_duplicate_triples_in_memory: no
+```
+
+Running the RDFizer directly
+
+```
+$ (env) python3 run_rdfizer.py configfile.ini
 ```

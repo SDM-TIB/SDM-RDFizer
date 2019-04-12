@@ -10,4 +10,4 @@ Run the rdfizer:
 		$ (env) python3 rdfizer/semantify.py -c configfile.ini
 
 	2. As a package inside another script:
-		$ (env) python3 run_rdfizer.py
+		$ (env) python3 run_rdfizer.py configfile.ini
