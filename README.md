@@ -37,7 +37,7 @@ mapping: ${default:main_directory}/gtfs-csv.rml.ttl
 remove_duplicate_triples_in_memory: no
 ```
 
-Running the RDFizer directly
+## Running the RDFizer directly
 
 ```
 $ (env) python3 run_rdfizer.py configfile.ini
