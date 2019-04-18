@@ -15,6 +15,8 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import json
 
+from .functions import *
+
 try:
 	from triples_map import TriplesMap as tm
 except:
@@ -37,6 +39,7 @@ global join_table
 join_table = {}
 global po_table
 po_table = {}
+
 
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
@@ -66,78 +69,6 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 		else:
 			hash_table.update({row[row_headers.index(child_object.parent)] : ["<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
-
-
-def shared_items(dic1, dic2):
-	i = 0
-	for key in dic1.keys():
-		if dic2[key] is not None:
-			if dic1[key] == dic2[key]:
-				i += 1
-	return i
-
-
-def dictionary_maker_array(row, row_headers):
-	dic = {}
-	for key in row_headers:
-		dic[key] = row[row_headers.index(key)]
-	return dic
-
-
-def dictionary_maker(row):
-	dic = {}
-	for key, value in row.items():
-		dic[key] = value
-	return dic
-
-def extract_name(string):
-	name = ""
-	i = len(string)
-	while 0 < i:
-		name = string[i-1] + name
-		i -= 1
-		if string[i-1] == "/":
-			break
-	name = name.split(".")[0]
-	return name
-
-def count_characters(string):
-	count = 0
-	for s in string:
-		if s == "{":
-			count += 1
-	return count
-
-def clean_URL_suffix(URL_suffix):
-    cleaned_URL=""
-    if "http" in URL_suffix:
-    	return URL_suffix
-
-    for c in URL_suffix:
-        if c.isalpha() or c.isnumeric() or c =='_' or c=='-' or c == '(' or c == ')':
-            cleaned_URL= cleaned_URL+c
-        if c == "/" or c == "\\":
-            cleaned_URL = cleaned_URL+"-"
-
-    return cleaned_URL
-
-def string_separetion(string):
-	if ("{" in string) and ("[" in string):
-		prefix = string.split("{")[0]
-		condition = string.split("{")[1].split("}")[0]
-		postfix = string.split("{")[1].split("}")[1]
-		field = prefix + "*" + postfix
-	elif "[" in string:
-		return string, string
-	else:
-		return string, ""
-	return string, condition
-
-def condition_separetor(string):
-	condition_field = string.split("[")
-	field = condition_field[1][:len(condition_field[1])-1].split("=")[0]
-	value = condition_field[1][:len(condition_field[1])-1].split("=")[1]
-	return field, value
 
 def mapping_parser(mapping_file):
 
@@ -312,323 +243,9 @@ def mapping_parser(mapping_file):
 
 	return triples_map_list
 
-def string_substitution(string, pattern, row, term):
 
-	"""
-	(Private function, not accessible from outside this package)
 
-	Takes a string and a pattern, matches the pattern against the string and perform the substitution
-	in the string from the respective value in the row.
-
-	Parameters
-	----------
-	string : string
-		String to be matched
-	triples_map_list : string
-		Pattern containing a regular expression to match
-	row : dictionary
-		Dictionary with CSV headers as keys and fields of the row as values
-
-	Returns
-	-------
-	A string with the respective substitution if the element to be subtitued is not invalid
-	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
-	returns None
-	"""
-
-	template_references = re.finditer(pattern, string)
-	new_string = string
-	offset_current_substitution = 0
-	for reference_match in template_references:
-		start, end = reference_match.span()[0], reference_match.span()[1]
-		if pattern == "{(.+?)}":
-			match = reference_match.group(1).split("[")[0]
-			if match in row.keys():
-				if row[match] is not None:
-					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-
-					else:
-						return None
-					# To-do:
-					# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
-					#if term == "subject":
-					#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
-					#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-					#else:
-					#	return None
-			else:
-				return None
-		elif pattern == ".+":
-			match = reference_match.group(0)
-			if match in row.keys():
-				if row[match] is not None:
-					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
-						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
-					else:
-						return None
-					#	return None
-			else:
-				return None
-		else:
-			print("Invalid pattern")
-			print("Aborting...")
-			sys.exit(1)
-
-	return new_string
-
-def string_substitution_array(string, pattern, row, row_headers, term):
-
-	"""
-	(Private function, not accessible from outside this package)
-
-	Takes a string and a pattern, matches the pattern against the string and perform the substitution
-	in the string from the respective value in the row.
-
-	Parameters
-	----------
-	string : string
-		String to be matched
-	triples_map_list : string
-		Pattern containing a regular expression to match
-	row : dictionary
-		Dictionary with CSV headers as keys and fields of the row as values
-
-	Returns
-	-------
-	A string with the respective substitution if the element to be subtitued is not invalid
-	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
-	returns None
-	"""
-
-	template_references = re.finditer(pattern, string)
-	new_string = string
-	offset_current_substitution = 0
-	for reference_match in template_references:
-		start, end = reference_match.span()[0], reference_match.span()[1]
-		if pattern == "{(.+?)}":
-			match = reference_match.group(1).split("[")[0]
-			if match in row_headers:
-				if row[row_headers.index(match)] is not None:
-					value = row[row_headers.index(match)]
-					if type(value) is int:
-						value = str(value)
-					if re.search("^[\s|\t]*$", value) is None:
-						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
-					else:
-						return None
-			else:
-				return None
-				# To-do:
-				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
-				#if term == "subject":
-				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
-				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-				#else:
-				#	return None
-		elif pattern == ".+":
-			match = reference_match.group(0)
-			if match in row_headers:
-				if row[row_headers.index(match)] is not None:
-					value = row[row_headers.index(match)]
-					if type(value) is int:
-						value = str(value)
-					if re.search("^[\s|\t]*$", value) is None:
-						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
-						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
-					else:
-						return None
-				else:
-					return None
-			else:
-				return None
-		else:
-			print("Invalid pattern")
-			print("Aborting...")
-			sys.exit(1)
-
-	return new_string
-
-def semantify_json(triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
-	
-	triples_map_triples = {}
-	i = 0
-	with open(str(triples_map.data_source), "r") as input_file_descriptor:
-		data = json.load(input_file_descriptor)
-		for row in data:
-			subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
-			if duplicate == "yes":
-				triple_entry = {subject_value: dictionary_maker(row)}
-				if subject_value in triples_map_triples:
-					if shared_items(triples_map_triples[subject_value], row) == len(triples_map_triples[subject_value]):
-						subject = None
-					else:
-						if triples_map.subject_map.condition == "":
-
-							try:
-								subject = "<" + subject_value + ">"
-								triples_map_triples.update(triple_entry) 
-							except:
-								subject = None
-
-						else:
-						#	field, condition = condition_separetor(triples_map.subject_map.condition)
-						#	if row[field] == condition:
-							try:
-								subject = "<" + subject_value  + ">"
-								triples_map_triples.update(triple_entry) 
-							except:
-								subject = None 
-				else:
-					if triples_map.subject_map.condition == "":
-
-						try:
-							subject = "<" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
-
-					else:
-					#	field, condition = condition_separetor(triples_map.subject_map.condition)
-					#	if row[field] == condition:
-						try:
-							subject = "<" + subject_value  + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
-			else:
-				if triples_map.subject_map.condition == "":
-
-					try:
-						subject = "<" + subject_value  + ">"
-					except:
-						subject = None
-
-				else:
-				#	field, condition = condition_separetor(triples_map.subject_map.condition)
-				#	if row[field] == condition:
-					try:
-						subject = "<" + subject_value  + ">"
-					except:
-						subject = None
-
-			if triples_map.subject_map.rdf_class is not None and subject is not None:
-				rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
-				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
-
-			
-			for predicate_object_map in triples_map.predicate_object_maps_list:
-				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				elif predicate_object_map.predicate_map.mapping_type == "template":
-					if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							try:
-								predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-							except:
-								predicate = None
-							#else:
-							#	predicate = None
-					else:
-						try:
-							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-						except:
-							predicate = None
-				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-							#else:
-							#	predicate = None
-						else:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-				else:
-					predicate = None
-
-				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-					object = "<" + predicate_object_map.object_map.value + ">"
-				elif predicate_object_map.object_map.mapping_type == "template":
-					try:
-						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
-					except TypeError:
-						object = None
-				elif predicate_object_map.object_map.mapping_type == "reference":
-					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				elif predicate_object_map.object_map.mapping_type == "parent triples map":
-					for triples_map_element in triples_map_list:
-						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-							if triples_map_element.data_source != triples_map.data_source:
-								object_list = []
-								if triples_map_element.triples_map_id not in join_table:
-									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-											else:
-												data = json.load(input_file_descriptor)
-											hash_maker(data, triples_map_element, predicate_object_map.object_map)								
-									else:
-										database, query_list = translate_sql(triples_map)
-										db = connector.connect(host=host, port=port, user=user, password=password)
-										cursor = db.cursor()
-										cursor.execute("use " + database)
-										for query in query_list:
-											cursor.execute(query)
-											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-								object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
-								object = None
-							else:
-								try:
-									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-								except TypeError:
-									object = None
-							break
-						else:
-							continue
-				else:
-					object = None
-
-				if object is not None and predicate_object_map.object_map.datatype is not None:
-					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
-
-				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + ".\n"
-					if duplicate == "yes":
-						if triple not in generated_triples:
-							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							generated_triples.update({triple : number_triple})
-							i += 1
-					else:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + ".\n"
-						if duplicate == "yes":
-							if triple not in generated_triples:
-								output_file_descriptor.write(triple)
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								generated_triples.update({triple : number_triple})
-								i += 1
-						else:
-							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							i += 1
-					object_list = []
-				else:
-					continue
-		return i
-
-def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name):
+def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -658,39 +275,21 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
-	with open(str(triples_map.data_source), "r") as input_file_descriptor:
-		reader = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-		i = 0
-		for row in reader:
-			subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
-			if duplicate == "yes":
-				triple_entry = {subject_value: [dictionary_maker(row)]}	
-				if subject_value in triples_map_triples:
-					if dictionary_maker(row) in triples_map_triples[subject_value]:
-						subject = None
-					else:
-						if triples_map.subject_map.condition == "":
-
-							try:
-								subject = "<" + subject_value + ">"
-								triples_map_triples[subject_value].append(dictionary_maker(row)) 
-							except:
-								subject = None
-
-						else:
-						#	field, condition = condition_separetor(triples_map.subject_map.condition)
-						#	if row[field] == condition:
-							try:
-								subject = "<" + subject_value  + ">"
-								triples_map_triples[subject_value].append(dictionary_maker(row)) 
-							except:
-								subject = None 
+	
+	i = 0
+	for row in data:
+		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
+		if duplicate == "yes":
+			triple_entry = {subject_value: [dictionary_maker(row)]}	
+			if subject_value in triples_map_triples:
+				if dictionary_maker(row) in triples_map_triples[subject_value]:
+					subject = None
 				else:
 					if triples_map.subject_map.condition == "":
 
 						try:
 							subject = "<" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
+							triples_map_triples[subject_value].append(dictionary_maker(row)) 
 						except:
 							subject = None
 
@@ -699,14 +298,15 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 					#	if row[field] == condition:
 						try:
 							subject = "<" + subject_value  + ">"
-							triples_map_triples.update(triple_entry) 
+							triples_map_triples[subject_value].append(dictionary_maker(row)) 
 						except:
-							subject = None
+							subject = None 
 			else:
 				if triples_map.subject_map.condition == "":
 
 					try:
-						subject = "<" + subject_value  + ">"
+						subject = "<" + subject_value + ">"
+						triples_map_triples.update(triple_entry) 
 					except:
 						subject = None
 
@@ -715,100 +315,129 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 				#	if row[field] == condition:
 					try:
 						subject = "<" + subject_value  + ">"
+						triples_map_triples.update(triple_entry) 
 					except:
 						subject = None
+		else:
+			if triples_map.subject_map.condition == "":
 
-			if triples_map.subject_map.rdf_class is not None and subject is not None:
-				rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
-				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
+				try:
+					subject = "<" + subject_value  + ">"
+				except:
+					subject = None
 
-			
-			for predicate_object_map in triples_map.predicate_object_maps_list:
-				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				elif predicate_object_map.predicate_map.mapping_type == "template":
-					if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							try:
-								predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
-							except:
-								predicate = None
-							#else:
-							#	predicate = None
-					else:
+			else:
+			#	field, condition = condition_separetor(triples_map.subject_map.condition)
+			#	if row[field] == condition:
+				try:
+					subject = "<" + subject_value  + ">"
+				except:
+					subject = None
+
+		if triples_map.subject_map.rdf_class is not None and subject is not None:
+			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
+			output_file_descriptor.write(rdf_type)
+			csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+			i += 1
+
+		
+		for predicate_object_map in triples_map.predicate_object_maps_list:
+			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+				predicate = "<" + predicate_object_map.predicate_map.value + ">"
+			elif predicate_object_map.predicate_map.mapping_type == "template":
+				if predicate_object_map.predicate_map.condition != "":
+						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+						#if row[field] == condition:
 						try:
 							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
 						except:
 							predicate = None
-				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
-							#else:
-							#	predicate = None
-						else:
-							predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+						#else:
+						#	predicate = None
 				else:
-					predicate = None
-
-				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-					object = "<" + predicate_object_map.object_map.value + ">"
-				elif predicate_object_map.object_map.mapping_type == "template":
 					try:
-						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
-					except TypeError:
-						object = None
-				elif predicate_object_map.object_map.mapping_type == "reference":
-					object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				elif predicate_object_map.object_map.mapping_type == "parent triples map":
-					if subject is not None:
-						for triples_map_element in triples_map_list:
-							if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-								if triples_map_element.data_source != triples_map.data_source:
-									if triples_map_element.triples_map_id not in join_table:
-										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												else:
-													data = json.load(input_file_descriptor)
-												hash_maker(data, triples_map_element, predicate_object_map.object_map)							
-										else:
-											database, query_list = translate_sql(triples_map)
-											db = connector.connect(host=host, port=port, user=user, password=password)
-											cursor = db.cursor()
-											cursor.execute("use " + database)
-											for query in query_list:
-												cursor.execute(query)
-											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
-										object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
-									else:
-										object_list = []
-									object = None
-								else:
-									try:
-										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-									except TypeError:
-										object = None
-								break
-							else:
-								continue
+						predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate") + ">"
+					except:
+						predicate = None
+			elif predicate_object_map.predicate_map.mapping_type == "reference":
+					if predicate_object_map.predicate_map.condition != "":
+						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+						#if row[field] == condition:
+						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+						#else:
+						#	predicate = None
 					else:
-						object = None
+						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate")
+			else:
+				predicate = None
+
+			if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
+				object = "<" + predicate_object_map.object_map.value + ">"
+			elif predicate_object_map.object_map.mapping_type == "template":
+				try:
+					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+				except TypeError:
+					object = None
+			elif predicate_object_map.object_map.mapping_type == "reference":
+				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
+			elif predicate_object_map.object_map.mapping_type == "parent triples map":
+				if subject is not None:
+					for triples_map_element in triples_map_list:
+						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
+							if triples_map_element.data_source != triples_map.data_source:
+								if triples_map_element.triples_map_id not in join_table:
+									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											if str(triples_map_element.file_format).lower() == "csv":
+												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+											else:
+												data = json.load(input_file_descriptor)
+											hash_maker(data, triples_map_element, predicate_object_map.object_map)							
+									else:
+										database, query_list = translate_sql(triples_map)
+										db = connector.connect(host=host, port=port, user=user, password=password)
+										cursor = db.cursor()
+										cursor.execute("use " + database)
+										for query in query_list:
+											cursor.execute(query)
+										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+								if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
+									object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+								else:
+									object_list = []
+								object = None
+							else:
+								try:
+									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+								except TypeError:
+									object = None
+							break
+						else:
+							continue
 				else:
 					object = None
+			else:
+				object = None
 
-				
-				if object is not None and predicate_object_map.object_map.datatype is not None:
-					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+			
+			if object is not None and predicate_object_map.object_map.datatype is not None:
+				object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
-				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + ".\n"
+			if predicate is not None and object is not None and subject is not None:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if duplicate == "yes":
+					if triple not in generated_triples:
+						output_file_descriptor.write(triple)
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						generated_triples.update({triple : number_triple})
+						i += 1
+				else:
+					output_file_descriptor.write(triple)
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					i += 1
+			elif predicate is not None and subject is not None and object_list:
+				for obj in object_list:
+					triple = subject + " " + predicate + " " + obj + ".\n"
 					if duplicate == "yes":
 						if triple not in generated_triples:
 							output_file_descriptor.write(triple)
@@ -819,23 +448,10 @@ def semantify_csv(triples_map, triples_map_list, delimiter, output_file_descript
 						output_file_descriptor.write(triple)
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						triple = subject + " " + predicate + " " + obj + ".\n"
-						if duplicate == "yes":
-							if triple not in generated_triples:
-								output_file_descriptor.write(triple)
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								generated_triples.update({triple : number_triple})
-								i += 1
-						else:
-							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							i += 1
-					object_list = []
-				else:
-					continue
-		return i
+				object_list = []
+			else:
+				continue
+	return i
 
 def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
 
@@ -1121,9 +737,13 @@ def semantify(config_path):
 						for triples_map in triples_map_list:
 							global number_triple
 							if str(triples_map.file_format).lower() == "csv":
-								number_triple += executor.submit(semantify_csv, triples_map, triples_map_list, ",", output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
+								with open(str(triples_map.data_source), "r") as input_file_descriptor:
+									data = csv.DictReader(input_file_descriptor, delimiter=',')
+									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 							elif triples_map.file_format == "JSONPath":
-								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, extract_name(triples_map.data_source)).result()
+								with open(str(triples_map.data_source), "r") as input_file_descriptor:
+									data = json.load(input_file_descriptor)
+									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).results()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								global user, password, port, host
 								user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
@@ -1171,9 +791,13 @@ def semantify(config_path):
 						for triples_map in triples_map_list:
 							#global number_triple
 							if str(triples_map.file_format).lower() == "csv" and config[dataset_i]["format"].lower() == "csv":
-								number_triple += executor.submit(semantify_csv, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"]).results()
+								with open(str(triples_map.data_source), "r") as input_file_descriptor:
+									data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).results()
 							elif triples_map.file_format == "JSONPath":
-								number_triple += executor.submit(semantify_json, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).results()
+								with open(str(triples_map.data_source), "r") as input_file_descriptor:
+									data = json.load(input_file_descriptor)
+									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).results()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								database, query_list = translate_sql(triples_map)
 								#global user, password, port, host

@@ -1,0 +1,216 @@
+import os
+import re
+
+def string_substitution(string, pattern, row, term):
+
+	"""
+	(Private function, not accessible from outside this package)
+
+	Takes a string and a pattern, matches the pattern against the string and perform the substitution
+	in the string from the respective value in the row.
+
+	Parameters
+	----------
+	string : string
+		String to be matched
+	triples_map_list : string
+		Pattern containing a regular expression to match
+	row : dictionary
+		Dictionary with CSV headers as keys and fields of the row as values
+
+	Returns
+	-------
+	A string with the respective substitution if the element to be subtitued is not invalid
+	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
+	returns None
+	"""
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			if match in row.keys():
+				if row[match] is not None:
+					if re.search("^[\s|\t]*$", row[match]) is None:
+						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+
+					else:
+						return None
+					# To-do:
+					# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
+					#if term == "subject":
+					#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
+					#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+					#else:
+					#	return None
+			else:
+				return None
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			if match in row.keys():
+				if row[match] is not None:
+					if re.search("^[\s|\t]*$", row[match]) is None:
+						new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+					#	return None
+			else:
+				return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
+
+def string_substitution_array(string, pattern, row, row_headers, term):
+
+	"""
+	(Private function, not accessible from outside this package)
+
+	Takes a string and a pattern, matches the pattern against the string and perform the substitution
+	in the string from the respective value in the row.
+
+	Parameters
+	----------
+	string : string
+		String to be matched
+	triples_map_list : string
+		Pattern containing a regular expression to match
+	row : dictionary
+		Dictionary with CSV headers as keys and fields of the row as values
+
+	Returns
+	-------
+	A string with the respective substitution if the element to be subtitued is not invalid
+	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
+	returns None
+	"""
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			if match in row_headers:
+				if row[row_headers.index(match)] is not None:
+					value = row[row_headers.index(match)]
+					if type(value) is int:
+						value = str(value)
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+					else:
+						return None
+			else:
+				return None
+				# To-do:
+				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
+				#if term == "subject":
+				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
+				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+				#else:
+				#	return None
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			if match in row_headers:
+				if row[row_headers.index(match)] is not None:
+					value = row[row_headers.index(match)]
+					if type(value) is int:
+						value = str(value)
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+				else:
+					return None
+			else:
+				return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
+
+
+
+
+def shared_items(dic1, dic2):
+	i = 0
+	for key in dic1.keys():
+		if dic2[key] is not None:
+			if dic1[key] == dic2[key]:
+				i += 1
+	return i
+
+
+def dictionary_maker_array(row, row_headers):
+	dic = {}
+	for key in row_headers:
+		dic[key] = row[row_headers.index(key)]
+	return dic
+
+
+def dictionary_maker(row):
+	dic = {}
+	for key, value in row.items():
+		dic[key] = value
+	return dic
+
+def extract_name(string):
+	name = ""
+	i = len(string)
+	while 0 < i:
+		name = string[i-1] + name
+		i -= 1
+		if string[i-1] == "/":
+			break
+	name = name.split(".")[0]
+	return name
+
+def count_characters(string):
+	count = 0
+	for s in string:
+		if s == "{":
+			count += 1
+	return count
+
+def clean_URL_suffix(URL_suffix):
+    cleaned_URL=""
+    if "http" in URL_suffix:
+    	return URL_suffix
+
+    for c in URL_suffix:
+        if c.isalpha() or c.isnumeric() or c =='_' or c=='-' or c == '(' or c == ')':
+            cleaned_URL= cleaned_URL+c
+        if c == "/" or c == "\\":
+            cleaned_URL = cleaned_URL+"-"
+
+    return cleaned_URL
+
+def string_separetion(string):
+	if ("{" in string) and ("[" in string):
+		prefix = string.split("{")[0]
+		condition = string.split("{")[1].split("}")[0]
+		postfix = string.split("{")[1].split("}")[1]
+		field = prefix + "*" + postfix
+	elif "[" in string:
+		return string, string
+	else:
+		return string, ""
+	return string, condition
+
+def condition_separetor(string):
+	condition_field = string.split("[")
+	field = condition_field[1][:len(condition_field[1])-1].split("=")[0]
+	value = condition_field[1][:len(condition_field[1])-1].split("=")[1]
+	return field, value
