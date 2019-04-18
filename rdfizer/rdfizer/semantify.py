@@ -743,7 +743,7 @@ def semantify(config_path):
 							elif triples_map.file_format == "JSONPath":
 								with open(str(triples_map.data_source), "r") as input_file_descriptor:
 									data = json.load(input_file_descriptor)
-									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).results()
+									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 							elif triples_map.file_format == "SQL" or triples_map.file_format == "TSV":
 								global user, password, port, host
 								user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
