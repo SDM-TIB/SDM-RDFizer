@@ -33,8 +33,7 @@ name: 1-csv
 
 [dataset1]
 name: 1-csv
-mapping: ${default:main_directory}/gtfs-csv.rml.ttl
-remove_duplicate_triples_in_memory: no
+mapping: ${default:main_directory}/gtfs-csv.rml.ttl 
 ```
 
 ## Running the RDFizer directly

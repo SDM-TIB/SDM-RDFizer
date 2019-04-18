@@ -823,12 +823,7 @@ def semantify(config_path):
 
 		print("Successfully semantified {}.{}\n".format(config[dataset_i]["name"]))
 
-		if config[dataset_i]["remove_duplicate_triples_in_memory"].lower() == "yes":
-			output_file_name = output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"]
-			cmd = 'sort -u {} > {}'.format(output_file_name + ".nt", output_file + "-min.nt")
-			subprocess.call(cmd, shell=True)
-
-	
+		
 
 def main():
 
