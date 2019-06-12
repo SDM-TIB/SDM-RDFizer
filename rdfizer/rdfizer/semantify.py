@@ -705,7 +705,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				predicate = None
 
 			if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-				object = "<" + predicate_object_map.object_map.value + ">"
+				object = "\"" + predicate_object_map.object_map.value + "\""
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
 					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"

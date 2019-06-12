@@ -1,6 +1,51 @@
 import os
 import re
 
+def string_substitution_xml(string, pattern, row, term):
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			match = match.split("@")[1]
+			print(match)
+			if row[match] is not None:
+				if re.search("^[\s|\t]*$", row[match]) is None:
+					new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+
+				else:
+					return None
+
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			print(match)
+			if "@" in match:
+				match = match.split("@")[1]
+				if row.attrib[match] is not None:
+					if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+						new_string = new_string[:start + offset_current_substitution] + "\"" + row.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
+
+					else:
+						return None
+			else:
+				if row.text is not None:
+					if re.search("^[\s|\t]*$", row.text) is None:
+						new_string = new_string[:start] + row.text.strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
+
 def string_substitution(string, pattern, row, term):
 
 	"""
@@ -159,6 +204,18 @@ def dictionary_maker_array(row, row_headers):
 		dic[key] = row[row_headers.index(key)]
 	return dic
 
+
+def dictionary_maker_xml(row):
+	dic = {}
+	for child in row:
+		for c in child:
+			for attr in c:
+				if attr in dic:
+					dic[attr].append(child.attrib[attr])
+				else:	
+					dic[attr] = [child.attrib[attr]]
+				i += 0
+	return dic
 
 def dictionary_maker(row):
 	dic = {}
