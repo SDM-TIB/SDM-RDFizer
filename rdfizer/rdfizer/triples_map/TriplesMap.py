@@ -2,7 +2,7 @@ import re
 
 class TriplesMap:
 
-	def __init__(self, triples_map_id, data_source, subject_map, predicate_object_maps_list, ref_form=None, iterator=None):
+	def __init__(self, triples_map_id, data_source, subject_map, predicate_object_maps_list, ref_form=None, iterator=None, tablename=None, query=None):
 
 		"""
 		Constructor of a TriplesMap object
@@ -26,8 +26,14 @@ class TriplesMap:
 		self.triples_map_name = re.compile("((.*?))$").search(str(self.triples_map_id)).group(0)
 		self.data_source = data_source[7:] if data_source[:7] == "file://" else data_source
 		self.reference_formulation = ref_form
-		self.file_format = re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)).group(0)[1:]
+		print(ref_form)
+		if self.reference_formulation != "None":
+			self.file_format = re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)).group(0)[1:]
+		else:
+			self.file_format = None
 		self.iterator = iterator
+		self.tablename = tablename
+		self.query = query
 
 		if subject_map is not None:
 			self.subject_map = subject_map

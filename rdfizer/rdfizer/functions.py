@@ -1,5 +1,6 @@
 import os
 import re
+import datetime
 
 def string_substitution_xml(string, pattern, row, term):
 
@@ -79,6 +80,8 @@ def string_substitution(string, pattern, row, term):
 			match = reference_match.group(1).split("[")[0]
 			if match in row.keys():
 				if row[match] is not None:
+					if (type(row[match]).__name__) == "int":
+						row[match] = str(row[match]) 
 					if re.search("^[\s|\t]*$", row[match]) is None:
 						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
@@ -97,6 +100,8 @@ def string_substitution(string, pattern, row, term):
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if match in row.keys():
+				if (type(row[match]).__name__) == "int":
+						row[match] = str(row[match])
 				if row[match] is not None:
 					if re.search("^[\s|\t]*$", row[match]) is None:
 						new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
@@ -147,7 +152,8 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					if type(value) is int:
+					print(value)
+					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
@@ -168,8 +174,13 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					if type(value) is int:
+					if type(value) is int or ((type(value).__name__) == "float"):
 						value = str(value)
+					elif type(value).__name__ == "date":
+						value = value.strftime("%Y-%m-%d")
+					elif type(value).__name__ == "datetime":
+						value = value.strftime("%Y-%m-%d T%H:%M:%S")
+
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
 						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
@@ -187,7 +198,88 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 	return new_string
 
 
+def string_substitution_postgres(string, pattern, row, row_headers, term):
 
+	"""
+	(Private function, not accessible from outside this package)
+
+	Takes a string and a pattern, matches the pattern against the string and perform the substitution
+	in the string from the respective value in the row.
+
+	Parameters
+	----------
+	string : string
+		String to be matched
+	triples_map_list : string
+		Pattern containing a regular expression to match
+	row : dictionary
+		Dictionary with CSV headers as keys and fields of the row as values
+
+	Returns
+	-------
+	A string with the respective substitution if the element to be subtitued is not invalid
+	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
+	returns None
+	"""
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			match = match.lower()
+			if match in row_headers:
+				if row[row_headers.index(match)] != None:
+					value = row[row_headers.index(match)]
+					if (type(value) is int) or ((type(value).__name__) == "float"):
+						value = str(value)
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+					else:
+						return None
+				else:
+					return None
+			else:
+				return None
+				# To-do:
+				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
+				#if term == "subject":
+				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
+				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+				#else:
+				#	return None
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			match = match.lower()
+			if match in row_headers:
+				if row[row_headers.index(match)] is not None:
+					value = row[row_headers.index(match)]
+					print(value)
+					if type(value) is int or ((type(value).__name__) == "float"):
+						value = str(value)
+					elif type(value).__name__ == "date":
+						value = value.strftime("%Y-%m-%d")
+					elif type(value).__name__ == "datetime":
+						value = value.strftime("%Y-%m-%d T%H:%M:%S")
+
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+				else:
+					return None
+			else:
+				return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
 
 def shared_items(dic1, dic2):
 	i = 0
