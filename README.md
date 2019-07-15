@@ -57,6 +57,7 @@ all_in_one_file: no
 remove_duplicate: yes
 name: RMLTC0011b-MySql
 enrichment: yes
+dbType: mysql
 
 
 [dataset1]
