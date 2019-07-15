@@ -1,5 +1,13 @@
 # RDFizer
 
+##Version 3.0
+
+##Test Date: 12/07/2019
+
+##Contact
+Enrique Iglesias
+e-mail: eiglesias@gmail.com
+
 ##Create the Docker Container
 
 ```
