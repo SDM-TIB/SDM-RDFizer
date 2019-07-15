@@ -1,21 +1,21 @@
 # RDFizer
 
-##Version 
+## Version 
 ```
 3.0
 ```
-##Test Date
+## Test Date
 ```
 12/07/2019
 ```
 
-##Contact
+## Contact
 ```
 Enrique Iglesias
 e-mail: eiglesias@gmail.com
 ```
 
-##Create the Docker Container
+## Create the Docker Container
 
 ```
 docker build -t rdfizer .
