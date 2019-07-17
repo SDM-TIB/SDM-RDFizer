@@ -12,7 +12,6 @@ def string_substitution_xml(string, pattern, row, term):
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
 			match = match.split("@")[1]
-			print(match)
 			if row[match] is not None:
 				if re.search("^[\s|\t]*$", row[match]) is None:
 					new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
@@ -23,7 +22,6 @@ def string_substitution_xml(string, pattern, row, term):
 
 		elif pattern == ".+":
 			match = reference_match.group(0)
-			print(match)
 			if "@" in match:
 				match = match.split("@")[1]
 				if row.attrib[match] is not None:
@@ -152,7 +150,6 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					print(value)
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
@@ -257,7 +254,6 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					print(value)
 					if type(value) is int or ((type(value).__name__) == "float"):
 						value = str(value)
 					elif type(value).__name__ == "date":

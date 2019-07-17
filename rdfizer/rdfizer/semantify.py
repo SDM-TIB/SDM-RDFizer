@@ -852,7 +852,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 	object_list = []
 	if "{" in triples_map.subject_map.value:
 		subject_value = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject")
-		print(subject_value)
 	else:
 		subject_value = "_:" + string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers, "subject")[1:-1]
 	i = 0
@@ -916,7 +915,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					subject = subject_value
 			except:
 				subject = None
-	print(subject)
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None and (subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)not in g_triples):
 		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
@@ -982,8 +980,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									data = cursor
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 						jt = join_table[triples_map_element.triples_map_id]
-						print(type(list(jt.keys())[0]))
-						print(type(row[row_headers.index(predicate_object_map.object_map.child)]).__name__)
 						if row[row_headers.index(predicate_object_map.object_map.child)] is not None:
 							object_list = jt[row[row_headers.index(predicate_object_map.object_map.child)]]
 						object = None
@@ -991,10 +987,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						try:
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
-							print(port)
 							db = connector.connect(host = "localhost", port = 3306, user = "root", password = "06012009mj")
 							cursor = db.cursor()
-							print(database)
 							if database == None:
 								cursor.execute("use " + database)
 							else:
@@ -1004,7 +998,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									query_1 = q.split("FROM")
 									query_2 = query.split("SELECT")[1].split("FROM")[0]
 									query_new = query_1[0] + " , " + query_2 + " FROM " + query_1[1]
-									print(query_new)
 									cursor.execute(query_new)
 									r_h=[x[0] for x in cursor.description]
 									for r in cursor:
@@ -1084,7 +1077,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 	object_list = []
 	if "{" in triples_map.subject_map.value:
 		subject_value = string_substitution_postgres(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject")
-		print(subject_value)
 	else:
 		subject_value = "_:" + string_substitution_postgres(triples_map.subject_map.value, ".+", row, row_headers, "subject")[1:-1]
 	i = 0
@@ -1148,7 +1140,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					subject = subject_value
 			except:
 				subject = None
-	print(subject)
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None and (subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)not in g_triples):
 		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
@@ -1188,7 +1179,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_postgres(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			print(object)
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
@@ -1211,8 +1201,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									data = cursor
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 						jt = join_table[triples_map_element.triples_map_id]
-						print(type(list(jt.keys())[0]))
-						print(type(row[row_headers.index(predicate_object_map.object_map.child)]).__name__)
 						if row[row_headers.index(predicate_object_map.object_map.child)] is not None:
 							object_list = jt[row[row_headers.index(predicate_object_map.object_map.child)]]
 						object = None
@@ -1227,7 +1215,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									query_1 = q.split("FROM")
 									query_2 = query.split("SELECT")[1].split("FROM")[0]
 									query_new = query_1[0] + ", " + query_2 + " FROM " + query_1[1]
-									print(query_new)
 									cursor.execute(query_new)
 									r_h=[x[0] for x in cursor.description]
 									for r in cursor:
@@ -1483,7 +1470,6 @@ def semantify(config_path):
 					
 					with open(output_file, "w") as output_file_descriptor:
 						for triples_map in triples_map_list:
-							print(triples_map)
 							global number_triple
 							if enrichment == "yes":
 								if str(triples_map.file_format).lower() == "csv" and triples_map.query == "None":
@@ -1525,7 +1511,6 @@ def semantify(config_path):
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												print(row)
 												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 									else:
 										cursor.execute(triples_map.query)
