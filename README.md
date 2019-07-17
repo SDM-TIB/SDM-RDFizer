@@ -84,7 +84,7 @@ name: RMLTC0011b-MySQL
 mapping: ${default:main_directory}/RMLTC0011b-MySQL/mapping.ttl
 ```
 
-### Example of a Config file for Postgres
+### Example of a Config file for PostgreSQL
 
 ```
 [default]
