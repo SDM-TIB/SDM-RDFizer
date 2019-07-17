@@ -19,7 +19,7 @@ Enrique Iglesias (current version)
 e-mail: s6enigle@uni-bonn.de 
 
 Guillermo Betancourt (version 0.1)
-
+e-mail: guillermojbetancourt@gmail.com
 Under the supervision of 
 
 David Chaves 
