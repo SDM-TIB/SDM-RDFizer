@@ -1,21 +1,21 @@
 # RDFizer
+RML Engine for the generation of RDF Knowledge Graphs from Heterogeneous Datasources (CSV, JSON, RDB, XML)
 
-## Version 
+## Authors
 ```
-3.0
-```
-## Test Date
-```
-12/07/2019
-```
-
-## Contact
-```
-Enrique Iglesias
-e-mail: eiglesias@gmail.com
+Enrique Iglesias (University of Bonn)
+Kemele M. Endris (L3S Institute & TIB)
+David Chaves Fraga (OEG-UPM)
+Guillermo Betancourt (TIB)
+Maria-Esther Vidal (L3S Institute & TIB)
 ```
 
-## Create the Docker Container
+## RML-Test Cases
+See the results of the SDM-RDFizer over the RML test-cases at the (RML Implementation Report)[http://rml.io/implementation-report/]
+
+## How to run it
+
+### Create the Docker Container
 
 ```
 docker build -t rdfizer .
@@ -33,14 +33,14 @@ Send a POST request with the configuration file to RDFizer the file
 localhost:4000/graph_creation/path/to/config/file
 ```
 
-## Running the RDFizer directly
+### Running the RDFizer directly
 
 ```
 python3 rdfizer/run_rdfizer.py /path/to/config/file
 ```
 
 
-## Example of a Config file
+## Example of a config file for CSV
 
 ```
 [default]
@@ -59,7 +59,7 @@ name: 1-csv
 mapping: ${default:main_directory}/gtfs-csv.rml.ttl 
 ```
 
-## Example of a Config file
+## Example of a Config file for MySQL
 
 ```
 [default]
@@ -108,3 +108,9 @@ db:
 name: RMLTC0020b-PostgreSQL
 mapping: ${default:main_directory}/RMLTC0020b-PostgreSQL/mapping.ttl 
 ```
+
+
+## Contact
+```
+Enrique Iglesias
+e-mail: eiglesias@gmail.com
