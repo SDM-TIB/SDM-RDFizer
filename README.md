@@ -2,16 +2,15 @@
 RML Engine for the generation of RDF Knowledge Graphs from Heterogeneous Datasources (CSV, JSON, RDB, XML)
 
 ## Authors
-```
 Enrique Iglesias (University of Bonn)
 Kemele M. Endris (L3S Institute & TIB)
 David Chaves Fraga (OEG-UPM)
 Guillermo Betancourt (TIB)
 Maria-Esther Vidal (L3S Institute & TIB)
-```
+
 
 ## RML-Test Cases
-See the results of the SDM-RDFizer over the RML test-cases at the (RML Implementation Report)[http://rml.io/implementation-report/]
+See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/)
 
 ## How to run it
 
@@ -39,8 +38,9 @@ localhost:4000/graph_creation/path/to/config/file
 python3 rdfizer/run_rdfizer.py /path/to/config/file
 ```
 
+## How to configurate the SDM-RDFizer
 
-## Example of a config file for CSV
+### Example of a config file for CSV
 
 ```
 [default]
@@ -59,7 +59,7 @@ name: 1-csv
 mapping: ${default:main_directory}/gtfs-csv.rml.ttl 
 ```
 
-## Example of a Config file for MySQL
+### Example of a Config file for MySQL
 
 ```
 [default]
@@ -84,7 +84,7 @@ name: RMLTC0011b-MySQL
 mapping: ${default:main_directory}/RMLTC0011b-MySQL/mapping.ttl
 ```
 
-## Example of a Config file for Postgres
+### Example of a Config file for Postgres
 
 ```
 [default]
