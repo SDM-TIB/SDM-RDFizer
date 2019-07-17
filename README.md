@@ -2,11 +2,11 @@
 RML Engine for the generation of RDF Knowledge Graphs from Heterogeneous Datasources (CSV, JSON, RDB, XML)
 
 ## Authors
-Enrique Iglesias (University of Bonn)
-Kemele M. Endris (L3S Institute & TIB)
-David Chaves Fraga (OEG-UPM)
-Guillermo Betancourt (TIB)
-Maria-Esther Vidal (L3S Institute & TIB)
+- Enrique Iglesias (University of Bonn)
+- Kemele M. Endris (L3S Institute & TIB)
+- David Chaves Fraga (OEG-UPM)
+- Guillermo Betancourt (TIB)
+- Maria-Esther Vidal (L3S Institute & TIB)
 
 
 ## RML-Test Cases
