@@ -68,7 +68,7 @@ class TriplesMap:
 
 class SubjectMap:
 	
-	def __init__(self, subject_value, condition,rdf_class=None):
+	def __init__(self, subject_value, condition, subject_mapping_type, rdf_class=None, term_type=None, graph=None):
 
 		"""
 		Constructor of a SubjectMap object
@@ -85,6 +85,9 @@ class SubjectMap:
 		self.value = subject_value
 		self.condition = condition 
 		self.rdf_class = rdf_class
+		self.term_type = term_type
+		self.subject_mapping_type = subject_mapping_type
+		self.graph = graph
 
 class PredicateObjectMap:
 	
@@ -128,7 +131,7 @@ class PredicateMap:
 
 class ObjectMap:
 
-	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent):
+	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language):
 
 		"""
 		Constructor of ObjectMap object
@@ -147,3 +150,5 @@ class ObjectMap:
 		self.mapping_type = object_mapping_type
 		self.child = object_child if object_child != "None" else None
 		self.parent = object_parent if object_parent != "None" else None
+		self.term = term if term != "None" else None
+		self.language = language if language != "None" else None
