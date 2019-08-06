@@ -12,6 +12,7 @@ def string_substitution_xml(string, pattern, row, term):
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
 			match = match.split("@")[1]
+			print(match)
 			if row[match] is not None:
 				if re.search("^[\s|\t]*$", row[match]) is None:
 					new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
@@ -22,6 +23,7 @@ def string_substitution_xml(string, pattern, row, term):
 
 		elif pattern == ".+":
 			match = reference_match.group(0)
+			print(match)
 			if "@" in match:
 				match = match.split("@")[1]
 				if row.attrib[match] is not None:
@@ -76,6 +78,9 @@ def string_substitution(string, pattern, row, term):
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
+			if "\\" in match:
+				temp = match.split("{")
+				match = temp[len(temp)-1]
 			if match in row.keys():
 				if row[match] is not None:
 					if (type(row[match]).__name__) == "int":
@@ -83,6 +88,14 @@ def string_substitution(string, pattern, row, term):
 					if re.search("^[\s|\t]*$", row[match]) is None:
 						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+						if "\\" in new_string:
+							new_string = new_string.replace("\\", "")
+							count = new_string.count("}")
+							i = 0
+							while i < count:
+								new_string = "{" + new_string
+								i += 1
+							new_string = new_string.replace(" ", "")
 
 					else:
 						return None
@@ -147,14 +160,27 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
+			if "\\" in match:
+				temp = match.split("{")
+				match = temp[len(temp)-1]
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
+					print(value)
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+						if "\\" in new_string:
+							new_string = new_string.replace("\\", "")
+							count = new_string.count("}")
+							i = 0
+							while i < count:
+								new_string = "{" + new_string
+								i += 1
+							new_string = new_string.replace(" ", "")
+
 					else:
 						return None
 			else:
@@ -254,6 +280,7 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
+					print(value)
 					if type(value) is int or ((type(value).__name__) == "float"):
 						value = str(value)
 					elif type(value).__name__ == "date":
