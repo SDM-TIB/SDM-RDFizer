@@ -1,9 +1,9 @@
 # SDM-RDFizer
 This project presents the SDM-RDFizer, an interpreter of mapping rules that allow the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the RDF Mapping Language (RML) by Dimou et al. The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from Heterogeneous data sources (CSV, JSON, RDB, XML). The results of the execution of the SDM-RDFizer has been reported in the following research reports:
 
-- Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. Under evaluation.
+- Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. Accepted at the 27th International Conference on Cooperative Information Systems (CoopIS 2019). 
 
-- David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. ODBASE 2019.
+- David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. Accepted at the 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
 
 The SDM-RDFizer is used in the creation of the knowledge graphs of the EU H2020 projects iASiS (http://project-iasis.eu/) and BigMedilytics - lung cancer pilot (https://www.bigmedilytics.eu/)
 
