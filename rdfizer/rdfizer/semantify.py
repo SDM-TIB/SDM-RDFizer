@@ -871,10 +871,20 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										object_list = []
 								object = None
 							else:
-								try:
-									object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
-								except TypeError:
+								if predicate_object_map.object_map.parent is not None:
+									if triples_map_element.triples_map_id not in join_table:
+										hash_maker(data, triples_map_element, predicate_object_map.object_map)
+									if 	predicate_object_map.object_map.child in row.keys():
+										if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
+											object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
+										else:
+											object_list = []
 									object = None
+								else:
+									try:
+										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"
+									except TypeError:
+										object = None
 							break
 						else:
 							continue
