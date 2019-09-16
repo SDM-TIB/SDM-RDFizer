@@ -895,7 +895,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 
 			
 			if object is not None and predicate_object_map.object_map.datatype is not None:
-				object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
 				triple = subject + " " + predicate + " " + object + ".\n"
