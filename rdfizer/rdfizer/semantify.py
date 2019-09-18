@@ -873,7 +873,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							else:
 								if predicate_object_map.object_map.parent is not None:
 									if triples_map_element.triples_map_id not in join_table:
-										hash_maker(data, triples_map_element, predicate_object_map.object_map)
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											if str(triples_map_element.file_format).lower() == "csv":
+												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+												hash_maker(data, triples_map_element, predicate_object_map.object_map)
+											else:
+												data = json.load(input_file_descriptor)
+												hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 									if 	predicate_object_map.object_map.child in row.keys():
 										if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id]:
 											object_list = join_table[triples_map_element.triples_map_id][row[predicate_object_map.object_map.child]]
