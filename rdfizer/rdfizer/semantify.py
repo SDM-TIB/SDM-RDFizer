@@ -829,7 +829,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "\"" + predicate_object_map.object_map.value + "\""
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
-					if (predicate_object_map.object_map.term is None) or (predicate_object_map.object_map.term is "IRI"):
+					if (predicate_object_map.object_map.term is None) or (triples_map.subject_map.term_type is "IRI"):
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
@@ -1277,7 +1277,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				object = "\"" + predicate_object_map.object_map.value + "\""
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
-				if (predicate_object_map.object_map.term is None) or (predicate_object_map.object_map.term is "IRI"):
+				if (predicate_object_map.object_map.term is None) or (triples_map.subject_map.term_type is "IRI"):
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + "\""
@@ -1727,7 +1727,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = "\"" + predicate_object_map.object_map.value + "\""
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
-				if (predicate_object_map.object_map.term is None) or (predicate_object_map.object_map.term is "IRI"):
+				if (predicate_object_map.object_map.term is None) or (triples_map.subject_map.term_type is "IRI"):
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + "\""
