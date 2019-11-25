@@ -8,10 +8,10 @@ app = Flask(__name__)
 def index():
     return "Welcome to the Rdf Graph Service"
 
-@app.route('/graph_creation/<path:config_file>', methods=['POST'])
+@app.route('/graph_creation/<path:config_file>', methods=['GET','POST'])
 def rdfgraph(config_file):
-	os.system("python3 rdfizer/rdfizer.py -m /" + config_file)
-	return "New RDF Graph has been created"
+	os.system("python3 rdfizer/run_rdfizer.py " + config_file)
+	return "The file has been semantified" 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=4000)

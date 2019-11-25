@@ -37,6 +37,9 @@ The SDM-RDFizer can run by building a docker container or by installing the RDFf
 
 ## Accessing the SDM-RDFizer via a Docker Container
 
+Building docker container.
+Note: All documents in the same folder of the Dockerfile will be copied to the container.
+
 ```
 docker build -t rdfizer .
 ```
@@ -44,13 +47,45 @@ docker build -t rdfizer .
 Run the Application
 
 ```
-docker run -p 4000:80 rdfizer
+docker run -p 4000:4000 rdfizer
 ```
 
 Send a POST request with the configuration file to RDFizer the file
 
 ```
 localhost:4000/graph_creation/path/to/config/file
+```
+
+Pull document from container
+
+```
+docker cp CONTAINER_ID:/app/path/to/output .
+```
+
+## Executing SDM-RDFizer Docker Container DEMO
+
+Note: All documents in the same folder of the Dockerfile will be copied to the container.
+
+```
+docker build -t rdfizer .
+```
+
+Run the Application
+
+```
+docker run -p 4000:4000 rdfizer
+```
+
+Send a POST request with the configuration file to RDFizer the file
+
+```
+localhost:4000/graph_creation/rdfizer/configfile_docker.ini
+```
+
+Pull document from container
+
+```
+docker cp CONTAINER_ID:/app/path/to/output .
 ```
 
 ## Accessing the SDM-RDFizer locally
