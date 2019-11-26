@@ -46,14 +46,16 @@ docker build -t rdfizer .
 
 Run the Application
 
+To run the application, you need to map your data volume to `/data` folder of the container as follows:
+
 ```
-docker run -p 4000:4000 rdfizer
+docker run -d -p 4000:4000 -v /path/to/yourdata:/data rdfizer
 ```
 
 Send a POST request with the configuration file to RDFizer the file
 
 ```
-localhost:4000/graph_creation/path/to/config/file
+localhost:4000/graph_creation/data/path/to/config/file/inyourdata
 ```
 
 Pull document from container
@@ -73,19 +75,19 @@ docker build -t rdfizer .
 Run the Application
 
 ```
-docker run -p 4000:4000 rdfizer
+docker run -d -p 4000:4000 -v /path/../SDM-RDFizer/example:/data rdfizer
 ```
 
 Send a POST request with the configuration file to RDFizer the file
 
 ```
-localhost:4000/graph_creation/rdfizer/configfile_docker.ini
+curl http://localhost:4000/graph_creation/data/config.ini
 ```
 
-Pull document from container
+Output results can be found in example folder of SDM-RDFizer
 
 ```
-docker cp CONTAINER_ID:/app/path/to/output .
+/path/../SDM-RDFizer/example/output
 ```
 
 ## Accessing the SDM-RDFizer locally
