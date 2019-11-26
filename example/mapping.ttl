@@ -1,0 +1,43 @@
+
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ex: <http://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix iasis: <http://project-iasis.eu/vocab/> .
+@base <http://project-iasis.eu/> .
+
+<TripleMap1>
+  a rr:TriplesMap;
+    
+  rml:logicalSource [
+    rml:source "/data/files/sampleSource1.csv";
+    rml:referenceFormulation ql:CSV
+  ];
+  rr:subjectMap [
+    rr:template "http://project-iasis.eu/BioType/{biotype}";
+    rr:class iasis:BioType
+  ]; 
+  rr:predicateObjectMap [ 
+    rr:predicate iasis:isRelatedTo; 
+    rr:objectMap [
+      rr:parentTriplesMap <TripleMap2>;
+      rr:joinCondition [
+        rr:child "enst";
+        rr:parent "Transcript";
+      ];
+    ];
+  ].
+
+<TripleMap2>
+  a rr:TriplesMap;
+    
+  rml:logicalSource [
+    rml:source "/data/files/sampleSource2.csv";
+    rml:referenceFormulation ql:CSV
+  ];
+  rr:subjectMap [
+    rr:template "http://project-iasis.eu/Chromosome/{chr}";
+    rr:class iasis:chr
+  ]. 
