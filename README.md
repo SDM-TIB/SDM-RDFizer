@@ -55,7 +55,7 @@ docker run -d -p 4000:4000 -v /path/to/yourdata:/data rdfizer
 Send a POST request with the configuration file to RDFizer the file
 
 ```
-localhost:4000/graph_creation/data/path/to/config/file/inyourdata
+curl localhost:4000/graph_creation/data/path/to/config/file/inyourdata
 ```
 
 Pull document from container
@@ -93,7 +93,7 @@ Output results can be found in example folder of SDM-RDFizer
 ## Accessing the SDM-RDFizer locally
 
 ```
-python3 rdfizer/run_rdfizer.py /path/to/config/confFILE
+python3 rdfizer/run_rdfizer.py /path/to/config/FILE
 ```
 
 # Parameters to Run the SDM-RDFizer
