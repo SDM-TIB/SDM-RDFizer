@@ -5,6 +5,8 @@ This project presents the SDM-RDFizer, an interpreter of mapping rules that allo
 
 - David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. Accepted at the 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
 
+- David Chaves-Fraga, Antón Adolfo, Jhon Toledo, Oscar Corcho. ONETT: Systematic Knowledge Graph Generation for National Access Points. Accepted at 1st International Workshop on Semantics for Transport co-located with SEMANTiCS 2019
+
 The SDM-RDFizer is used in the creation of the knowledge graphs of the EU H2020 projects iASiS (http://project-iasis.eu/) and BigMedilytics - lung cancer pilot (https://www.bigmedilytics.eu/)
 
 
