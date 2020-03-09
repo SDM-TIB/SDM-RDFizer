@@ -70,7 +70,6 @@ def hash_maker(parent_data, parent_subject, child_object):
 				else:	
 					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
-	print(join_table)
 
 def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 	hash_table = {}
@@ -666,7 +665,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	
 	i = 0
 	for row in data:
-		print(triples_map.subject_map.subject_mapping_type)
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(row)]}	
