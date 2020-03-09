@@ -53,20 +53,29 @@ def hash_maker(parent_data, parent_subject, child_object):
 			if row[child_object.parent] in hash_table:
 				if duplicate == "yes":
 					if parent_subject.subject_map.subject_mapping_type == "reference":
-						if string_substitution(parent_subject.subject_map.value, ".+", row, "object") not in hash_table[row[child_object.parent]]:
-							hash_table[row[child_object.parent]].append(string_substitution(parent_subject.subject_map.value, ".+", row, "object"))
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if "http" in value:
+							value = "<" + value[1:-1] + ">"
+						if value not in hash_table[row[child_object.parent]]:
+							hash_table[row[child_object.parent]].append(value)
 					else:
 						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
 							hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
-						hash_table[row[child_object.parent]].append(string_substitution(parent_subject.subject_map.value, ".+", row, "object"))
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if "http" in value:
+							value = "<" + value[1:-1] + ">"
+						hash_table[row[child_object.parent]].append(value)
 					else:
 						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
-					hash_table.update({row[child_object.parent] : [string_substitution(parent_subject.subject_map.value, ".+", row, "object")]}) 
+					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					if "http" in value:
+						value = "<" + value[1:-1] + ">"
+					hash_table.update({row[child_object.parent] : [value]}) 
 				else:	
 					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
