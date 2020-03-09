@@ -52,16 +52,27 @@ def hash_maker(parent_data, parent_subject, child_object):
 		if child_object.parent in row.keys():
 			if row[child_object.parent] in hash_table:
 				if duplicate == "yes":
-					if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
-						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						if string_substitution(parent_subject.subject_map.value, ".+", row, "object") not in hash_table[row[child_object.parent]]:
+							hash_table[row[child_object.parent]].append(string_substitution(parent_subject.subject_map.value, ".+", row, "object"))
+					else:
+						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+							hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 				else:
-					hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						hash_table[row[child_object.parent]].append(string_substitution(parent_subject.subject_map.value, ".+", row, "object"))
+					else:
+						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
-				hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
+				if parent_subject.subject_map.subject_mapping_type == "reference":
+					hash_table.update({row[child_object.parent] : [string_substitution(parent_subject.subject_map.value, ".+", row, "object")]}) 
+				else:	
+					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
 	join_table.update({parent_subject.triples_map_id : hash_table})
+	print(join_table)
 
-def hash_maker_array(parent_data, parent_subject, child_object):
+def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
 	for row in parent_data:
@@ -655,6 +666,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	
 	i = 0
 	for row in data:
+		print(triples_map.subject_map.subject_mapping_type)
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(row)]}	
@@ -734,7 +746,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										triples_map_triples.update(triple_entry) 
 									except:
 										subject = None 
-					elif triples_map.subject_map.subject_mapping_type == "reference":
+					elif "reference" in triples_map.subject_map.subject_mapping_type:
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject")
 						subject_value = subject_value[1:-1]
 						if "/" in subject_value:
@@ -855,7 +867,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								except:
 									subject = None
 
-				elif triples_map.subject_map.subject_mapping_type == "reference":
+				elif "reference" in triples_map.subject_map.subject_mapping_type:
 					if triples_map.subject_map.condition == "":
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject")
 						subject_value = subject_value[1:-1]

@@ -1,6 +1,7 @@
 import os
 import re
 import datetime
+import sys
 
 def string_substitution_xml(string, pattern, row, term):
 
