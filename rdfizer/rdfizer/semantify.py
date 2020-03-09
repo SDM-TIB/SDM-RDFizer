@@ -767,7 +767,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if triples_map.subject_map.condition == "":
 
 							try:
-								subject = "<" + triples_map.subject_map.value + ">"
+								subject = "\"" + triples_map.subject_map.value + "\""
 								triple_entry = {subject: [dictionary_maker(row)]}	
 								triples_map_triples.update(triple_entry) 
 							except:
@@ -777,7 +777,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						#	field, condition = condition_separetor(triples_map.subject_map.condition)
 						#	if row[field] == condition:
 							try:
-								subject = "<" + triples_map.subject_map.value + ">"
+								subject = "\"" + triples_map.subject_map.value + "\""
 								triple_entry = {subject: [dictionary_maker(row)]}
 								triples_map_triples.update(triple_entry) 
 							except:
@@ -887,7 +887,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 
 						try:
-							subject =  "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}	
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -897,7 +897,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					#	field, condition = condition_separetor(triples_map.subject_map.condition)
 					#	if row[field] == condition:
 						try:
-							subject = "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -1225,7 +1225,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					if triples_map.subject_map.condition == "":
 
 						try:
-							subject = "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}	
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -1235,7 +1235,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					#	field, condition = condition_separetor(triples_map.subject_map.condition)
 					#	if row[field] == condition:
 						try:
-							subject = "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -1345,7 +1345,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				if triples_map.subject_map.condition == "":
 
 					try:
-						subject =  "<" + triples_map.subject_map.value + ">"
+						subject =  "\"" + triples_map.subject_map.value + "\""
 						triple_entry = {subject: [dictionary_maker(row)]}	
 						triples_map_triples.update(triple_entry) 
 					except:
@@ -1355,7 +1355,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				#	field, condition = condition_separetor(triples_map.subject_map.condition)
 				#	if row[field] == condition:
 					try:
-						subject = "<" + triples_map.subject_map.value + ">"
+						subject =  "\"" + triples_map.subject_map.value + "\""
 						triple_entry = {subject: [dictionary_maker(row)]}
 						triples_map_triples.update(triple_entry) 
 					except:
@@ -1675,7 +1675,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					if triples_map.subject_map.condition == "":
 
 						try:
-							subject = "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}	
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -1685,7 +1685,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					#	field, condition = condition_separetor(triples_map.subject_map.condition)
 					#	if row[field] == condition:
 						try:
-							subject = "<" + triples_map.subject_map.value + ">"
+							subject =  "\"" + triples_map.subject_map.value + "\""
 							triple_entry = {subject: [dictionary_maker(row)]}
 							triples_map_triples.update(triple_entry) 
 						except:
@@ -1795,7 +1795,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				if triples_map.subject_map.condition == "":
 
 					try:
-						subject =  "<" + triples_map.subject_map.value + ">"
+						subject =  "\"" + triples_map.subject_map.value + "\""
 						triple_entry = {subject: [dictionary_maker(row)]}	
 						triples_map_triples.update(triple_entry) 
 					except:
@@ -1805,7 +1805,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				#	field, condition = condition_separetor(triples_map.subject_map.condition)
 				#	if row[field] == condition:
 					try:
-						subject = "<" + triples_map.subject_map.value + ">"
+						subject =  "\"" + triples_map.subject_map.value + "\""
 						triple_entry = {subject: [dictionary_maker(row)]}
 						triples_map_triples.update(triple_entry) 
 					except:
