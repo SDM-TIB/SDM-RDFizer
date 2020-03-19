@@ -3,6 +3,78 @@ import re
 import datetime
 import sys
 
+def string_substitution_json(string, pattern, row, term):
+
+	template_references = re.finditer(pattern, string)
+	new_string = string
+	offset_current_substitution = 0
+	for reference_match in template_references:
+		start, end = reference_match.span()[0], reference_match.span()[1]
+		if pattern == "{(.+?)}":
+			match = reference_match.group(1).split("[")[0]
+			if "\\" in match:
+				temp = match.split("{")
+				match = temp[len(temp)-1]
+				if match in row.keys():
+					value = row[match]
+				else:
+					value = None
+
+			elif "." in match:
+				temp = match.split(".")
+				value = row[temp[1]]
+				temp = temp[2:]
+				for t in temp:
+					value = value[t]
+			
+			if value is not None:
+				if (type(value).__name__) == "int":
+					value = str(row[match]) 
+				if re.search("^[\s|\t]*$", value) is None:
+					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+					if "\\" in new_string:
+						new_string = new_string.replace("\\", "")
+						count = new_string.count("}")
+						i = 0
+						while i < count:
+							new_string = "{" + new_string
+							i += 1
+						new_string = new_string.replace(" ", "")
+
+				else:
+					return None
+			else:
+				return None
+
+		elif pattern == ".+":
+			match = reference_match.group(0)
+
+			if "." in match:
+				temp = match.split(".")
+				value = row[temp[1]]
+				temp = temp[2:]
+				for t in temp:
+					value = value[t]
+
+			if match is not None:
+				if (type(value).__name__) == "int":
+						value = str(row[match])
+				if value is not None:
+					if re.search("^[\s|\t]*$", value) is None:
+						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+					else:
+						return None
+			else:
+				return None
+		else:
+			print("Invalid pattern")
+			print("Aborting...")
+			sys.exit(1)
+
+	return new_string
+
 def string_substitution_xml(string, pattern, row, term):
 
 	template_references = re.finditer(pattern, string)
