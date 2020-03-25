@@ -54,8 +54,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 				if duplicate == "yes":
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-						if "http" in value:
-							value = "<" + value[1:-1] + ">"
+						if value is not None:
+							if "http" in value:
+								value = "<" + value[1:-1] + ">"
 						if value not in hash_table[row[child_object.parent]]:
 							hash_table[row[child_object.parent]].append(value)
 					else:
@@ -64,8 +65,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-						if "http" in value:
-							value = "<" + value[1:-1] + ">"
+						if value is not None:
+							if "http" in value:
+								value = "<" + value[1:-1] + ">"
 						hash_table[row[child_object.parent]].append(value)
 					else:
 						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
@@ -73,8 +75,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-					if "http" in value:
-						value = "<" + value[1:-1] + ">"
+					if value is not None:
+						if "http" in value:
+							value = "<" + value[1:-1] + ">"
 					hash_table.update({row[child_object.parent] : [value]}) 
 				else:	
 					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
