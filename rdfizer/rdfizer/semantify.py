@@ -1192,24 +1192,25 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										subject = None 
 					elif "reference" in triples_map.subject_map.subject_mapping_type:
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject")
-						subject_value = subject_value[1:-1]
-						if "/" in subject_value:
-							i = len(subject_value) - 1
-							temp = ""
-							while  0 < i:
-								if subject_value[i] == "/":
-									break
-								else:
-									temp = subject_value[i] + temp
-								i -= 1
-							subject_value = temp
-						if triples_map.subject_map.condition == "":
+						if subject_value is not None:
+							subject_value = subject_value[1:-1]
+							if "/" in subject_value:
+								i = len(subject_value) - 1
+								temp = ""
+								while  0 < i:
+									if subject_value[i] == "/":
+										break
+									else:
+										temp = subject_value[i] + temp
+									i -= 1
+								subject_value = temp
+							if triples_map.subject_map.condition == "":
 
-							try:
-								subject = "<http://example.com/base/" + subject_value + ">"
-								triples_map_triples.update(triple_entry) 
-							except:
-								subject = None
+								try:
+									subject = "<http://example.com/base/" + subject_value + ">"
+									triples_map_triples.update(triple_entry) 
+								except:
+									subject = None
 
 						else:
 						#	field, condition = condition_separetor(triples_map.subject_map.condition)
