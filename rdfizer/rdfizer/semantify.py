@@ -1517,22 +1517,23 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
-					triple = subject + " " + predicate + " " + obj + ".\n"
-					if triples_map.subject_map.graph is not None:
-						if "{" in triples_map.subject_map.graph:
-							triple = triple[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + ">.\n"
+					if obj is not None:
+						triple = subject + " " + predicate + " " + obj + ".\n"
+						if triples_map.subject_map.graph is not None:
+							if "{" in triples_map.subject_map.graph:
+								triple = triple[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + ">.\n"
+							else:
+								triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
+						if duplicate == "yes":
+							if triple not in generated_triples:
+								output_file_descriptor.write(triple)
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								i += 1
 						else:
-							triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-					if duplicate == "yes":
-						if triple not in generated_triples:
 							output_file_descriptor.write(triple)
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							generated_triples.update({triple : number_triple})
 							i += 1
-					else:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						i += 1
 				object_list = []
 			else:
 				continue
