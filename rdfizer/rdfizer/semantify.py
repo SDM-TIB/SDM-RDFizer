@@ -964,7 +964,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = "\"" + predicate_object_map.object_map.value + "\""
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
-				if (triples_map.subject_map.term_type is "IRI") or (predicate_object_map.object_map.term is "IRI"):
+				if "IRI" in predicate_object_map.object_map.term:
 					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object") + ">"
 				elif predicate_object_map.object_map.term is None:
 					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object") + ">"
@@ -1427,7 +1427,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "\"" + predicate_object_map.object_map.value + "\""
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
-					if (triples_map.subject_map.term_type is "IRI") or (predicate_object_map.object_map.term is "IRI"):
+					if "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 					elif predicate_object_map.object_map.term is None:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
@@ -1878,7 +1878,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				object = "\"" + predicate_object_map.object_map.value + "\""
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
-				if (triples_map.subject_map.term_type is "IRI") or (predicate_object_map.object_map.term is "IRI"):
+				if "IRI" in predicate_object_map.object_map.term:
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
 				elif predicate_object_map.object_map.term is None:
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
@@ -2330,7 +2330,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = "\"" + predicate_object_map.object_map.value + "\""
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
-				if (triples_map.subject_map.term_type is "IRI") or (predicate_object_map.object_map.term is "IRI"):
+				if "IRI" in predicate_object_map.object_map.term:
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
 				elif predicate_object_map.object_map.term is None:
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers,"object") + ">"
