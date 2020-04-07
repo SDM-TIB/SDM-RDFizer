@@ -200,6 +200,7 @@ def mapping_parser(mapping_file):
 				?_predicate_object_map rr:objectMap ?_object_map .
 				?_object_map rml:reference ?object_reference .
 				OPTIONAL { ?_object_map rr:language ?language .}
+				OPTIONAL {?_object_map rr:termType ?term .}
 				OPTIONAL {
 					?_object_map rr:datatype ?object_datatype .
 				}
@@ -211,11 +212,13 @@ def mapping_parser(mapping_file):
 					?_object_map rr:joinCondition ?join_condition .
 					?join_condition rr:child ?child_value;
 								 rr:parent ?parent_value.
+					OPTIONAL {?_object_map rr:termType ?term .}
 				}
 				OPTIONAL {
 					?_object_map rr:joinCondition ?join_condition .
 					?join_condition rr:child ?child_value;
 								 rr:parent ?parent_value;
+					OPTIONAL {?_object_map rr:termType ?term .}
 				}
 			}
 			OPTIONAL {
@@ -485,7 +488,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								i += 1
 						elif predicate is not None and subject is not None and object_list:
 							for obj in object_list:
-								triple = subject + " " + predicate + " " + obj + ".\n"
+								if "IRI" in predicate_object_map.object_map.term:
+									triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+								else:
+									triple = subject + " " + predicate + " " + obj + ".\n"
 								if duplicate == "yes":
 									if triple not in generated_triples:
 										output_file_descriptor.write(triple)
@@ -628,7 +634,10 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
-					triple = subject + " " + predicate + " " + obj + ".\n"
+					if "IRI" in predicate_object_map.object_map.term:
+						triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+					else:
+						triple = subject + " " + predicate + " " + obj + ".\n"
 					if duplicate == "yes":
 						if triple not in triple_array:
 							output_file_descriptor.write(triple)
@@ -979,6 +988,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			if subject is not None:
 				for triples_map_element in triples_map_list:
@@ -1059,7 +1070,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
-				triple = subject + " " + predicate + " " + obj + ".\n"
+				if "IRI" in predicate_object_map.object_map.term:
+					triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+				else:
+					triple = subject + " " + predicate + " " + obj + ".\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:
 						triple = triple[:-2] + " <" + string_substitution_json(triples_map.subject_map.graph, "{(.+?)}", data, "subject") + ">.\n"
@@ -1442,6 +1456,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object += "@es"
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 						object += "@en"
+					elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -1523,7 +1539,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
 					if obj is not None:
-						triple = subject + " " + predicate + " " + obj + ".\n"
+						if "IRI" in predicate_object_map.object_map.term:
+							triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+						else:
+							triple = subject + " " + predicate + " " + obj + ".\n"
 						if triples_map.subject_map.graph is not None:
 							if "{" in triples_map.subject_map.graph:
 								triple = triple[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + ">.\n"
@@ -1893,6 +1912,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
@@ -2345,6 +2366,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
@@ -2417,7 +2440,10 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
-				triple = subject + " " + predicate + " " + obj + ".\n"
+				if "IRI" in predicate_object_map.object_map.term:
+					triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+				else:
+					triple = subject + " " + predicate + " " + obj + ".\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:
 						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
