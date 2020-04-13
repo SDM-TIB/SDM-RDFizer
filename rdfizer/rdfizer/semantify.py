@@ -488,8 +488,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								i += 1
 						elif predicate is not None and subject is not None and object_list:
 							for obj in object_list:
-								if "IRI" in predicate_object_map.object_map.term:
-									triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+								if predicate_object_map.object_map.term is not None:
+									if "IRI" in predicate_object_map.object_map.term:
+										triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+									else:
+										triple = subject + " " + predicate + " " + obj + ".\n"
 								else:
 									triple = subject + " " + predicate + " " + obj + ".\n"
 								if duplicate == "yes":
@@ -634,8 +637,11 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
-					if "IRI" in predicate_object_map.object_map.term:
-						triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+					if predicate_object_map.object_map.term is not None:
+						if "IRI" in predicate_object_map.object_map.term:
+							triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+						else:
+							triple = subject + " " + predicate + " " + obj + ".\n"
 					else:
 						triple = subject + " " + predicate + " " + obj + ".\n"
 					if duplicate == "yes":
@@ -1070,8 +1076,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
-				if "IRI" in predicate_object_map.object_map.term:
-					triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+				if predicate_object_map.object_map.term is not None:
+					if "IRI" in predicate_object_map.object_map.term:
+						triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+					else:
+						triple = subject + " " + predicate + " " + obj + ".\n"
 				else:
 					triple = subject + " " + predicate + " " + obj + ".\n"
 				if triples_map.subject_map.graph is not None:
@@ -1539,8 +1548,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
 					if obj is not None:
-						if "IRI" in predicate_object_map.object_map.term:
-							triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+						if predicate_object_map.object_map.term is not None:
+							if "IRI" in predicate_object_map.object_map.term:
+								triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+							else:
+								triple = subject + " " + predicate + " " + obj + ".\n"
 						else:
 							triple = subject + " " + predicate + " " + obj + ".\n"
 						if triples_map.subject_map.graph is not None:
