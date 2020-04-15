@@ -2,6 +2,7 @@ import os
 import re
 import datetime
 import sys
+import xml.etree.ElementTree as ET
 
 def string_substitution_json(string, pattern, row, term):
 
@@ -84,35 +85,51 @@ def string_substitution_xml(string, pattern, row, term):
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
 			match = reference_match.group(1).split("[")[0]
-			match = match.split("@")[1]
-			print(match)
-			if row[match] is not None:
-				if re.search("^[\s|\t]*$", row[match]) is None:
-					new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
-					offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-
-				else:
-					return None
-
-		elif pattern == ".+":
-			match = reference_match.group(0)
-			print(match)
-			if "@" in match:
-				match = match.split("@")[1]
+			if row.attrib:
+				if "@" in match:
+					match = match.split("@")[1]
 				if row.attrib[match] is not None:
-					if re.search("^[\s|\t]*$", row.attrib[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + "\"" + row.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
+					if re.search("^[\s|\t]*$", row[match]) is None:
+						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 
 					else:
 						return None
 			else:
-				if row.text is not None:
-					if re.search("^[\s|\t]*$", row.text) is None:
-						new_string = new_string[:start] + row.text.strip().replace("\"", "'") + new_string[end:]
-						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+				if re.search("^[\s|\t]*$", row.find(match).text) is None:
+					new_string = new_string[:start + offset_current_substitution] + row.find(match).text.strip() + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+
+				else:
+					return None
+
+
+		elif pattern == ".+":
+			match = reference_match.group(0)
+			if row.attrib:
+				if "@" in match:
+					match = match.split("@")[1]
+					if row.attrib[match] is not None:
+						if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+							new_string = new_string[:start + offset_current_substitution] + "\"" + row.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
+							offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
+
+						else:
+							return None
+				else:
+					if re.search("^[\s|\t]*$", row.find(match).text) is None:
+						new_string = new_string[:start + offset_current_substitution] + "\"" + row.find(match).text.strip() + "\"" + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+
 					else:
 						return None
+			else:
+				if re.search("^[\s|\t]*$", row.find(match).text) is None:
+					new_string = new_string[:start + offset_current_substitution] + "\"" + row.find(match).text.strip() + "\"" + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+
+				else:
+					return None
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
