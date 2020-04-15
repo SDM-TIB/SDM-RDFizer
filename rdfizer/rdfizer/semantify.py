@@ -1757,9 +1757,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "\"" + predicate_object_map.object_map.value + "\""
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
-					if "IRI" in predicate_object_map.object_map.term:
+					if predicate_object_map.object_map.term is None:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
-					elif predicate_object_map.object_map.term is None:
+					elif "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
