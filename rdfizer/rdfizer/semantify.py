@@ -473,6 +473,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									triples_map_triples.update(triple_entry) 
 								except:
 									subject = None
+
+						elif "constant" in triples_map.subject_map.subject_mapping_type:
+							subject = "<" + subject_value + ">"
+
 						else:
 							if triples_map.subject_map.condition == "":
 
@@ -1084,6 +1088,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							triples_map_triples.update(triple_entry) 
 						except:
 							subject = None
+
+				elif "constant" in triples_map.subject_map.subject_mapping_type:
+						subject = "<" + subject_value + ">"
 				else:
 					if triples_map.subject_map.condition == "":
 
@@ -1204,6 +1211,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						triples_map_triples.update(triple_entry) 
 					except:
 						subject = None
+
+			elif "constant" in triples_map.subject_map.subject_mapping_type:
+						subject = "<" + subject_value + ">"
+
 			else:
 				if triples_map.subject_map.condition == "":
 
@@ -1555,6 +1566,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								triples_map_triples.update(triple_entry) 
 							except:
 								subject = None
+
+					elif "constant" in triples_map.subject_map.subject_mapping_type:
+						subject = "<" + subject_value + ">"
+
 					else:
 						if triples_map.subject_map.condition == "":
 
@@ -1675,6 +1690,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							triples_map_triples.update(triple_entry) 
 						except:
 							subject = None
+
+				elif "constant" in triples_map.subject_map.subject_mapping_type:
+					subject = "<" + subject_value + ">"
+
 				else:
 					if triples_map.subject_map.condition == "":
 
@@ -2024,6 +2043,10 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							triples_map_triples.update(triple_entry) 
 						except:
 							subject = None
+
+				elif "constant" in triples_map.subject_map.subject_mapping_type:
+					subject = "<" + subject_value + ">"
+
 				else:
 					if triples_map.subject_map.condition == "":
 
@@ -2144,6 +2167,10 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						triples_map_triples.update(triple_entry) 
 					except:
 						subject = None
+
+			elif "constant" in triples_map.subject_map.subject_mapping_type:
+				subject = "<" + subject_value + ">"
+
 			else:
 				if triples_map.subject_map.condition == "":
 
@@ -2478,6 +2505,10 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							triples_map_triples.update(triple_entry) 
 						except:
 							subject = None
+				
+				elif "constant" in triples_map.subject_map.subject_mapping_type:
+					subject = "<" + subject_value + ">"
+
 				else:
 					if triples_map.subject_map.condition == "":
 
@@ -2598,6 +2629,10 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						triples_map_triples.update(triple_entry) 
 					except:
 						subject = None
+			
+			elif "constant" in triples_map.subject_map.subject_mapping_type:
+				subject = "<" + subject_value + ">"
+
 			else:
 				if triples_map.subject_map.condition == "":
 
