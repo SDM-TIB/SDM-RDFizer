@@ -19,7 +19,10 @@ def string_substitution_json(string, pattern, row, term):
 				if match in row.keys():
 					value = row[match]
 				else:
-					value = None
+					print('The attribute ' + match + ' is missing.')
+					print('Aborting...')
+					sys.exit(1)
+					return
 
 			elif "." in match:
 				temp = match.split(".")
@@ -197,7 +200,10 @@ def string_substitution(string, pattern, row, term):
 					#else:
 					#	return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if match in row.keys():
@@ -211,7 +217,10 @@ def string_substitution(string, pattern, row, term):
 						return None
 					#	return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
@@ -274,7 +283,10 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 					else:
 						return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 				# To-do:
 				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
 				#if term == "subject":
@@ -302,7 +314,10 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 				else:
 					return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
@@ -356,7 +371,10 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 				else:
 					return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 				# To-do:
 				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
 				#if term == "subject":
@@ -386,7 +404,10 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 				else:
 					return None
 			else:
-				return None
+				print('The attribute ' + match + ' is missing.')
+				print('Aborting...')
+				sys.exit(1)
+				return
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
