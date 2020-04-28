@@ -696,7 +696,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = None
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object")
-					if predicate_object_map.object_map.language is not None:
+					if (predicate_object_map.object_map.language is not None) and (object is not None):
 						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 							object += "@es"
 						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
@@ -1310,7 +1310,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object")
-			if predicate_object_map.object_map.language is not None:
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
 				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
@@ -1789,7 +1789,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				if predicate_object_map.object_map.language is not None:
+				if (predicate_object_map.object_map.language is not None) and (object is not None):
 					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 						object += "@es"
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
@@ -2256,7 +2256,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if predicate_object_map.object_map.language is not None:
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
 				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
@@ -2718,7 +2718,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if predicate_object_map.object_map.language is not None:
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
 				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 					object += "@es"
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
