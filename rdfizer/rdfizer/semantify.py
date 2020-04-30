@@ -731,39 +731,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									else:
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												for line in data:
-													if predicate_object_map.object_map.parent in line.keys():
-														if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-															if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-																join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-															else:
-																join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
-
-											elif triples_map_element.file_format == "XPath":
-												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-													child_tree = ET.parse(input_file_descriptor)
-													child_root = child_tree.getroot()
-													for line in data:
-														if predicate_object_map.object_map.parent in line.keys():
-															if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-																if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-																	join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-																else:
-																	join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
-												
-											else:
-												data = json.load(input_file_descriptor)
-												for line in data:
-													if predicate_object_map.object_map.parent in line.keys():
-														if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-															if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-																join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-															else:
-																join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
 
 									if child.find(predicate_object_map.object_map.child) is not None:
 										if child.find(predicate_object_map.object_map.child).text in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
@@ -948,27 +915,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 										for query in query_list:
 											cursor.execute(query)
 										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-								else:
-									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-										if str(triples_map_element.file_format).lower() == "csv":
-											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-											for line in data:
-												if predicate_object_map.object_map.parent in line.keys():
-													if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-														if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-															join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-														else:
-															join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
-											
-										else:
-											data = json.load(input_file_descriptor)
-											for line in data:
-												if predicate_object_map.object_map.parent in line.keys():
-													if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-														if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-															join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-														else:
-															join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
+								
 								if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
 									object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]]
 								else:
@@ -1393,27 +1340,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									for query in query_list:
 										cursor.execute(query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-							else:
-								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-									if str(triples_map_element.file_format).lower() == "csv":
-										data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-										for line in data:
-											if predicate_object_map.object_map.parent in line.keys():
-												if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-													if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-														join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-													else:
-														join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
-										
-									else:
-										data = json.load(input_file_descriptor)
-										for line in data:
-											if predicate_object_map.object_map.parent in line.keys():
-												if row[predicate_object_map.object_map.child] == line[predicate_object_map.object_map.parent]:
-													if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-														join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]].append("<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">")
-													else:
-														join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]] = ["<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", line, "object") + ">"]
+							
 							if 	predicate_object_map.object_map.child in data.keys():
 								if data[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
 									object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]]
