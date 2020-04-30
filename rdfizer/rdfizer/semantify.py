@@ -3220,7 +3220,7 @@ def semantify(config_path):
 
 	else:
 		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt" 
-		print("Semantifying {}.{}...".format(config[dataset_i]["name"]))
+		print("Semantifying {}.{}...".format(config["datasets"]["name"]))
 
 		start_time = time.time()
 		with open(output_file, "w") as output_file_descriptor:
