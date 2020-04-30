@@ -3108,7 +3108,7 @@ def semantify(config_path):
 			os.mkdir(config["datasets"]["output_folder"])
 
 	global start_time
-	if config["datasets"]["all_in_one_file"] == "no":
+	if "no" in config["datasets"]["all_in_one_file"]:
 		
 		start_time = time.time()
 
