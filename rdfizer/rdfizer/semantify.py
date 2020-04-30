@@ -117,8 +117,8 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 				hash_table.update({row.find(child_object.parent).text : [value]}) 
 			else:	
 				hash_table.update({row.find(child_object.parent).text : ["<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
-	join_table.update({parent_subject.triples_map_id : hash_table})
-	print(join_table)
+	join_table.update({parent_subject.triples_map_id + "_" + child_object.child  : hash_table})
+
 
 def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 	hash_table = {}
@@ -136,7 +136,7 @@ def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 			
 		else:
 			hash_table.update({element : ["<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">"]}) 
-	join_table.update({parent_subject.triples_map_id : hash_table})
+	join_table.update({parent_subject.triples_map_id + "_" + child_object.child  : hash_table})
 
 
 def mapping_parser(mapping_file):
