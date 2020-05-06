@@ -55,8 +55,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
 						if value is not None:
-							if "http" in value:
+							if "http" in value and "<" not in value:
 								value = "<" + value[1:-1] + ">"
+							elif "http" in value and "<" in value:
+								value = value[1:-1] 
 						if value not in hash_table[row[child_object.parent]]:
 							hash_table[row[child_object.parent]].append(value)
 					else:
@@ -65,9 +67,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-						if value is not None:
-							if "http" in value:
-								value = "<" + value[1:-1] + ">"
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
 						hash_table[row[child_object.parent]].append(value)
 					else:
 						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
@@ -76,10 +79,13 @@ def hash_maker(parent_data, parent_subject, child_object):
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
 					if value is not None:
-						if "http" in value:
+						if "http" in value and "<" not in value:
 							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
 					hash_table.update({row[child_object.parent] : [value]}) 
-				else:	
+				else:
+					print(parent_subject.subject_map.value)	
 					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child : hash_table})
 
@@ -1820,7 +1826,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										for query in query_list:
 											cursor.execute(query)
 										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-
 								if 	predicate_object_map.object_map.child in row.keys():
 									if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
 										object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]]
