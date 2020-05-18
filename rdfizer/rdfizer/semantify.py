@@ -46,11 +46,29 @@ po_table = {}
 global enrichment
 enrichment = ""
 
-def hash_maker_two(parent_data, parent_subject, child_object):
+def sublist(part_list, full_list):
+	for part in part_list:
+		if part not in full_list:
+			return False
+	return True
+
+def child_list(childs):
+	value = ""
+	for child in childs:
+		value += child + "_"
+	return value[:-1]
+
+def child_list_value(childs,row):
+	value = ""
+	for child in childs:
+		value += row[child] + "_"
+	return value[:-1]
+
+def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
-		if child_object.parent in row.keys() and child_object.parent_second in row.keys():
-			if row[child_object.parent] + "_" + row[child_object.parent_second] in hash_table:
+		if child_object.parent[0] in row.keys():
+			if row[child_object.parent[0]] in hash_table:
 				if duplicate == "yes":
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -59,11 +77,11 @@ def hash_maker_two(parent_data, parent_subject, child_object):
 								value = "<" + value[1:-1] + ">"
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
-						if value not in hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]]:
-							hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]].append(value)
+						if value not in hash_table[row[child_object.parent[0]]]:
+							hash_table[row[child_object.parent]].append(value)
 					else:
-						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]]:
-							hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -71,9 +89,9 @@ def hash_maker_two(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-						hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]].append(value)
+						hash_table[row[child_object.parent[0]]].append(value)
 					else:
-						hash_table[row[child_object.parent] + "_" + row[child_object.parent_second]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+						hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -83,16 +101,16 @@ def hash_maker_two(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-					hash_table.update({row[child_object.parent] + "_" + row[child_object.parent_second] : [value]}) 
-				else:
-					hash_table.update({row[child_object.parent] + "_" + row[child_object.parent_second] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
-	join_table.update({parent_subject.triples_map_id + "_" + child_object.child + "_" + child_object.child_second : hash_table})
+					hash_table.update({row[child_object.parent[0]] : [value]}) 
+				else:	
+					hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
-def hash_maker(parent_data, parent_subject, child_object):
+def hash_maker_list(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
-		if child_object.parent in row.keys():
-			if row[child_object.parent] in hash_table:
+		if sublist(child_object.parent,row.keys()):
+			if child_list_value(child_object.parent,row) in hash_table:
 				if duplicate == "yes":
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -102,10 +120,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
 						if value not in hash_table[row[child_object.parent]]:
-							hash_table[row[child_object.parent]].append(value)
+							hash_table[child_list_value(child_object.parent,row)].append(value)
 					else:
 						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
-							hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+							hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -113,9 +131,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-						hash_table[row[child_object.parent]].append(value)
+						hash_table[child_list_value(child_object.parent,row)].append(value)
 					else:
-						hash_table[row[child_object.parent]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+						hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -125,10 +143,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-					hash_table.update({row[child_object.parent] : [value]}) 
+					hash_table.update({child_list_value(child_object.parent,row) : [value]}) 
 				else:	
-					hash_table.update({row[child_object.parent] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
-	join_table.update({parent_subject.triples_map_id + "_" + child_object.child : hash_table})
+					hash_table.update({child_list_value(child_object.parent,row) : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child) : hash_table})
 
 def hash_maker_xml(parent_data, parent_subject, child_object):
 	hash_table = {}
@@ -297,12 +315,6 @@ def mapping_parser(mapping_file):
 					?join_condition rr:child ?child_value;
 								 rr:parent ?parent_value.
 					OPTIONAL {?_object_map rr:termType ?term .}
-					OPTIONAL {
-						?_object_map rr:joinCondition ?join_condition_second .
-						?join_condition_second rr:child ?child_value_second;
-									 rr:parent ?parent_value_second.
-						OPTIONAL {?_object_map rr:termType ?term .}
-					}
 				}
 			}
 			OPTIONAL {
@@ -358,13 +370,11 @@ def mapping_parser(mapping_file):
 
 			mapping_query_prepared_results = mapping_graph.query(mapping_query_prepared, initBindings={'triples_map_id': result_triples_map.triples_map_id})
 
-
-
-
+			join_predicate = {}
 			predicate_object_maps_list = []
 
-
 			for result_predicate_object_map in mapping_query_prepared_results:
+				join = True
 				if result_predicate_object_map.predicate_constant is not None:
 					predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "")
 				elif result_predicate_object_map.predicate_constant_shortcut is not None:
@@ -379,25 +389,31 @@ def mapping_parser(mapping_file):
 					predicate_map = tm.PredicateMap("None", "None", "None")
 
 				if result_predicate_object_map.object_constant is not None:
-					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype), "None", "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				elif result_predicate_object_map.object_template is not None:
-					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype), "None", "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				elif result_predicate_object_map.object_reference is not None:
-					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype), "None", "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				elif result_predicate_object_map.object_parent_triples_map is not None:
-					if str(result_predicate_object_map.child_value_second) is "None":
-						object_map = tm.ObjectMap("parent triples map", str(result_predicate_object_map.object_parent_triples_map), str(result_predicate_object_map.object_datatype), str(result_predicate_object_map.child_value), str(result_predicate_object_map.parent_value), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					if predicate_map.value not in join_predicate:
+						join_predicate[predicate_map.value] = {"predicate":predicate_map, "childs":[str(result_predicate_object_map.child_value)], "parents":[str(result_predicate_object_map.parent_value)], "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
 					else:
-						if str(result_predicate_object_map.parent_value) != str(result_predicate_object_map.parent_value_second):
-							object_map = tm.ObjectMap("parent triples map", str(result_predicate_object_map.object_parent_triples_map), str(result_predicate_object_map.object_datatype), str(result_predicate_object_map.child_value), str(result_predicate_object_map.parent_value), str(result_predicate_object_map.child_value_second), str(result_predicate_object_map.parent_value_second), result_predicate_object_map.term, result_predicate_object_map.language)
-						else:
-							object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None")
+						join_predicate[predicate_map.value]["childs"].append(str(result_predicate_object_map.child_value))
+						join_predicate[predicate_map.value]["parents"].append(str(result_predicate_object_map.parent_value))
+					join = False
 				elif result_predicate_object_map.object_constant_shortcut is not None:
-					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype), "None", "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				else:
-					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None")
+					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None")
 
-				predicate_object_maps_list += [tm.PredicateObjectMap(predicate_map, object_map)]
+				if join:
+					predicate_object_maps_list += [tm.PredicateObjectMap(predicate_map, object_map)]
+				join = True
+
+			if join_predicate:
+				for jp in join_predicate.keys():
+					object_map = tm.ObjectMap("parent triples map", join_predicate[jp]["triples_map"], str(result_predicate_object_map.object_datatype), join_predicate[jp]["childs"], join_predicate[jp]["parents"],result_predicate_object_map.term, result_predicate_object_map.language)
+					predicate_object_maps_list += [tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map)]
 
 			current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.data_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
 			triples_map_list += [current_triples_map]
@@ -1884,8 +1900,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					for triples_map_element in triples_map_list:
 						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 							if triples_map_element.data_source != triples_map.data_source:
-								if predicate_object_map.object_map.parent_second is None:
-									if (triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child) not in join_table:
+								if len(predicate_object_map.object_map.child) == 1:
+									if (triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]) not in join_table:
 										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												if str(triples_map_element.file_format).lower() == "csv":
@@ -1902,28 +1918,39 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-									if 	predicate_object_map.object_map.child in row.keys():
-										if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child][row[predicate_object_map.object_map.child]]
+
+									if sublist(predicate_object_map.object_map.child,row.keys()):
+										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 										else:
 											object_list = []
+									object = None
 								else:
-									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child + "_" + predicate_object_map.object_map.child_second not in join_table:
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker_two(data, triples_map_element, predicate_object_map.object_map)
-											else:
-												data = json.load(input_file_descriptor)
-												hash_maker_two(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-									if 	predicate_object_map.object_map.child in row.keys() and predicate_object_map.object_map.child_second in row.keys():
-										if row[predicate_object_map.object_map.child] + "_" + row[predicate_object_map.object_map.child_second]  in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child + "_" + predicate_object_map.object_map.child_second]:
-											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child + "_" + predicate_object_map.object_map.child_second][row[predicate_object_map.object_map.child] + "_" + row[predicate_object_map.object_map.child_second]]
+									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
+										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												if str(triples_map_element.file_format).lower() == "csv":
+													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+												else:
+													data = json.load(input_file_descriptor)
+													hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+										else:
+											database, query_list = translate_sql(triples_map)
+											db = connector.connect(host=host, port=port, user=user, password=password)
+											cursor = db.cursor()
+											cursor.execute("use " + database)
+											for query in query_list:
+												cursor.execute(query)
+											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+									if sublist(predicate_object_map.object_map.child,row.keys()):
+										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
+											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
 										else:
 											object_list = []
-								object = None
+									object = None
 							else:
-								if predicate_object_map.object_map.parent is not None and predicate_object_map.object_map.parent_value_second is None:
+								if predicate_object_map.object_map.parent is not None:
 									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
@@ -1938,20 +1965,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										else:
 											object_list = []
 									object = None
-								elif predicate_object_map.object_map.parent is not None and predicate_object_map.object_map.parent_value_second is not None:
-									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child + "_" + predicate_object_map.object_map.child_second not in join_table:
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker_two(data, triples_map_element, predicate_object_map.object_map)
-											else:
-												data = json.load(input_file_descriptor)
-												hash_maker_two(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-									if 	predicate_object_map.object_map.child in row.keys():
-										if row[predicate_object_map.object_map.child] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child]:
-											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child + "_" + predicate_object_map.object_map.child_second][row[predicate_object_map.object_map.child] + "_" + row[predicate_object_map.object_map.child_second]]
-										else:
-											object_list = []
 								else:
 									try:
 										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object") + ">"

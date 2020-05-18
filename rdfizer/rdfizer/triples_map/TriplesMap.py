@@ -62,6 +62,8 @@ class TriplesMap:
 		for predicate_object_map in self.predicate_object_maps_list:
 			value += "\t\tpredicate: {} - mapping type: {}\n".format(predicate_object_map.predicate_map.value, predicate_object_map.predicate_map.mapping_type)
 			value += "\t\tobject: {} - mapping type: {} - datatype: {}\n\n".format(predicate_object_map.object_map.value, predicate_object_map.object_map.mapping_type, str(predicate_object_map.object_map.datatype))
+			if predicate_object_map.object_map.mapping_type == "parent triples map":
+				value += "\t\t\tjoin condition: - child: {} - parent: {} \n\n\n".format(predicate_object_map.object_map.child,predicate_object_map.object_map.parent)
 
 		return value + "\n"
 
@@ -130,7 +132,7 @@ class PredicateMap:
 
 class ObjectMap:
 
-	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, object_child_second, object_parent_second, term, language):
+	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language):
 
 		"""
 		Constructor of ObjectMap object
@@ -149,7 +151,5 @@ class ObjectMap:
 		self.mapping_type = object_mapping_type
 		self.child = object_child if object_child != "None" else None
 		self.parent = object_parent if object_parent != "None" else None
-		self.child_second = object_child_second if object_child_second != "None" else None
-		self.parent_second = object_parent_second if object_parent_second != "None" else None
 		self.term = term if term != "None" else None
 		self.language = language if language != "None" else None
