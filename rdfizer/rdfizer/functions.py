@@ -4,6 +4,24 @@ import datetime
 import sys
 import xml.etree.ElementTree as ET
 
+def sublist(part_list, full_list):
+	for part in part_list:
+		if part not in full_list:
+			return False
+	return True
+
+def child_list(childs):
+	value = ""
+	for child in childs:
+		value += child + "_"
+	return value[:-1]
+
+def child_list_value(childs,row):
+	value = ""
+	for child in childs:
+		value += row[child] + "_"
+	return value[:-1]
+
 def string_substitution_json(string, pattern, row, term):
 
 	template_references = re.finditer(pattern, string)
