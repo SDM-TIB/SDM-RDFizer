@@ -60,9 +60,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
 						if value not in hash_table[row[child_object.parent[0]]]:
-							hash_table[row[child_object.parent]].append(value)
+							hash_table[row[child_object.parent[0]]].append(value)
 					else:
-						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
 							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
