@@ -1500,6 +1500,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 	return i
 
 def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
+	
+	print("TM:",triples_map.triples_map_name)
 
 	"""
 	(Private function, not accessible from outside this package)
