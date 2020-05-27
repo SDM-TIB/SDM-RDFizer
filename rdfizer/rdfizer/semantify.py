@@ -1934,7 +1934,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									object = None
 							else:
 								if predicate_object_map.object_map.parent is not None:
-									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+									if str(triples_map_element.triples_map_id) + "_" + str(predicate_object_map.object_map.child) not in join_table:
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
 												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
