@@ -1534,7 +1534,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	
 	i = 0
 	for row in data:
-		print(".", end="", flush=True)
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(row)]}	
