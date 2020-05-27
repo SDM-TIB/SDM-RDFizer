@@ -1500,6 +1500,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 	return i
 
 def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
+	
+	print("\n\nTM:",triples_map.triples_map_name)
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -1532,6 +1534,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	
 	i = 0
 	for row in data:
+		print(".", end="", flush=True)
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject") 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(row)]}	
@@ -1934,7 +1937,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									object = None
 							else:
 								if predicate_object_map.object_map.parent is not None:
-									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+									if str(triples_map_element.triples_map_id) + "_" + str(predicate_object_map.object_map.child) not in join_table:
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
 												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
