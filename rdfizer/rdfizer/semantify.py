@@ -1461,10 +1461,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				else:
 					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 			if duplicate == "yes":
-				if triple not in generated_triples:
+				if (triple not in generated_triples) and (triple not in g_triples):
 					output_file_descriptor.write(triple)
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({triple : number_triple})
+					g_triples.update({triple : number_triple})
 					i += 1
 			else:
 				output_file_descriptor.write(triple)
@@ -1976,10 +1977,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					else:
 						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if duplicate == "yes":
-					if triple not in generated_triples:
+					if (triple not in generated_triples) and (triple not in g_triples):
 						output_file_descriptor.write(triple)
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({triple : number_triple})
+						g_triples.update({triple : number_triple})
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
@@ -2001,10 +2003,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							else:
 								triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 						if duplicate == "yes":
-							if triple not in generated_triples:
+							if (triple not in generated_triples) and (triple not in g_triples):
 								output_file_descriptor.write(triple)
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								generated_triples.update({triple : number_triple})
+								g_triples.update({triple : number_triple})
 								i += 1
 						else:
 							output_file_descriptor.write(triple)
