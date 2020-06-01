@@ -16,7 +16,7 @@ import time
 import json
 import xml.etree.ElementTree as ET
 import psycopg2
-
+import types
 from .functions import *
 
 try:
@@ -101,10 +101,10 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 								value = "<" + value[1:-1] + ">"
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
-						if value not in hash_table[row[child_object.parent]]:
+						if value not in hash_table[child_list_value(child_object.parent,row)]:
 							hash_table[child_list_value(child_object.parent,row)].append(value)
 					else:
-						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
+						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[child_list_value(child_object.parent,row)]:
 							hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -964,14 +964,14 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					for triples_map_element in triples_map_list:
 						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 							if triples_map_element.data_source != triples_map.data_source:
-								if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+								if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
 									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
 												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 											else:
 												data = json.load(input_file_descriptor)
-											hash_maker(data, triples_map_element, predicate_object_map.object_map)							
+											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)							
 									else:
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host=host, port=port, user=user, password=password)
@@ -1947,7 +1947,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 												hash_maker(data, triples_map_element, predicate_object_map.object_map)
 											else:
 												data = json.load(input_file_descriptor)
-												hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+												if isinstance(data, list):
+													hash_maker(data, triples_map_element, predicate_object_map.object_map)
+												else:
+													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 									if sublist(predicate_object_map.object_map.child,row.keys()):
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
@@ -3166,7 +3169,9 @@ def semantify(config_path):
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
-										if len(data) < 2:
+										if isinstance(data, list):
+											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+										elif len(data) < 2:
 											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
 										else:
 											number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
@@ -3221,7 +3226,7 @@ def semantify(config_path):
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
-										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 								elif triples_map.tablename != "None" or triples_map.iterator != "None":
 									user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
 									
