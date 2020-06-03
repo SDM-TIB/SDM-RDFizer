@@ -46,6 +46,48 @@ po_table = {}
 global enrichment
 enrichment = ""
 
+def hash_update(parent_data, parent_subject, child_object,join_id):
+	hash_table = {}
+	for row in parent_data:
+		if child_object.parent[0] in row.keys():
+			if row[child_object.parent[0]] in hash_table:
+				if duplicate == "yes":
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if value is not None:
+							if "http" in value and "<" not in value:
+								value = "<" + value[1:-1] + ">"
+							elif "http" in value and "<" in value:
+								value = value[1:-1] 
+						if value not in hash_table[row[child_object.parent[0]]]:
+							hash_table[row[child_object.parent[0]]].append(value)
+					else:
+						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
+							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+				else:
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
+						hash_table[row[child_object.parent[0]]].append(value)
+					else:
+						hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+
+			else:
+				if parent_subject.subject_map.subject_mapping_type == "reference":
+					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					if value is not None:
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
+					hash_table.update({row[child_object.parent[0]] : [value]}) 
+				else:	
+					hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+	join_table[join_id].update(hash_table)
+
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
@@ -1898,7 +1940,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													hash_maker(data, triples_map_element, predicate_object_map.object_map)
 												else:
 													data = json.load(input_file_descriptor)
-													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+													if isinstance(data, list):
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
@@ -1912,7 +1957,21 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 										else:
-											object_list = []
+											if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+														hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+													else:
+														data = json.load(input_file_descriptor)
+														if isinstance(data, list):
+															hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+														elif len(data) < 2:	
+															hash_update(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+											if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
+											else:
+												object_list = []
 									object = None
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
@@ -1923,7 +1982,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 												else:
 													data = json.load(input_file_descriptor)
-													hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+													if isinstance(data, list):
+														hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
