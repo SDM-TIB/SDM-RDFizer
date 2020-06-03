@@ -149,7 +149,7 @@ class ObjectMap:
 		self.value = object_value
 		self.datatype = object_datatype if object_datatype != "None" else None 
 		self.mapping_type = object_mapping_type
-		self.child = object_child if object_child != "None" else None
-		self.parent = object_parent if object_parent != "None" else None
+		self.child = object_child if "None" not in object_child  else None
+		self.parent = object_parent if "None" not in object_parent else None
 		self.term = term if term != "None" else None
 		self.language = language if language != "None" else None
