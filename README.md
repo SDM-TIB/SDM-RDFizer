@@ -1,17 +1,17 @@
 # SDM-RDFizer
 This project presents the SDM-RDFizer, an interpreter of mapping rules that allow the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the RDF Mapping Language (RML) by Dimou et al. The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from Heterogeneous data sources (CSV, JSON, RDB, XML). The results of the execution of the SDM-RDFizer has been reported in the following research reports:
 
-- Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. Accepted at the 27th International Conference on Cooperative Information Systems (CoopIS 2019). 
+- Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. The 27th International Conference on Cooperative Information Systems (CoopIS 2019). 
 
-- David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. Accepted at the 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
+- David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. The 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
 
 - David Chaves-Fraga, Antón Adolfo, Jhon Toledo, Oscar Corcho. ONETT: Systematic Knowledge Graph Generation for National Access Points. Accepted at 1st International Workshop on Semantics for Transport co-located with SEMANTiCS 2019
 
-The SDM-RDFizer is used in the creation of the knowledge graphs of the EU H2020 projects iASiS (http://project-iasis.eu/) and BigMedilytics - lung cancer pilot (https://www.bigmedilytics.eu/)
-
-
-References:
+Additional References:
 Dimou et al. 2014. Dimou, A., Sande, M.V., Colpaert, P., Verborgh, R., Mannens, E., de Walle, R.V.:RML: A generic language for integrated RDF mappings of heterogeneous data. In:Proceedings of the Workshop on Linked Data on the Web co-located with the 23rdInternational World Wide Web Conference (WWW 2014) (2014)
+
+# Projects where the SDM-RDFizer has been used
+The SDM-RDFizer is used in the creation of the knowledge graphs of the EU H2020 projects and national where the Scientific Data Management group participates. These projects include: iASiS (http://project-iasis.eu/), BigMedilytics - lung cancer pilot (https://www.bigmedilytics.eu/), CLARIFY (https://www.clarify2020.eu/), P4-LUCAT (https://www.tib.eu/de/forschung-entwicklung/projektuebersicht/projektsteckbrief/p4-lucat), ImProVIT (https://www.tib.eu/de/forschung-entwicklung/projektuebersicht/projektsteckbrief/improvit), PLATOON (https://platoon-project.eu/). The iASiS RDF knowledge graph comprises more than 1.2B RDF triples collected from more than 40 heterogeneous sources using more than 1300 RML triple maps. Further, around 800 RML triple maps are used to create the lung cancer knowledge graph from around 25 data sources with 500M RDF triples. The SDM-RDFizer has also created the Knowledge4COVID-19 knowledge graph during the participation of the team of the Scientific Data Management group in the EUvsVirus Hackathon (April 2020) (https://blogs.tib.eu/wp/tib/2020/05/06/how-do-knowledge-graphs-contribute-to-understanding-covid-19-related-treatments/). By June 7th, 2020, the Knowledge4COVID-19 knowledge graph comprises 28M RDF triples describing at a fine-grained level 63527 COVID-19 scientific publications and related COVID-19 concepts (e.g., 5802 substrances, 1.2M drug-drug interactions, and 103 molecular disfunctions).  
 
 
 # About and Authors
@@ -21,7 +21,7 @@ Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancour
 
 Under the supervision of:
 
-David Chaves-Fraga (dchaves@fi.upm.es) and Kemele Endris (kemele.endris@tib.eu)
+David Chaves-Fraga (dchaves@fi.upm.es), Samaneh Jozashoori (samaneh.jozashoori@tib.eu), and Kemele Endris (kemele.endris@tib.eu)
 
 # Installing and Running the SDM-RDFizer 
 The SDM-RDFizer can run by building a docker container or by installing the RDFfizer locally. 
