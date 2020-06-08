@@ -213,7 +213,7 @@ mapping: ${default:main_directory}/mappingDataset1.ttl
 3.2
 ```
 ## RML-Test Cases
-See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). Last test date: 13/04/2019
+See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). Last test date: 08/06/2020
 
 ## License
 This work is licensed under Apache 2.0
