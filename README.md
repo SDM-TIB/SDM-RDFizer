@@ -215,5 +215,8 @@ mapping: ${default:main_directory}/mappingDataset1.ttl
 ## RML-Test Cases
 See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). Last test date: 08/06/2020
 
+## Experimental Evaluations
+See the results of the experimental evaluations of SDM-RDFizer at [SDM-RDFizer-Experiments repository](https://github.com/SDM-TIB/SDM-RDFizer-Experiments)
+
 ## License
 This work is licensed under Apache 2.0
