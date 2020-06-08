@@ -15,13 +15,7 @@ The SDM-RDFizer is used in the creation of the knowledge graphs of the EU H2020 
 
 
 # About and Authors
-The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by
-
-Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com)
-
-Under the supervision of:
-
-David Chaves-Fraga (dchaves@fi.upm.es), Samaneh Jozashoori (samaneh.jozashoori@tib.eu), and Kemele Endris (kemele.endris@tib.eu)
+The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of David Chaves-Fraga (dchaves@fi.upm.es), Samaneh Jozashoori (samaneh.jozashoori@tib.eu), and Kemele Endris (kemele.endris@tib.eu)
 
 # Installing and Running the SDM-RDFizer 
 The SDM-RDFizer can run by building a docker container or by installing the RDFfizer locally. 
