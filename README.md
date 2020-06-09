@@ -20,7 +20,7 @@ The SDM-RDFizer is used in the creation of the knowledge graphs of EU H2020 proj
 
 
 # Installing and Running the SDM-RDFizer 
-Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository to learn how to install and run the SDM-RDFizer.
+Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository to learn how to install and run the SDM-RDFizer. You can also take a look to our demo at: https://www.youtube.com/watch?v=DpH_57M1uOE
 
 ## Version 
 ```
