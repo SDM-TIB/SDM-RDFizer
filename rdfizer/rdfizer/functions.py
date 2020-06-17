@@ -48,6 +48,9 @@ def string_substitution_json(string, pattern, row, term):
 				temp = temp[2:]
 				for t in temp:
 					value = value[t]
+
+			else:
+				value = match
 			
 			if value is not None:
 				if (type(value).__name__) == "int":
