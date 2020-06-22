@@ -3268,9 +3268,7 @@ def semantify(config_path):
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
 											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
-								elif config["datasets"]["dbType"] == "postgres":
-									
-									user, password, db, host = config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]	
+								elif config["datasets"]["dbType"] == "postgres":	
 									database, query_list = translate_sql(triples_map)
 									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 									cursor = db.cursor()
@@ -3298,20 +3296,42 @@ def semantify(config_path):
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
 										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-								elif triples_map.tablename != "None" or triples_map.iterator != "None":
-									user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
-									
-									db = connector.connect(host = host, port = port, user = user, password = password)
-									cursor = db.cursor()
+								elif triples_map.file_format == "XPath":
+									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+								elif config["datasets"]["dbType"] == "mysql":
 									database, query_list = translate_sql(triples_map)
-									cursor.execute("use " + database)
-									for query in query_list:
-										cursor.execute(query)
+									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
+									cursor = db.cursor()
+									if database != "None":
+										cursor.execute("use " + database)
+									else:
+										cursor.execute("use test")
+									if triples_map.query == "None":	
+										for query in query_list:
+											cursor.execute(query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+									else:
+										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-								elif triples_map.file_format == "XPath":
-									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()		
+											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+								elif config["datasets"]["dbType"] == "postgres":	
+									database, query_list = translate_sql(triples_map)
+									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+									cursor = db.cursor()
+									if triples_map.query == "None":	
+										for query in query_list:
+											cursor.execute(query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+									else:
+										cursor.execute(triples_map.query)
+										row_headers=[x[0] for x in cursor.description]
+										for row in cursor:
+											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
 								else:
 									print("Invalid reference formulation or format")
 									print("Aborting...")
