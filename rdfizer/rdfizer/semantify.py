@@ -2094,7 +2094,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				continue
 	return i
 
-def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2475,7 +2475,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 							else:
 								database, query_list = translate_sql(triples_map_element)
-								db = connector.connect(host="localhost", port=3306, user="root", password="06012009mj")
+								db = connector.connect(host = host, port = port, user = user, password = password)
 								cursor = db.cursor()
 								if database == None:
 									cursor.execute("use " + database)
@@ -2493,7 +2493,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						try:
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
-							db = connector.connect(host = "localhost", port = 3306, user = "root", password = "06012009mj")
+							db = connector.connect(host = host, port = port, user = user, password = password)
 							cursor = db.cursor()
 							if database == None:
 								cursor.execute("use " + database)
@@ -2562,7 +2562,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			continue
 	return i
 
-def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
+def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, user, password, db, host):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2943,7 +2943,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 							else:
 								database, query_list = translate_postgressql(triples_map_element)
-								db = psycopg2.connect( host="localhost", user="postgres", password="postgres", dbname="" )
+								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 								cursor = db.cursor()
 								for query in query_list:
 									cursor.execute(query)
@@ -2957,7 +2957,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						try:
 							database, query_list = translate_postgressql(triples_map)
 							database2, query_list_origin = translate_postgressql(triples_map_element)
-							db = psycopg2.connect( host="localhost", user="postgres", password="postgres", dbname="" )
+							db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 							cursor = db.cursor()
 							for query in query_list:
 								for q in query_list_origin:
@@ -3250,9 +3250,8 @@ def semantify(config_path):
 								elif triples_map.file_format == "XPath":
 									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 								elif config["datasets"]["dbType"] == "mysql":
-									user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
 									database, query_list = translate_sql(triples_map)
-									db = connector.connect(host = host, port = port, user = user, password = password)
+									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 									cursor = db.cursor()
 									if database != "None":
 										cursor.execute("use " + database)
@@ -3263,29 +3262,29 @@ def semantify(config_path):
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
 								elif config["datasets"]["dbType"] == "postgres":
 									
 									user, password, db, host = config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]	
 									database, query_list = translate_sql(triples_map)
-									db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
+									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 									cursor = db.cursor()
 									if triples_map.query == "None":	
 										for query in query_list:
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()					
+											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
 								else:
 									print("Invalid reference formulation or format")
 									print("Aborting...")
