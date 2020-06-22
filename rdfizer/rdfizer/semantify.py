@@ -62,16 +62,19 @@ def hash_maker(parent_data, parent_subject, child_object):
 						if value not in hash_table[row[child_object.parent[0]]]:
 							hash_table[row[child_object.parent[0]]].append(value)
 					else:
-						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
-							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+						value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object")
+						if value is not None:
+							if "<" + value + ">" not in hash_table[row[child_object.parent[0]]]:
+								hash_table[row[child_object.parent[0]]].append("<" + value + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-						if "http" in value and "<" not in value:
-							value = "<" + value[1:-1] + ">"
-						elif "http" in value and "<" in value:
-							value = value[1:-1] 
-						hash_table[row[child_object.parent[0]]].append(value)
+						if value is not None:
+							if "http" in value and "<" not in value:
+								value = "<" + value[1:-1] + ">"
+							elif "http" in value and "<" in value:
+								value = value[1:-1] 
+							hash_table[row[child_object.parent[0]]].append(value)
 					else:
 						hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
@@ -84,8 +87,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
 					hash_table.update({row[child_object.parent[0]] : [value]}) 
-				else:	
-					hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+				else:
+					value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object")
+					if value is not None:	
+						hash_table.update({row[child_object.parent[0]] : ["<" + value + ">"]})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
