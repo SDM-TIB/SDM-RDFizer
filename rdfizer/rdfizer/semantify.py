@@ -2530,19 +2530,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 		if predicate is not None and object is not None and subject is not None:
 			triple = subject + " " + predicate + " " + object + ".\n"
+			if triples_map.subject_map.graph is not None:
+				if "{" in triples_map.subject_map.graph:
+					triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+				else:
+					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 			if duplicate == "yes":
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
-					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if triple not in g_triples:
-					output_file_descriptor.write(triple)
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
-				output_file_descriptor.write(triple)
+				try:
+					output_file_descriptor.write(triple)
+				except:
+					output_file_descriptor.write(triple.encode("utf-8"))
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
@@ -2556,12 +2562,18 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 				if duplicate == "yes":
 					if triple not in g_triples:
-						output_file_descriptor.write(triple)
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
-					output_file_descriptor.write(triple)
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
@@ -2998,12 +3010,18 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 			if duplicate == "yes":
 				if triple not in g_triples:
-					output_file_descriptor.write(triple)
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
-				output_file_descriptor.write(triple)
+				try:
+					output_file_descriptor.write(triple)
+				except:
+					output_file_descriptor.write(triple.encode("utf-8"))
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
@@ -3019,12 +3037,18 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if duplicate == "yes":
 					if triple not in g_triples:
-						output_file_descriptor.write(triple)
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
-					output_file_descriptor.write(triple)
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
