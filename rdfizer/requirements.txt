@@ -1,6 +1,0 @@
-isodate==0.6.0
-pyparsing==2.2.0
-rdflib==4.2.2
-six==1.11.0
-mysql
-psycopg2-binary
