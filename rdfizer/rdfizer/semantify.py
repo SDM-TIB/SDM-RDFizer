@@ -3210,6 +3210,11 @@ def semantify(config_path):
 	
 	"""
 
+	if os.path.isfile(config_path) == False:
+		print("The configuration file " + config_path + " does not exist.")
+		print("Aborting...")
+		sys.exit(1)
+
 	config = ConfigParser(interpolation=ExtendedInterpolation())
 	config.read(config_path)
 
