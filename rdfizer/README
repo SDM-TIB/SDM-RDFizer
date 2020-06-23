@@ -7,7 +7,7 @@ Install requirements:
 
 Run the rdfizer:
 	1. As a script itself:
-		$ (env) python3 rdfizer/semantify.py -c configfile.ini
+		$ (env) python3 rdfizer/run_rdfizer.py -c configfile.ini
 
 	2. As a package inside another script:
 		$ (env) python3 run_rdfizer.py configfile.ini
