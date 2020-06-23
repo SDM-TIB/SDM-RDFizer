@@ -954,6 +954,11 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
 			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
+			if triples_map.subject_map.graph is not None:
+				if "{" in triples_map.subject_map.graph:	
+					rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
+				else:
+					rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 			if duplicate == "yes":
 				if rdf_type not in generated_triples:
 					output_file_descriptor.write(rdf_type)
@@ -2399,10 +2404,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
 		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
-		if "{" in triples_map.subject_map.graph:	
-			rdf_type = rdf_type[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
-		else:
-			rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
+		if triples_map.subject_map.graph is not None:
+			if "{" in triples_map.subject_map.graph:	
+				rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
+			else:
+				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 		if duplicate == "yes":
 			if rdf_type not in g_triples:
 				output_file_descriptor.write(rdf_type)
