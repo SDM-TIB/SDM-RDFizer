@@ -749,13 +749,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 				if duplicate == "yes":
 					if rdf_type not in generated_triples:
 						output_file_descriptor.write(rdf_type)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({rdf_type : number_triple + i + 1})
 						i += 1
 				else:
 					output_file_descriptor.write(rdf_type)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 
@@ -892,13 +892,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					if duplicate == "yes":
 						if triple not in generated_triples:
 							output_file_descriptor.write(triple)
-							if number_triple + i + 1 % 10000 == 0:
+							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							generated_triples.update({triple : number_triple})
 							i += 1
 					else:
 						output_file_descriptor.write(triple)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 				elif predicate is not None and subject is not None and object_list:
@@ -920,13 +920,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if duplicate == "yes":
 							if triple not in generated_triples:
 								output_file_descriptor.write(triple)
-								if number_triple + i + 1 % 10000 == 0:
+								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								generated_triples.update({triple : number_triple})
 								i += 1
 						else:
 							output_file_descriptor.write(triple)
-							if number_triple + i + 1 % 10000 == 0:
+							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
 					object_list = []
@@ -968,13 +968,13 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 			if duplicate == "yes":
 				if rdf_type not in generated_triples:
 					output_file_descriptor.write(rdf_type)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({rdf_type : number_triple + i + 1})
 					i += 1
 			else:
 				output_file_descriptor.write(rdf_type)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
@@ -1073,14 +1073,14 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				if duplicate == "yes":
 					if (triple not in triple_array) and (triple not in triples):
 						output_file_descriptor.write(triple)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						triple_array.append(triple)
 						triples.append(triple)
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
@@ -1095,14 +1095,14 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					if duplicate == "yes":
 						if (triple not in triple_array) and (triple not in triples):
 							output_file_descriptor.write(triple)
-							if number_triple + i + 1 % 10000 == 0:
+							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							triple_array.append(triple)
 							triples.append(triple)
 							i += 1
 					else:
 						output_file_descriptor.write(triple)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 				object_list = []
@@ -1398,13 +1398,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 		if duplicate == "yes":
 			if rdf_type not in generated_triples:
 				output_file_descriptor.write(rdf_type)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				generated_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			if number_triple + i + 1 % 10000 == 0:
+			if (number_triple + i + 1) % 10000 == 0:
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
@@ -1535,14 +1535,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			if duplicate == "yes":
 				if (triple not in generated_triples) and (triple not in g_triples):
 					output_file_descriptor.write(triple)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({triple : number_triple})
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
 				output_file_descriptor.write(triple)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
@@ -1562,14 +1562,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				if duplicate == "yes":
 					if (triple not in generated_triples) and (triple not in g_triples):
 						output_file_descriptor.write(triple)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({triple : number_triple})
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
@@ -1895,13 +1895,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			if duplicate == "yes":
 				if rdf_type not in generated_triples:
 					output_file_descriptor.write(rdf_type)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({rdf_type : number_triple + i + 1})
 					i += 1
 			else:
 				output_file_descriptor.write(rdf_type)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
@@ -2080,14 +2080,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				if duplicate == "yes":
 					if (triple not in generated_triples) and (triple not in g_triples):
 						output_file_descriptor.write(triple)
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({triple : number_triple})
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
@@ -2108,14 +2108,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if duplicate == "yes":
 							if (triple not in generated_triples) and (triple not in g_triples):
 								output_file_descriptor.write(triple)
-								if number_triple + i + 1 % 10000 == 0:
+								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								generated_triples.update({triple : number_triple})
 								g_triples.update({triple : number_triple})
 								i += 1
 						else:
 							output_file_descriptor.write(triple)
-							if number_triple + i + 1 % 10000 == 0:
+							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
 				object_list = []
@@ -2436,13 +2436,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		if duplicate == "yes":
 			if rdf_type not in g_triples:
 				output_file_descriptor.write(rdf_type)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				g_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			if number_triple + i + 1 % 10000 == 0:
+			if (number_triple + i + 1) % 10000 == 0:
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
@@ -2567,7 +2567,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						output_file_descriptor.write(triple)
 					except:
 						output_file_descriptor.write(triple.encode("utf-8"))
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
@@ -2576,7 +2576,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					output_file_descriptor.write(triple)
 				except:
 					output_file_descriptor.write(triple.encode("utf-8"))
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
@@ -2594,7 +2594,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							output_file_descriptor.write(triple)
 						except:
 							output_file_descriptor.write(triple.encode("utf-8"))
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
@@ -2603,7 +2603,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						output_file_descriptor.write(triple)
 					except:
 						output_file_descriptor.write(triple.encode("utf-8"))
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
@@ -2924,13 +2924,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 		if duplicate == "yes":
 			if rdf_type not in g_triples:
 				output_file_descriptor.write(rdf_type)
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				g_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			if number_triple + i + 1 % 10000 == 0:
+			if (number_triple + i + 1) % 10000 == 0:
 				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
@@ -3046,7 +3046,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						output_file_descriptor.write(triple)
 					except:
 						output_file_descriptor.write(triple.encode("utf-8"))
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
@@ -3055,7 +3055,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					output_file_descriptor.write(triple)
 				except:
 					output_file_descriptor.write(triple.encode("utf-8"))
-				if number_triple + i + 1 % 10000 == 0:
+				if (number_triple + i + 1) % 10000 == 0:
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
@@ -3075,7 +3075,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							output_file_descriptor.write(triple)
 						except:
 							output_file_descriptor.write(triple.encode("utf-8"))
-						if number_triple + i + 1 % 10000 == 0:
+						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
@@ -3084,7 +3084,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						output_file_descriptor.write(triple)
 					except:
 						output_file_descriptor.write(triple.encode("utf-8"))
-					if number_triple + i + 1 % 10000 == 0:
+					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
