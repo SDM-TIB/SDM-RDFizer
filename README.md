@@ -27,16 +27,20 @@ The SDM-RDFizer is used in the creation of the knowledge graphs of EU H2020 proj
 - ImProVIT (https://www.tib.eu/de/forschung-entwicklung/projektuebersicht/projektsteckbrief/improvit)
 - PLATOON (https://platoon-project.eu/) 
 - EUvsVirus Hackathon (April 2020) (https://blogs.tib.eu/wp/tib/2020/05/06/how-do-knowledge-graphs-contribute-to-understanding-covid-19-related-treatments/). SDM-RDFizer created the Knowledge4COVID-19 knowledge graph during the participation of the team of the Scientific Data Management group. By June 7th, 2020, this KG is comprised of 28M RDF triples describing at a fine-grained level 63527 COVID-19 scientific publications and COVID-19 related concepts (e.g., 5802 substances, 1.2M drug-drug interactions, and 103 molecular disfunctions). 
-- Drugs4Covid (https://drugs4covid.oeg-upm.net/):  NLP annotations and metadata from more than 60,000 scientific papers about COVID viruses are integrated in a KG with almost 44M of facts (triples). SDM-RDFizer was used for creating this KG.
 
 The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national projects where the Ontology Engineering Group (Technical University of Madrid) participates. These projects, mainly focused on the transportation and smart cities domain, include:
 
-- SPRINT (http://sprint-transport.eu/)
-- SNAP (https://www.snap-project.eu/) 
-- Open Cities (https://ciudades-abiertas.es/)
+- H2020 - SPRINT (http://sprint-transport.eu/): performance and scalability to test a semantic architecture for the Interoperability Framework on Transport across Europe.
+- EIT-SNAP (https://www.snap-project.eu/): innovation project on the application of semantic technologies for national access points.
+- Open Cities (https://ciudades-abiertas.es/): national project on creating common and shared vocabularies for Spanish Cities
+- Drugs4Covid (https://drugs4covid.oeg-upm.net/): NLP annotations and metadata from more than 60,000 scientific papers about COVID viruses are integrated in a KG with almost 44M of facts (triples). SDM-RDFizer was used for creating this KG.
+
 
 # Installing and Running the SDM-RDFizer 
 Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository to learn how to install and run the SDM-RDFizer. You can also take a look to our demo at: https://www.youtube.com/watch?v=DpH_57M1uOE
+- Install and run the SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/Install&Run
+- Parameters to configure SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/The-Parameters-of-the-Configuration-file
+- FAQ: https://github.com/SDM-TIB/SDM-RDFizer/wiki/FAQ
 
 ## Version 
 ```
