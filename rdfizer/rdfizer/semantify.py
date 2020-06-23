@@ -2450,11 +2450,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				else:
-					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -2920,11 +2920,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				else:
-					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
