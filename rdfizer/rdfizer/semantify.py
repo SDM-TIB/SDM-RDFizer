@@ -3423,7 +3423,7 @@ def semantify(config_path):
 		print("Semantifying {}.{}...".format(config["datasets"]["name"]))
 
 		start_time = time.time()
-		with open(output_file, "w") as output_file_descriptor:
+		with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 			with open(config["datasets"]["output_folder"] + "/" + "datasets_stats.csv", 'w') as myfile:
 				wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 				wr.writerow(["Dataset", "Number of the triple", "Time"])
