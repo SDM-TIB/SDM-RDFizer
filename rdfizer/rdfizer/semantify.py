@@ -3303,7 +3303,7 @@ def semantify(config_path):
 
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
 					
-					with open(output_file, "w") as output_file_descriptor:
+					with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 						for triples_map in triples_map_list:
 							global number_triple
 							if enrichment == "yes":
