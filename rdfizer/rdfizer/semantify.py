@@ -16,7 +16,7 @@ import time
 import json
 import xml.etree.ElementTree as ET
 import psycopg2
-
+import types
 from .functions import *
 
 try:
@@ -46,6 +46,51 @@ po_table = {}
 global enrichment
 enrichment = ""
 
+def hash_update(parent_data, parent_subject, child_object,join_id):
+	hash_table = {}
+	for row in parent_data:
+		if child_object.parent[0] in row.keys():
+			if row[child_object.parent[0]] in hash_table:
+				if duplicate == "yes":
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if value is not None:
+							if "http" in value and "<" not in value:
+								value = "<" + value[1:-1] + ">"
+							elif "http" in value and "<" in value:
+								value = value[1:-1] 
+						if value not in hash_table[row[child_object.parent[0]]]:
+							hash_table[row[child_object.parent[0]]].append(value)
+					else:
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
+								hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+				else:
+					if parent_subject.subject_map.subject_mapping_type == "reference":
+						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
+						hash_table[row[child_object.parent[0]]].append(value)
+					else:
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+
+			else:
+				if parent_subject.subject_map.subject_mapping_type == "reference":
+					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					if value is not None:
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
+					hash_table.update({row[child_object.parent[0]] : [value]}) 
+				else:
+					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
+						hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+	join_table[join_id].update(hash_table)
+
 def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
@@ -62,21 +107,20 @@ def hash_maker(parent_data, parent_subject, child_object):
 						if value not in hash_table[row[child_object.parent[0]]]:
 							hash_table[row[child_object.parent[0]]].append(value)
 					else:
-						value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object")
-						if value is not None:
-							if "<" + value + ">" not in hash_table[row[child_object.parent[0]]]:
-								hash_table[row[child_object.parent[0]]].append("<" + value + ">") 
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
+								hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
-						if value is not None:
-							if "http" in value and "<" not in value:
-								value = "<" + value[1:-1] + ">"
-							elif "http" in value and "<" in value:
-								value = value[1:-1] 
-							hash_table[row[child_object.parent[0]]].append(value)
+						if "http" in value and "<" not in value:
+							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
+						hash_table[row[child_object.parent[0]]].append(value)
 					else:
-						hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -88,9 +132,8 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 					hash_table.update({row[child_object.parent[0]] : [value]}) 
 				else:
-					value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object")
-					if value is not None:	
-						hash_table.update({row[child_object.parent[0]] : ["<" + value + ">"]})
+					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
+						hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
@@ -106,11 +149,12 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 								value = "<" + value[1:-1] + ">"
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
-						if value not in hash_table[row[child_object.parent]]:
+						if value not in hash_table[child_list_value(child_object.parent,row)]:
 							hash_table[child_list_value(child_object.parent,row)].append(value)
 					else:
-						if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent]]:
-							hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[child_list_value(child_object.parent,row)]:
+								hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -120,7 +164,8 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 						hash_table[child_list_value(child_object.parent,row)].append(value)
 					else:
-						hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
+							hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -131,8 +176,9 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
 					hash_table.update({child_list_value(child_object.parent,row) : [value]}) 
-				else:	
-					hash_table.update({child_list_value(child_object.parent,row) : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+				else:
+					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
+						hash_table.update({child_list_value(child_object.parent,row) : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child) : hash_table})
 
 def hash_maker_xml(parent_data, parent_subject, child_object):
@@ -703,12 +749,14 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 				if duplicate == "yes":
 					if rdf_type not in generated_triples:
 						output_file_descriptor.write(rdf_type)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({rdf_type : number_triple + i + 1})
 						i += 1
 				else:
 					output_file_descriptor.write(rdf_type)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 
 
@@ -750,24 +798,22 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 				elif predicate_object_map.object_map.mapping_type == "template":
 					try:
 						if predicate_object_map.object_map.term is None:
-							object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 						elif "IRI" in predicate_object_map.object_map.term:
-							object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 						else:
-							object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+							object = "\"" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
 					except TypeError:
 						object = None
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object")
-					if object is not None:
-						if predicate_object_map.object_map.language is not None:
-							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-								object += "@es"
-							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-								object += "@en"
-						if predicate_object_map.object_map.term is not None:
-							if "IRI" in predicate_object_map.object_map.term:
-								object = "<" + object[1:-1] + ">" 
+					if (predicate_object_map.object_map.language is not None) and (object is not None):
+						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+							object += "@es"
+						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+							object += "@en"
+						elif "IRI" in predicate_object_map.object_map.term:
+							object = "<" + object + ">" 
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
 					if subject is not None:
 						for triples_map_element in triples_map_list:
@@ -846,12 +892,14 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					if duplicate == "yes":
 						if triple not in generated_triples:
 							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							generated_triples.update({triple : number_triple})
 							i += 1
 					else:
 						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 				elif predicate is not None and subject is not None and object_list:
 					for obj in object_list:
@@ -872,12 +920,14 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if duplicate == "yes":
 							if triple not in generated_triples:
 								output_file_descriptor.write(triple)
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								generated_triples.update({triple : number_triple})
 								i += 1
 						else:
 							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
 					object_list = []
 				else:
@@ -910,15 +960,22 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
 			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
+			if triples_map.subject_map.graph is not None:
+				if "{" in triples_map.subject_map.graph:	
+					rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
+				else:
+					rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 			if duplicate == "yes":
 				if rdf_type not in generated_triples:
 					output_file_descriptor.write(rdf_type)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({rdf_type : number_triple + i + 1})
 					i += 1
 			else:
 				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
 
@@ -971,14 +1028,14 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					for triples_map_element in triples_map_list:
 						if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 							if triples_map_element.data_source != triples_map.data_source:
-								if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+								if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
 									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
 												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 											else:
 												data = json.load(input_file_descriptor)
-											hash_maker(data, triples_map_element, predicate_object_map.object_map)							
+											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)							
 									else:
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host=host, port=port, user=user, password=password)
@@ -1016,13 +1073,15 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				if duplicate == "yes":
 					if (triple not in triple_array) and (triple not in triples):
 						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						triple_array.append(triple)
 						triples.append(triple)
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
@@ -1036,13 +1095,15 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					if duplicate == "yes":
 						if (triple not in triple_array) and (triple not in triples):
 							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							triple_array.append(triple)
 							triples.append(triple)
 							i += 1
 					else:
 						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 				object_list = []
 			else:
@@ -1337,12 +1398,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 		if duplicate == "yes":
 			if rdf_type not in generated_triples:
 				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				generated_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+			if (number_triple + i + 1) % 10000 == 0:
+				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
 	
@@ -1384,24 +1447,22 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
 				else:
-					object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+					object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object")
-			if object is not None:
-				if predicate_object_map.object_map.language is not None:
-					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-						object += "@es"
-					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-						object += "@en"
-				if predicate_object_map.object_map.term is not None:		
-					if "IRI" in predicate_object_map.object_map.term:
-							object = "<" + object[1:-1] + ">" 
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
+				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+					object += "@es"
+				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			if subject is not None:
 				for triples_map_element in triples_map_list:
@@ -1474,13 +1535,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			if duplicate == "yes":
 				if (triple not in generated_triples) and (triple not in g_triples):
 					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					generated_triples.update({triple : number_triple})
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
 				output_file_descriptor.write(triple)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
@@ -1499,13 +1562,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				if duplicate == "yes":
 					if (triple not in generated_triples) and (triple not in g_triples):
 						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({triple : number_triple})
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
 					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
 		else:
@@ -1821,21 +1886,31 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					subject = None
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
-			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
+			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+			obj = "<{}>".format(triples_map.subject_map.rdf_class)
+			rdf_type = subject + " " + predicate + " " + obj + ".\n"
 			if triples_map.subject_map.graph is not None:
 				if "{" in triples_map.subject_map.graph:	
 					rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
 				else:
 					rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 			if duplicate == "yes":
-				if rdf_type not in generated_triples:
+				if predicate not in g_triples:
 					output_file_descriptor.write(rdf_type)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					generated_triples.update({rdf_type : number_triple + i + 1})
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
+					i += 1
+				elif subject + "_" + obj not in g_triples[predicate]:
+					output_file_descriptor.write(rdf_type)
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					g_triples[predicate].update({subject + "_" + obj : rdf_type})
 					i += 1
 			else:
 				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 
 		
@@ -1886,15 +1961,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				if object is not None:
-					if predicate_object_map.object_map.term is not None:
-						if "IRI" in predicate_object_map.object_map.term:
-							object = "<" + object[1:-1] + ">" 
-					if (predicate_object_map.object_map.language is not None):
-						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-							object += "@es"
-						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-							object += "@en"
+				if (predicate_object_map.object_map.language is not None) and (object is not None):
+					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+						object += "@es"
+					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+						object += "@en"
+					elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -1909,7 +1982,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													hash_maker(data, triples_map_element, predicate_object_map.object_map)
 												else:
 													data = json.load(input_file_descriptor)
-													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+													if isinstance(data, list):
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
@@ -1923,7 +1999,21 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 										else:
-											object_list = []
+											if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+														hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+													else:
+														data = json.load(input_file_descriptor)
+														if isinstance(data, list):
+															hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+														elif len(data) < 2:	
+															hash_update(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+											if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
+											else:
+												object_list = []
 									object = None
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
@@ -1934,7 +2024,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 												else:
 													data = json.load(input_file_descriptor)
-													hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+													if isinstance(data, list):
+														hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
@@ -1958,7 +2051,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 												hash_maker(data, triples_map_element, predicate_object_map.object_map)
 											else:
 												data = json.load(input_file_descriptor)
-												hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+												if isinstance(data, list):
+													hash_maker(data, triples_map_element, predicate_object_map.object_map)
+												else:
+													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 									if sublist(predicate_object_map.object_map.child,row.keys()):
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
@@ -1990,15 +2086,24 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					else:
 						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if duplicate == "yes":
-					if (triple not in generated_triples) and (triple not in g_triples):
+					if predicate not in g_triples:
 						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						generated_triples.update({triple : number_triple})
-						g_triples.update({triple : number_triple})
+						g_triples.update({predicate : {subject + "_" + object: triple}})
 						i += 1
+					elif subject + "_" + object not in g_triples[predicate]:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						generated_triples.update({triple : number_triple})
+						g_triples[predicate].update({subject + "_" + object: triple})
+						i += 1 
 				else:
 					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
 				for obj in object_list:
@@ -2016,22 +2121,30 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							else:
 								triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 						if duplicate == "yes":
-							if (triple not in generated_triples) and (triple not in g_triples):
+							if predicate not in g_triples:
 								output_file_descriptor.write(triple)
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								generated_triples.update({triple : number_triple})
-								g_triples.update({triple : number_triple})
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								g_triples.update({predicate : {subject + "_" + obj: triple}})
 								i += 1
+							elif subject + "_" + obj not in g_triples[predicate]:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								g_triples[predicate].update({subject + "_" + obj: triple})
+								i += 1
+
 						else:
 							output_file_descriptor.write(triple)
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
 				object_list = []
 			else:
 				continue
 	return i
 
-def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2334,20 +2447,24 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			except:
 				subject = None
 
-	if triples_map.subject_map.rdf_class is not None and subject is not None and (subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)not in g_triples):
-		if "{" in triples_map.subject_map.graph:	
-			rdf_type = rdf_type[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
-		else:
-			rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
+	if triples_map.subject_map.rdf_class is not None and subject is not None:
+		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
+		if triples_map.subject_map.graph is not None:
+			if "{" in triples_map.subject_map.graph:	
+				rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
+			else:
+				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 		if duplicate == "yes":
 			if rdf_type not in g_triples:
 				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				g_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+			if (number_triple + i + 1) % 10000 == 0:
+				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
 
@@ -2380,24 +2497,22 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				else:
-					object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if object is not None:
-				if predicate_object_map.object_map.language is not None:
-					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-						object += "@es"
-					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-						object += "@en"
-				if predicate_object_map.object_map.term is not None:
-					if "IRI" in predicate_object_map.object_map.term:
-						object = "<" + object[1:-1] + ">" 
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
+				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+					object += "@es"
+				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
@@ -2414,7 +2529,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 							else:
 								database, query_list = translate_sql(triples_map_element)
-								db = connector.connect(host="localhost", port=3306, user="root", password="06012009mj")
+								db = connector.connect(host = host, port = port, user = user, password = password)
 								cursor = db.cursor()
 								if database == None:
 									cursor.execute("use " + database)
@@ -2432,7 +2547,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						try:
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
-							db = connector.connect(host = "localhost", port = 3306, user = "root", password = "06012009mj")
+							db = connector.connect(host = host, port = port, user = user, password = password)
 							cursor = db.cursor()
 							if database == None:
 								cursor.execute("use " + database)
@@ -2462,20 +2577,28 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 		if predicate is not None and object is not None and subject is not None:
 			triple = subject + " " + predicate + " " + object + ".\n"
+			if triples_map.subject_map.graph is not None:
+				if "{" in triples_map.subject_map.graph:
+					triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+				else:
+					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 			if duplicate == "yes":
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
-					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if triple not in g_triples:
-					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
-				output_file_descriptor.write(triple)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				try:
+					output_file_descriptor.write(triple)
+				except:
+					output_file_descriptor.write(triple.encode("utf-8"))
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
@@ -2488,20 +2611,28 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 				if duplicate == "yes":
 					if triple not in g_triples:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
-					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
 		else:
 			continue
 	return i
 
-def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
+def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, user, password, db, host):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2804,20 +2935,24 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			except:
 				subject = None
 
-	if triples_map.subject_map.rdf_class is not None and subject is not None and (subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)not in g_triples):
-		if "{" in triples_map.subject_map.graph:	
-			rdf_type = rdf_type[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
-		else:
-			rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
+	if triples_map.subject_map.rdf_class is not None and subject is not None:
+		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}> .\n".format(triples_map.subject_map.rdf_class)
+		if triples_map.subject_map.graph is not None:
+			if "{" in triples_map.subject_map.graph:	
+				rdf_type = rdf_type[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
+			else:
+				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
 		if duplicate == "yes":
 			if rdf_type not in g_triples:
 				output_file_descriptor.write(rdf_type)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				g_triples.update({rdf_type : number_triple + i + 1})
 				i += 1
 		else:
 			output_file_descriptor.write(rdf_type)
-			csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+			if (number_triple + i + 1) % 10000 == 0:
+				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 			i += 1
 
 
@@ -2850,24 +2985,22 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + ">"
 				else:
-					object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object") + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
-			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if object is not None:
-				if predicate_object_map.object_map.language is not None:
-					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-						object += "@es"
-					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-						object += "@en"
-				if predicate_object_map.object_map.term is not None:
-					if "IRI" in predicate_object_map.object_map.term:
-							object = "<" + object[1:-1] + ">" 
+			object = string_substitution_postgres(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
+			if (predicate_object_map.object_map.language is not None) and (object is not None):
+				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+					object += "@es"
+				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+					object += "@en"
+				elif "IRI" in predicate_object_map.object_map.term:
+						object = "<" + object + ">" 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
@@ -2883,7 +3016,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 							else:
 								database, query_list = translate_postgressql(triples_map_element)
-								db = psycopg2.connect( host="localhost", user="postgres", password="postgres", dbname="" )
+								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 								cursor = db.cursor()
 								for query in query_list:
 									cursor.execute(query)
@@ -2897,7 +3030,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						try:
 							database, query_list = translate_postgressql(triples_map)
 							database2, query_list_origin = translate_postgressql(triples_map_element)
-							db = psycopg2.connect( host="localhost", user="postgres", password="postgres", dbname="" )
+							db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 							cursor = db.cursor()
 							for query in query_list:
 								for q in query_list_origin:
@@ -2930,13 +3063,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 			if duplicate == "yes":
 				if triple not in g_triples:
-					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					g_triples.update({triple : number_triple})
 					i += 1
 			else:
-				output_file_descriptor.write(triple)
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				try:
+					output_file_descriptor.write(triple)
+				except:
+					output_file_descriptor.write(triple.encode("utf-8"))
+				if (number_triple + i + 1) % 10000 == 0:
+					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
@@ -2951,13 +3092,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if duplicate == "yes":
 					if triple not in g_triples:
-						output_file_descriptor.write(triple)
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						g_triples.update({triple : number_triple})
 						i += 1
 				else:
-					output_file_descriptor.write(triple)
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					try:
+						output_file_descriptor.write(triple)
+					except:
+						output_file_descriptor.write(triple.encode("utf-8"))
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			object_list = []
 		else:
@@ -3142,6 +3291,11 @@ def semantify(config_path):
 	
 	"""
 
+	if os.path.isfile(config_path) == False:
+		print("The configuration file " + config_path + " does not exist.")
+		print("Aborting...")
+		sys.exit(1)
+
 	config = ConfigParser(interpolation=ExtendedInterpolation())
 	config.read(config_path)
 
@@ -3152,6 +3306,12 @@ def semantify(config_path):
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
 			os.mkdir(config["datasets"]["output_folder"])
+
+	if (duplicate == "yes") and (config["datasets"]["context"].lower() == "yes") and enrichment == "yes":
+		if config["datasets"]["context_file"] != "none":
+			with open(str(config["datasets"]["context_file"]), "r") as input_file_descriptor:
+				global g_triples
+				g_triples = json.load(input_file_descriptor)
 
 	global start_time
 	if config["datasets"]["all_in_one_file"] == "no":
@@ -3170,7 +3330,7 @@ def semantify(config_path):
 
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
 					
-					with open(output_file, "w") as output_file_descriptor:
+					with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 						for triples_map in triples_map_list:
 							global number_triple
 							if enrichment == "yes":
@@ -3181,16 +3341,17 @@ def semantify(config_path):
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
-										if len(data) < 2:
+										if isinstance(data, list):
+											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+										elif len(data) < 2:
 											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
 										else:
 											number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 								elif triples_map.file_format == "XPath":
 									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 								elif config["datasets"]["dbType"] == "mysql":
-									user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
 									database, query_list = translate_sql(triples_map)
-									db = connector.connect(host = host, port = port, user = user, password = password)
+									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 									cursor = db.cursor()
 									if database != "None":
 										cursor.execute("use " + database)
@@ -3201,29 +3362,27 @@ def semantify(config_path):
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-								elif config["datasets"]["dbType"] == "postgres":
-									
-									user, password, db, host = config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]	
+											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+								elif config["datasets"]["dbType"] == "postgres":	
 									database, query_list = translate_sql(triples_map)
-									db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
+									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 									cursor = db.cursor()
 									if triples_map.query == "None":	
 										for query in query_list:
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()					
+											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
 								else:
 									print("Invalid reference formulation or format")
 									print("Aborting...")
@@ -3236,21 +3395,43 @@ def semantify(config_path):
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
-										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-								elif triples_map.tablename != "None" or triples_map.iterator != "None":
-									user, password, port, host = config[dataset_i]["user"], config[dataset_i]["password"], int(config[dataset_i]["port"]), config[dataset_i]["host"]
-									
-									db = connector.connect(host = host, port = port, user = user, password = password)
-									cursor = db.cursor()
+										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+								elif triples_map.file_format == "XPath":
+									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+								elif config["datasets"]["dbType"] == "mysql":
 									database, query_list = translate_sql(triples_map)
-									cursor.execute("use " + database)
-									for query in query_list:
-										cursor.execute(query)
+									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
+									cursor = db.cursor()
+									if database != "None":
+										cursor.execute("use " + database)
+									else:
+										cursor.execute("use test")
+									if triples_map.query == "None":	
+										for query in query_list:
+											cursor.execute(query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+									else:
+										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-								elif triples_map.file_format == "XPath":
-									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()		
+											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+								elif config["datasets"]["dbType"] == "postgres":	
+									database, query_list = translate_sql(triples_map)
+									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+									cursor = db.cursor()
+									if triples_map.query == "None":	
+										for query in query_list:
+											cursor.execute(query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+									else:
+										cursor.execute(triples_map.query)
+										row_headers=[x[0] for x in cursor.description]
+										for row in cursor:
+											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
 								else:
 									print("Invalid reference formulation or format")
 									print("Aborting...")
@@ -3264,12 +3445,21 @@ def semantify(config_path):
 			wr.writerow(["Number of triples", "Time"])
 			wr.writerow([number_triple, time.time()-start_time])
 
+		if (duplicate == "yes") and (config["datasets"]["context"].lower() == "yes") and (enrichment == "yes") and (config["datasets"]["predicates"].lower() != "none"):
+			with open(config["datasets"]["output_folder"] + "/context.json", 'w') as context_file:
+				g_t = {}
+				predicates = open(config["datasets"]["predicates"], "r").read()
+				for p in predicates.strip().split("\n"):
+					if p in g_triples:
+						g_t[p] = g_triples[p]
+				json.dump(g_t,context_file)
+
 	else:
 		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt" 
 		print("Semantifying {}.{}...".format(config["datasets"]["name"]))
 
 		start_time = time.time()
-		with open(output_file, "w") as output_file_descriptor:
+		with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 			with open(config["datasets"]["output_folder"] + "/" + "datasets_stats.csv", 'w') as myfile:
 				wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 				wr.writerow(["Dataset", "Number of the triple", "Time"])
