@@ -60,11 +60,11 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
 						if value not in hash_table[row[child_object.parent[0]]]:
-							hash_table[row[child_object.parent[0]]].append(value)
+							hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
 							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
-								hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+								hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}) 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -72,10 +72,10 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-						hash_table[row[child_object.parent[0]]].append(value)
+						hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
-							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+							hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -88,7 +88,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 					hash_table.update({row[child_object.parent[0]] : [value]}) 
 				else:
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
-						hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}})
 	join_table[join_id].update(hash_table)
 
 def hash_maker(parent_data, parent_subject, child_object):
@@ -105,11 +105,11 @@ def hash_maker(parent_data, parent_subject, child_object):
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
 						if value not in hash_table[row[child_object.parent[0]]]:
-							hash_table[row[child_object.parent[0]]].append(value)
+							hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
 							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row[child_object.parent[0]]]:
-								hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+								hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}) 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -117,10 +117,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-						hash_table[row[child_object.parent[0]]].append(value)
+						hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
-							hash_table[row[child_object.parent[0]]].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+							hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -130,10 +130,10 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-					hash_table.update({row[child_object.parent[0]] : [value]}) 
+					hash_table.update({row[child_object.parent[0]] : {value : "object"}}) 
 				else:
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
-						hash_table.update({row[child_object.parent[0]] : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
@@ -150,11 +150,11 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
 						if value not in hash_table[child_list_value(child_object.parent,row)]:
-							hash_table[child_list_value(child_object.parent,row)].append(value)
+							hash_table[child_list_value(child_object.parent,row)].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
 							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[child_list_value(child_object.parent,row)]:
-								hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">") 
+								hash_table[child_list_value(child_object.parent,row)].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}) 
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
@@ -162,10 +162,10 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-						hash_table[child_list_value(child_object.parent,row)].append(value)
+						hash_table[child_list_value(child_object.parent,row)].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:
-							hash_table[child_list_value(child_object.parent,row)].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+							hash_table[child_list_value(child_object.parent,row)].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -175,10 +175,10 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-					hash_table.update({child_list_value(child_object.parent,row) : [value]}) 
+					hash_table.update({child_list_value(child_object.parent,row) : {value : "object"}}) 
 				else:
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") is not None:	
-						hash_table.update({child_list_value(child_object.parent,row) : ["<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]})
+						hash_table.update({child_list_value(child_object.parent,row) : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child) : hash_table})
 
 def hash_maker_xml(parent_data, parent_subject, child_object):
@@ -192,19 +192,19 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
 					if value not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].append(value)
+						hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
 				else:
 					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].append("<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
 					if value is not None:
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
-					hash_table[row.find(child_object.parent[0]).text].append(value)
+					hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
 				else:
-					hash_table[row.find(child_object.parent[0]).text].append("<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">")
+					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -212,9 +212,9 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 				if value is not None:
 					if "http" in value:
 						value = "<" + value[1:-1] + ">"
-				hash_table.update({row.find(child_object.parent[0]).text : [value]}) 
+				hash_table.update({row.find(child_object.parent[0]).text : {value : "object"}}) 
 			else:	
-				hash_table.update({row.find(child_object.parent[0]).text : ["<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">"]}) 
+				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 
@@ -228,12 +228,12 @@ def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 		if row[row_headers.index(child_object.parent[0])] in hash_table:
 			if duplicate == "yes":
 				if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[row[child_object.parent[0]]]:
-					hash_table[element].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">")
+					hash_table[element].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
 			else:
-				hash_table[element].append("<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">")
+				hash_table[element].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
 			
 		else:
-			hash_table.update({element : ["<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">"]}) 
+			hash_table.update({element : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0]  : hash_table})
 
 
@@ -1107,7 +1107,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				for obj in object_list:
 					if predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
-							triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+							triple = subject + " " + predicate + " <" + obj[1:-1]+ ">.\n"
 						else:
 							triple = subject + " " + predicate + " " + obj + ".\n"
 					else:
@@ -2645,7 +2645,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
-				triple = subject + " " + predicate + " " + obj + ".\n"
+				triple = subject + " " + predicate + " " + obj.keys() + ".\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:
 						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
