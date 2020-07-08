@@ -827,7 +827,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						for triples_map_element in triples_map_list:
 							if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 								if triples_map_element.data_source != triples_map.data_source:
-									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												if str(triples_map_element.file_format).lower() == "csv":
@@ -859,7 +859,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									object = None
 								else:
 									if predicate_object_map.object_map.parent is not None:
-										if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+										if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												if str(triples_map_element.file_format).lower() == "csv":
 													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
@@ -1488,7 +1488,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				for triples_map_element in triples_map_list:
 					if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 						if triples_map_element.data_source != triples_map.data_source:
-							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 										if str(triples_map_element.file_format).lower() == "csv":
@@ -1514,7 +1514,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							object = None
 						else:
 							if predicate_object_map.object_map.parent is not None:
-								if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+								if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 										if str(triples_map_element.file_format).lower() == "csv":
 											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
@@ -2552,7 +2552,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename):
-						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 							if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 									if str(triples_map_element.file_format).lower() == "csv":
@@ -3071,7 +3071,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename):
-						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child not in join_table:
+						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 							if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 									if str(triples_map_element.file_format).lower() == "csv":
