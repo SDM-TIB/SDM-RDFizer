@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 with open("requirements.txt") as r:
-    requirements = r.read().split("\n")[0:-1]
+    requirements = list(filter(None, r.read().split("\n")[0:]))
 
 setuptools.setup(
     name="rdfizer",
