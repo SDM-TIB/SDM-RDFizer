@@ -11,7 +11,7 @@ with open("requirements.txt") as r:
 
 setuptools.setup(
     name="rdfizer",
-    version="3.2.rc"+v_time,
+    version="3.2."+v_time,
     author="Maria-Esther Vidal",
     author_email="maria.vidal@tib.eu",
     license="Apache 2.0",
@@ -27,5 +27,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=requirements,
-    python_requires='>=3.7',
+    python_requires='>=3.6',
 )
