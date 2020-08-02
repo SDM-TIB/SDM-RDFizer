@@ -12,7 +12,7 @@
   a rr:TriplesMap;
     
   rml:logicalSource [
-    rml:source "/data/files/sampleSource1.csv";
+    rml:source "./files/sampleSource1.csv";
     rml:referenceFormulation ql:CSV
   ];
   rr:subjectMap [
@@ -34,7 +34,7 @@
   a rr:TriplesMap;
     
   rml:logicalSource [
-    rml:source "/data/files/sampleSource2.csv";
+    rml:source "./files/sampleSource2.csv";
     rml:referenceFormulation ql:CSV
   ];
   rr:subjectMap [
