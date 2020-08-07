@@ -242,10 +242,26 @@ def hash_maker_array_list(parent_data, parent_subject, child_object):
 	for row in parent_data:
 		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
 			if duplicate == "yes":
-				if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
-					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
+				if parent_subject.subject_map.subject_mapping_type == "reference":
+					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					if value is not None:
+						if "http" in value:
+							value = "<" + value[1:-1] + ">"
+					if value not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
+						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value + ">" : "object"})
+
+				else:
+					if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
+						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
 			else:
-				hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
+				if parent_subject.subject_map.subject_mapping_type == "reference":
+					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					if value is not None:
+						if "http" in value:
+							value = "<" + value[1:-1] + ">"
+					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
+				else:
+					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
 			
 		else:
 			hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
