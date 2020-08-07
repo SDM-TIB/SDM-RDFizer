@@ -3328,8 +3328,9 @@ def translate_sql(triples_map):
             if predicate not in proyections:
                     proyections.append(predicate)
         if po.object_map.child != None:
-            if po.object_map.child not in proyections:
-                    proyections.append(po.object_map.child)
+        	for c in po.object_map.child:
+        		if c not in proyections:
+                    proyections.append(c)
 
     temp_query = "SELECT "
     for p in proyections:
