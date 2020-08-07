@@ -3309,7 +3309,7 @@ def translate_sql(triples_map):
     	if type(p) == str:
 	        if p is not "None":
 	            temp_query += "`" + p + "`, " 
-	    elif type(p) == list:
+        elif type(p) == list:
 	    	for pr in p:
 	    		temp_query += "`" + pr + "`, " 
     temp_query = temp_query[:-2] 
