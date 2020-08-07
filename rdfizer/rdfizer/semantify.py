@@ -2642,7 +2642,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									for query in query_list:
 										temp_query = query.split("FROM")
 										parent_list = ""
-										for parent in predicate_object_map.object_map:
+										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", " + parent
 										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
