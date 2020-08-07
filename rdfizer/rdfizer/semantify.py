@@ -2693,7 +2693,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
 			for obj in object_list:
-				triple = subject + " " + predicate + " " + obj.keys() + ".\n"
+				triple = subject + " " + predicate + " " + obj + ".\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:
 						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
