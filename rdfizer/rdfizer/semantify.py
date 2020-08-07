@@ -3270,6 +3270,9 @@ def translate_sql(triples_map):
                         subject = subject.split("[")
                     if subject not in proyections:
                         proyections.append(subject)
+    else:
+    	if triples_map.subject_map.value not in proyections:
+    		proyections.append(triples_map.subject_map.value)
 
     for po in triples_map.predicate_object_maps_list:
         if "{" in po.object_map.value:
