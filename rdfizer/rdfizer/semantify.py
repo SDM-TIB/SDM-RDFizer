@@ -3331,7 +3331,7 @@ def translate_sql(triples_map):
             if "[" in predicate:
                 predicate = predicate.split("[")[0]
             if predicate not in proyections:
-                    proyections.append(predicate)
+                proyections.append(predicate)
         if po.object_map.child != None:
             for c in po.object_map.child:
                 if c not in proyections:
