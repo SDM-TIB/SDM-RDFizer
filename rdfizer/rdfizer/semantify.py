@@ -243,7 +243,7 @@ def hash_maker_array_list(parent_data, parent_subject, child_object):
 		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
 			if duplicate == "yes":
 				if parent_subject.subject_map.subject_mapping_type == "reference":
-					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
@@ -255,7 +255,7 @@ def hash_maker_array_list(parent_data, parent_subject, child_object):
 						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
-					value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
@@ -265,12 +265,13 @@ def hash_maker_array_list(parent_data, parent_subject, child_object):
 			
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
-				value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+				value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 				if value is not None:
 					if "http" in value:
 						value = "<" + value[1:-1] + ">"
 				hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
-			hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
+			else:
+				hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child)  : hash_table})
 
 def mapping_parser(mapping_file):
