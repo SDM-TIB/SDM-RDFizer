@@ -3306,12 +3306,13 @@ def translate_sql(triples_map):
 
     temp_query = "SELECT "
     for p in proyections:
-    	for pr in p:
-	        if pr is not "None":
-                temp_query += "`" + pr + "`, " 
-	        else:
-	            temp_query = temp_query[:-2]
-    temp_query = temp_query[:-2]  
+    	if type(p) == str:
+	        if p is not "None":
+	            temp_query += "`" + p + "`, " 
+	    elif type(p) == list:
+	    	for pr in pr:
+	    		temp_query += "`" + p + "`, " 
+    temp_query = temp_query[:-2] 
     if triples_map.tablename != "None":
         temp_query = temp_query + " FROM " + triples_map.tablename + ";"
     else:
