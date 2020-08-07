@@ -415,7 +415,6 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					print(value)
 					if type(value) is int or ((type(value).__name__) == "float"):
 						value = str(value)
 					elif type(value).__name__ == "date":

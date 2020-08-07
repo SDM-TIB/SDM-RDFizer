@@ -239,15 +239,16 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
-	print(row_headers)
 	for row in parent_data:
 		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
 			if duplicate == "yes":
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
-						if "http" in value:
+						if "http" in value and "<" not in value:
 							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
 					if value not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
 						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value + ">" : "object"})
 
@@ -258,8 +259,10 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
-						if "http" in value:
+						if "http" in value and "<" not in value:
 							value = "<" + value[1:-1] + ">"
+						elif "http" in value and "<" in value:
+							value = value[1:-1] 
 					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
 				else:
 					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
@@ -268,9 +271,11 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 			if parent_subject.subject_map.subject_mapping_type == "reference":
 				value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 				if value is not None:
-					if "http" in value:
+					if "http" in value and "<" not in value:
 						value = "<" + value[1:-1] + ">"
-				hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
+					elif "http" in value and "<" in value:
+							value = value[1:-1]
+				hash_table.update({child_list_value_array(child_object.parent,row,row_headers):{value : "object"}})
 			else:
 				hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child)  : hash_table})
@@ -2643,7 +2648,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										temp_query = query.split("FROM")
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
-											parent_list += ", " + parent
+											parent_list += ", `" + parent + "`"
 										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
