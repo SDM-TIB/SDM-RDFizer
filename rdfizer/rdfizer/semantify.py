@@ -241,28 +241,28 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 	row_headers=[x[0] for x in parent_data.description]
 	print(row_headers)
 	for row in parent_data:
-		if child_list_value_array(child_object.parent,row,r_w) in hash_table:
+		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
 			if duplicate == "yes":
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
-					if value not in hash_table[child_list_value_array(child_object.parent,r_w)]:
-						hash_table[child_list_value_array(child_object.parent,row,r_w)].update({value + ">" : "object"})
+					if value not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
+						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value + ">" : "object"})
 
 				else:
 					if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
-						hash_table[child_list_value_array(child_object.parent,row,r_w)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
+						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object")
 					if value is not None:
 						if "http" in value:
 							value = "<" + value[1:-1] + ">"
-					hash_table[child_list_value_array(child_object.parent,row,r_w)].update({value : "object"})
+					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
 				else:
-					hash_table[child_list_value_array(child_object.parent,row,r_w)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
+					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
 			
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -2640,7 +2640,12 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										if dbase.lower() != "none":
 											cursor.execute("use " + dbase)
 									for query in query_list:
-										cursor.execute(query)
+										temp_query = query.split("FROM")
+										parent_list = ""
+										for parent in predicate_object_map.object_map:
+											parent_list += ", " + parent
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 							if sublist(predicate_object_map.object_map.child,row_headers):
 								if child_list_value_array(predicate_object_map.object_map.child,row,row_headers) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
@@ -3328,8 +3333,8 @@ def translate_sql(triples_map):
             if predicate not in proyections:
                     proyections.append(predicate)
         if po.object_map.child != None:
-        	for c in po.object_map.child:
-        		if c not in proyections:
+            for c in po.object_map.child:
+                if c not in proyections:
                     proyections.append(c)
 
     temp_query = "SELECT "
