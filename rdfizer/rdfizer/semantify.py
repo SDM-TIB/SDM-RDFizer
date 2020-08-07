@@ -2178,7 +2178,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				continue
 	return i
 
-def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password,db):
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password,dbase):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2583,8 +2583,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
-										if db.lower() != "none":
-											cursor.execute("use " + db)
+										if dbase.lower() != "none":
+											cursor.execute("use " + dbase)
 									for query in query_list:
 										cursor.execute(query)
 										data = cursor
@@ -2613,8 +2613,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
-										if db.lower() != "none":
-											cursor.execute("use " + db)
+										if dbase.lower() != "none":
+											cursor.execute("use " + dbase)
 									for query in query_list:
 										cursor.execute(query)
 									hash_maker_array_list(cursor, row_headers, triples_map_element, predicate_object_map.object_map)
@@ -2633,8 +2633,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							if database != "None":
 								cursor.execute("use " + database)
 							else:
-								if db.lower() != "none":
-									cursor.execute("use " + db)
+								if dbase.lower() != "none":
+									cursor.execute("use " + dbase)
 							for query in query_list:
 								for q in query_list_origin:
 									query_1 = q.split("FROM")
