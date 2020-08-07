@@ -236,6 +236,20 @@ def hash_maker_array(parent_data, parent_subject, child_object, mapping_type):
 			hash_table.update({element : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0]  : hash_table})
 
+def hash_maker_array_list(parent_data, parent_subject, child_object, mapping_type):
+	hash_table = {}
+	row_headers=[x[0] for x in parent_data.description]
+	for row in parent_data:
+		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
+			if duplicate == "yes":
+				if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
+					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
+			else:
+				hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
+			
+		else:
+			hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"}}) 
+	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child)  : hash_table})
 
 def mapping_parser(mapping_file):
 
@@ -2164,7 +2178,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				continue
 	return i
 
-def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password):
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password,db):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2552,41 +2566,75 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
 					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename):
-						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
-							if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-									if str(triples_map_element.file_format).lower() == "csv":
-										data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-										hash_maker(data, triples_map_element, predicate_object_map.object_map)
-									else:
-										data = json.load(input_file_descriptor)
-										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
-							else:
-								database, query_list = translate_sql(triples_map_element)
-								db = connector.connect(host = host, port = port, user = user, password = password)
-								cursor = db.cursor()
-								if database == None:
-									cursor.execute("use " + database)
+						if len(predicate_object_map.object_map.child) == 1:
+							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
+								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										if str(triples_map_element.file_format).lower() == "csv":
+											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+											hash_maker(data, triples_map_element, predicate_object_map.object_map)
+										else:
+											data = json.load(input_file_descriptor)
+											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
 								else:
-									cursor.execute("use test")
-								for query in query_list:
-									cursor.execute(query)
-									data = cursor
-								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-						jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
-						if row[row_headers.index(predicate_object_map.object_map.child[0])] is not None:
-							object_list = jt[row[row_headers.index(predicate_object_map.object_map.child[0])]]
-						object = None
+									database, query_list = translate_sql(triples_map_element)
+									db = connector.connect(host = host, port = port, user = user, password = password)
+									cursor = db.cursor()
+									if database != "None":
+										cursor.execute("use " + database)
+									else:
+										if db.lower() != "none":
+											cursor.execute("use " + db)
+									for query in query_list:
+										cursor.execute(query)
+										data = cursor
+									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+							jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
+							if row[row_headers.index(predicate_object_map.object_map.child[0])] is not None:
+								object_list = jt[row[row_headers.index(predicate_object_map.object_map.child[0])]]
+							object = None
+						else:
+							if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
+								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										if str(triples_map_element.file_format).lower() == "csv":
+											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+										else:
+											data = json.load(input_file_descriptor)
+											if isinstance(data, list):
+												hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+											elif len(data) < 2:
+												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
+								else:
+									database, query_list = translate_sql(triples_map)
+									db = connector.connect(host=host, port=port, user=user, password=password)
+									cursor = db.cursor()
+									if database != "None":
+										cursor.execute("use " + database)
+									else:
+										if db.lower() != "none":
+											cursor.execute("use " + db)
+									for query in query_list:
+										cursor.execute(query)
+									hash_maker_array_list(cursor, row_headers, triples_map_element, predicate_object_map.object_map)
+							if sublist(predicate_object_map.object_map.child,row_headers):
+								if child_list_value_array(predicate_object_map.object_map.child,row,row_headers) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
+									object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value_array(predicate_object_map.object_map.child,row,row_headers)]
+								else:
+									object_list = []
+							object = None
 					else:
 						try:
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
 							db = connector.connect(host = host, port = port, user = user, password = password)
 							cursor = db.cursor()
-							if database == None:
+							if database != "None":
 								cursor.execute("use " + database)
 							else:
-								cursor.execute("use test")
+								if db.lower() != "none":
+									cursor.execute("use " + db)
 							for query in query_list:
 								for q in query_list_origin:
 									query_1 = q.split("FROM")
@@ -3199,79 +3247,79 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 
 def translate_sql(triples_map):
 
-	query_list = []
-	
-	
-	proyections = []
+    query_list = []
+    
+    
+    proyections = []
 
-		
-	if "{" in triples_map.subject_map.value:
-		subject = triples_map.subject_map.value
-		count = count_characters(subject)
-		if (count == 1) and (subject.split("{")[1].split("}")[0] not in proyections):
-			subject = subject.split("{")[1].split("}")[0]
-			if "[" in subject:
-				subject = subject.split("[")[0]
-			proyections.append(subject)
-		elif count > 1:
-			subject_list = subject.split("{")
-			for s in subject_list:
-				if "}" in s:
-					subject = s.split("}")[0]
-					if "[" in subject:
-						subject = subject.split("[")
-					if subject not in proyections:
-						proyections.append(subject)
+        
+    if "{" in triples_map.subject_map.value:
+        subject = triples_map.subject_map.value
+        count = count_characters(subject)
+        if (count == 1) and (subject.split("{")[1].split("}")[0] not in proyections):
+            subject = subject.split("{")[1].split("}")[0]
+            if "[" in subject:
+                subject = subject.split("[")[0]
+            proyections.append(subject)
+        elif count > 1:
+            subject_list = subject.split("{")
+            for s in subject_list:
+                if "}" in s:
+                    subject = s.split("}")[0]
+                    if "[" in subject:
+                        subject = subject.split("[")
+                    if subject not in proyections:
+                        proyections.append(subject)
 
-	for po in triples_map.predicate_object_maps_list:
-		if "{" in po.object_map.value:
-			count = count_characters(po.object_map.value)
-			if 0 < count <= 1 :
-				predicate = po.object_map.value.split("{")[1].split("}")[0]
-				if "[" in predicate:
-					predicate = predicate.split("[")[0]
-				if predicate not in proyections:
-					proyections.append(predicate)
+    for po in triples_map.predicate_object_maps_list:
+        if "{" in po.object_map.value:
+            count = count_characters(po.object_map.value)
+            if 0 < count <= 1 :
+                predicate = po.object_map.value.split("{")[1].split("}")[0]
+                if "[" in predicate:
+                    predicate = predicate.split("[")[0]
+                if predicate not in proyections:
+                    proyections.append(predicate)
 
-			elif 1 < count:
-				predicate = po.object_map.value.split("{")
-				for po_e in predicate:
-					if "}" in po_e:
-						pre = po_e.split("}")[0]
-						if "[" in pre:
-							pre = pre.split("[")
-						if pre not in proyections:
-							proyections.append(pre)
-		elif "#" in po.object_map.value:
-			pass
-		elif "/" in po.object_map.value:
-			pass
-		else:
-			predicate = po.object_map.value 
-			if "[" in predicate:
-				predicate = predicate.split("[")[0]
-			if predicate not in proyections:
-					proyections.append(predicate)
-		if po.object_map.child != None:
-			if po.object_map.child not in proyections:
-					proyections.append(po.object_map.child)
+            elif 1 < count:
+                predicate = po.object_map.value.split("{")
+                for po_e in predicate:
+                    if "}" in po_e:
+                        pre = po_e.split("}")[0]
+                        if "[" in pre:
+                            pre = pre.split("[")
+                        if pre not in proyections:
+                            proyections.append(pre)
+        elif "#" in po.object_map.value:
+            pass
+        elif "/" in po.object_map.value:
+            pass
+        else:
+            predicate = po.object_map.value 
+            if "[" in predicate:
+                predicate = predicate.split("[")[0]
+            if predicate not in proyections:
+                    proyections.append(predicate)
+        if po.object_map.child != None:
+            if po.object_map.child not in proyections:
+                    proyections.append(po.object_map.child)
 
-	temp_query = "SELECT "
-	for p in proyections:
-		if p is not "None":
-			if p == proyections[len(proyections)-1]:
-				temp_query += p
-			else:
-				temp_query += p + ", " 
-		else:
-			temp_query = temp_query[:-2] 
-	if triples_map.tablename != "None":
-		temp_query = temp_query + " FROM " + triples_map.tablename + ";"
-	else:
-		temp_query = temp_query + " FROM " + triples_map.data_source + ";"
-	query_list.append(temp_query)
+    temp_query = "SELECT "
+    for p in proyections:
+        if p is not "None":
+            if p == proyections[len(proyections)-1]:
+                temp_query += "`" + p + "`"
+            else:
+                temp_query += "`" + p + "`, " 
+        else:
+            temp_query = temp_query[:-2] 
+    if triples_map.tablename != "None":
+        temp_query = temp_query + " FROM " + triples_map.tablename + ";"
+    else:
+        temp_query = temp_query + " FROM " + triples_map.data_source + ";"
+    query_list.append(temp_query)
 
-	return triples_map.iterator, query_list
+    return triples_map.iterator, query_list
 
 
 def translate_postgressql(triples_map):
@@ -3434,18 +3482,25 @@ def semantify(config_path):
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
-										cursor.execute("use test")
+										if config[dataset_i]["db"].lower() != "none":
+											cursor.execute("use " + config[dataset_i]["db"])
 									if triples_map.query == "None":	
 										for query in query_list:
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+												if config[dataset_i]["db"].lower() != "none":
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+												else:
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+											if config[dataset_i]["db"].lower() != "none":
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+											else:
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 								elif config["datasets"]["dbType"] == "postgres":	
 									database, query_list = translate_sql(triples_map)
 									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
@@ -3483,13 +3538,17 @@ def semantify(config_path):
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
-										cursor.execute("use test")
+										if config[dataset_i]["db"].lower() != "none":
+											cursor.execute("use " + config[dataset_i]["db"])
 									if triples_map.query == "None":	
 										for query in query_list:
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"]).result()
+												if config[dataset_i]["db"].lower() != "none":
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+												else:
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
@@ -3556,7 +3615,8 @@ def semantify(config_path):
 								if database != "None":
 									cursor.execute("use " + database)
 								else:
-									cursor.execute("use test")
+									if config[dataset_i]["db"].lower() != "none":
+										cursor.execute("use " + config[dataset_i]["db"])
 								if triples_map.query == "None":	
 									for query in query_list:
 										cursor.execute(query)

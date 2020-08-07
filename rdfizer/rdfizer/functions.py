@@ -22,6 +22,12 @@ def child_list_value(childs,row):
 		value += row[child] + "_"
 	return value[:-1]
 
+def child_list_value_array(childs,row,row_headers):
+	value = ""
+	for child in childs:
+		value += row[row_headers.index(child)] + "_"
+	return value[:-1]
+
 def string_substitution_json(string, pattern, row, term):
 
 	template_references = re.finditer(pattern, string)
