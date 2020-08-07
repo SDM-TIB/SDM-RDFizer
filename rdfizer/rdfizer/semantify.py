@@ -239,6 +239,7 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 def hash_maker_array_list(parent_data, parent_subject, child_object):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
+	print(row_headers)
 	for row in parent_data:
 		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
 			if duplicate == "yes":
