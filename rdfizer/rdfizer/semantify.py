@@ -3309,7 +3309,7 @@ def translate_sql(triples_map):
     	for pr in p:
 	        if pr is not "None":
                 temp_query += "`" + pr + "`, " 
-	        else:
+            else:
 	            temp_query = temp_query[:-2]
     temp_query = temp_query[:-2]  
     if triples_map.tablename != "None":
