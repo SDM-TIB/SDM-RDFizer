@@ -2631,7 +2631,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 											elif len(data) < 2:
 												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
 								else:
-									database, query_list = translate_sql(triples_map)
+									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host=host, port=port, user=user, password=password)
 									cursor = db.cursor()
 									if database != "None":
