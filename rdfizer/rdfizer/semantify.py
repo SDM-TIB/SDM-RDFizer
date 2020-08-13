@@ -3342,7 +3342,7 @@ def translate_sql(triples_map):
                 if c not in proyections:
                     proyections.append(c)
 
-    temp_query = "SELECT "
+    temp_query = "SELECT DISTINCT "
     for p in proyections:
         if type(p) == str:
             if p is not "None":
