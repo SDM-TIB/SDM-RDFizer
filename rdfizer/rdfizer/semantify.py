@@ -888,7 +888,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
-											cursor = db.cursor()
+											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
 												cursor.execute(query)
@@ -1102,7 +1102,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 									else:
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host=host, port=port, user=user, password=password)
-										cursor = db.cursor()
+										cursor = db.cursor(buffered=True)
 										cursor.execute("use " + database)
 										for query in query_list:
 											cursor.execute(query)
@@ -1543,7 +1543,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								else:
 									database, query_list = translate_sql(triples_map)
 									db = connector.connect(host=host, port=port, user=user, password=password)
-									cursor = db.cursor()
+									cursor = db.cursor(buffered=True)
 									cursor.execute("use " + database)
 									for query in query_list:
 										cursor.execute(query)
@@ -2052,7 +2052,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
-											cursor = db.cursor()
+											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
 												cursor.execute(query)
@@ -2094,7 +2094,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=port, user=user, password=password)
-											cursor = db.cursor()
+											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
 												cursor.execute(query)
@@ -2608,7 +2608,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								else:
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host = host, port = port, user = user, password = password)
-									cursor = db.cursor()
+									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
@@ -2638,7 +2638,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								else:
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host=host, port=port, user=user, password=password)
-									cursor = db.cursor()
+									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
@@ -2663,7 +2663,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
 							db = connector.connect(host = host, port = port, user = user, password = password)
-							cursor = db.cursor()
+							cursor = db.cursor(buffered=True)
 							if database != "None":
 								cursor.execute("use " + database)
 							else:
@@ -3516,7 +3516,7 @@ def semantify(config_path):
 								elif config["datasets"]["dbType"] == "mysql":
 									database, query_list = translate_sql(triples_map)
 									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-									cursor = db.cursor()
+									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
@@ -3541,8 +3541,8 @@ def semantify(config_path):
 												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 								elif config["datasets"]["dbType"] == "postgres":	
 									database, query_list = translate_sql(triples_map)
-									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
-									cursor = db.cursor()
+									db = psycopg2.connect(host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+									cursor = db.cursor(buffered=True)
 									if triples_map.query == "None":	
 										for query in query_list:
 											cursor.execute(query)
@@ -3572,7 +3572,7 @@ def semantify(config_path):
 								elif config["datasets"]["dbType"] == "mysql":
 									database, query_list = translate_sql(triples_map)
 									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-									cursor = db.cursor()
+									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
 									else:
@@ -3649,7 +3649,7 @@ def semantify(config_path):
 							elif config["datasets"]["dbType"] == "mysql":
 								database, query_list = translate_sql(triples_map)
 								db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-								cursor = db.cursor()
+								cursor = db.cursor(buffered=True)
 								if database != "None":
 									cursor.execute("use " + database)
 								else:
