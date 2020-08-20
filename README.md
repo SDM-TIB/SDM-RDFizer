@@ -6,11 +6,15 @@ This project presents the SDM-RDFizer, an interpreter of mapping rules that allo
 
 The results of the execution of SDM-RDFizer has been described in the following research reports:
 
+- Enrique Iglesias, Samaneh Jozashoori, David Chaves-Fraga, Diego Collarana, and Maria-Esther Vidal. 2020. SDM-RDFizer: An RML Interpreter for the Efficient Creation of RDF Knowledge Graphs. The 29th ACM International Conference on Information and Knowledge Management (CIKM ’20).
+
 - Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. The 27th International Conference on Cooperative Information Systems (CoopIS 2019). 
 
 - David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. The 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
 
-- David Chaves-Fraga, Antón Adolfo, Jhon Toledo, Oscar Corcho. ONETT: Systematic Knowledge Graph Generation for National Access Points. Accepted at 1st International Workshop on Semantics for Transport co-located with SEMANTiCS 2019
+- David Chaves-Fraga, Antón Adolfo, Jhon Toledo, and Oscar Corcho. ONETT: Systematic Knowledge Graph Generation for National Access Points. The 1st International Workshop on Semantics for Transport co-located with SEMANTiCS 2019.
+
+- David Chaves-Fraga, Freddy Priyatna, Andrea Cimmino, Jhon Toledo, Edna Ruckhaus, and Oscar Corcho. GTFS-Madrid-Bench: A benchmark for virtual knowledge graph access in the transport domain. Journal of Web Semantics, 2020.
 
 Additional References:
 
