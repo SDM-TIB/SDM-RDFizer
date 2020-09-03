@@ -8,6 +8,8 @@ The results of the execution of SDM-RDFizer has been described in the following 
 
 - Enrique Iglesias, Samaneh Jozashoori, David Chaves-Fraga, Diego Collarana, and Maria-Esther Vidal. 2020. SDM-RDFizer: An RML Interpreter for the Efficient Creation of RDF Knowledge Graphs. The 29th ACM International Conference on Information and Knowledge Management (CIKM ’20).
 
+- Samaneh Jozashoori, David Chaves-Fraga, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. 2020. FunMap: Efficient Execution of Functional Mappings for Knowledge Graph Creation. The 19th International Semantic Web Conference - Research Track (ISWC 2020).
+
 - Samaneh Jozashoori and Maria-Esther Vidal. MapSDI: A Scaled-up Semantic Data Integrationframework for Knowledge Graph Creation. The 27th International Conference on Cooperative Information Systems (CoopIS 2019). 
 
 - David Chaves-Fraga, Kemele M. Endris, Enrique Iglesias, Oscar Corcho, and Maria-Esther Vidal. What are the Parameters that Affect the Construction of a Knowledge Graph?. The 18th International Conference on Ontologies, DataBases, and Applications of Semantics (ODBASE 2019).
