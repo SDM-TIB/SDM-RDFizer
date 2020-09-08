@@ -28,5 +28,5 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         cd rdfizer
-        python setup.py sdist bdist_wheel
+        python setup.py -k rel sdist bdist_wheel
         twine upload dist/*
