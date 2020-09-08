@@ -1,17 +1,34 @@
 import setuptools
+import argparse
 import time
+import sys
 
 v_time = str(int(time.time()))
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-k', help="Release type", dest="kind")
+#parser.add_argument('-t', help="Version tag", dest="tag")
+parsed, rest = parser.parse_known_args()
+sys.argv = [sys.argv[0]] + rest
+
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+with open("VERSION", "r") as fh:
+    v = fh.read().replace("\n", "")
+    if parsed.kind == "rel":
+        vers_taged = v
+    else:
+        vers_taged = v+".dev"+v_time
+
 
 with open("requirements.txt") as r:
     requirements = list(filter(None, r.read().split("\n")[0:]))
 
 setuptools.setup(
     name="rdfizer",
-    version="3.2."+v_time,
+    version=vers_taged,
     author="Maria-Esther Vidal",
     author_email="maria.vidal@tib.eu",
     license="Apache 2.0",
