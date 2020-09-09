@@ -43,6 +43,13 @@ The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national proje
 
 
 # Installing and Running the SDM-RDFizer 
+From PyPI (https://pypi.org/project/rdfizer/):
+```
+pip install rdfizer
+python3 -m rdfizer /path/to/config/file
+```
+
+From Github/Docker:
 Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository to learn how to install and run the SDM-RDFizer. You can also take a look to our demo at: https://www.youtube.com/watch?v=DpH_57M1uOE
 - Install and run the SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/Install&Run
 - Parameters to configure SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/The-Parameters-of-the-Configuration-file
