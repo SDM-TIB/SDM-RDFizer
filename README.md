@@ -45,7 +45,7 @@ The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national proje
 # Installing and Running the SDM-RDFizer 
 From PyPI (https://pypi.org/project/rdfizer/):
 ```
-pip install rdfizer
+python3 -m pip install rdfizer
 python3 -m rdfizer /path/to/config/file
 ```
 
