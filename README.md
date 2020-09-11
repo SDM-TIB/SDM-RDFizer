@@ -1,7 +1,7 @@
 # SDM-RDFizer
 This project presents the SDM-RDFizer, an interpreter of mapping rules that allows the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the [RDF Mapping Language (RML) by Dimou et al](https://rml.io/specs/rml/). The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from Heterogeneous data sources (CSV, JSON, RDB, XML). 
 
-![SDM-RDFizer workflow](images/architecture.jpg?raw=true "SDM-RDFizer workflow")
+![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/architecture.jpg "SDM-RDFizer workflow")
 
 
 The results of the execution of SDM-RDFizer has been described in the following research reports:
@@ -43,6 +43,13 @@ The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national proje
 
 
 # Installing and Running the SDM-RDFizer 
+From PyPI (https://pypi.org/project/rdfizer/):
+```
+python3 -m pip install rdfizer
+python3 -m rdfizer /path/to/config/file
+```
+
+From Github/Docker:
 Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository to learn how to install and run the SDM-RDFizer. You can also take a look to our demo at: https://www.youtube.com/watch?v=DpH_57M1uOE
 - Install and run the SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/Install&Run
 - Parameters to configure SDM-RDFizer: https://github.com/SDM-TIB/SDM-RDFizer/wiki/The-Parameters-of-the-Configuration-file
