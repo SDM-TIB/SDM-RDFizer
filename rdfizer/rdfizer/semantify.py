@@ -785,6 +785,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 			if triples_map.subject_map.rdf_class is not None and subject is not None:
 				predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 				obj = "<{}>".format(triples_map.subject_map.rdf_class)
+				subject = subject.replace(" ","_")
 				rdf_type = subject + " " + predicate + " " + obj + " .\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:	
@@ -934,6 +935,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 				if predicate is not None and object is not None and subject is not None:
+					subject = subject.replace(" ","_")
+					if ("<" in object) and (">" in object):
+						object = object.replace(" ","_")
 					triple = subject + " " + predicate + " " + object + ".\n"
 					if triples_map.subject_map.graph is not None:
 						if "{" in triples_map.subject_map.graph:
@@ -959,6 +963,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 				elif predicate is not None and subject is not None and object_list:
+					subject = subject.replace(" ","_")
 					for obj in object_list:
 						if predicate_object_map.object_map.term is not None:
 							if "IRI" in predicate_object_map.object_map.term:
@@ -1022,6 +1027,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				subject = None
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
+			subject = subject.replace(" ","_")
 			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
 			if triples_map.subject_map.graph is not None:
 				if "{" in triples_map.subject_map.graph:	
@@ -1132,6 +1138,9 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
+				subject = subject.replace(" ","_")
+				if ("<" in object) and (">" in object):
+					object = object.replace(" ","_")
 				triple = subject + " " + predicate + " " + object + ".\n"
 				if duplicate == "yes":
 					if (triple not in triple_array) and (triple not in triples):
@@ -1147,6 +1156,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
+				subject.replace(" ","_")
 				for obj in object_list:
 					if predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
@@ -1452,6 +1462,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				subject = None
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
+		subject = subject.replace(" ","_")
 		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
 		if triples_map.subject_map.graph is not None:
 			if "{" in triples_map.subject_map.graph:	
@@ -1951,6 +1962,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
 			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 			obj = "<{}>".format(triples_map.subject_map.rdf_class)
+			subject = subject.replace(" ","_")
 			rdf_type = subject + " " + predicate + " " + obj + ".\n"
 			if triples_map.subject_map.graph is not None:
 				if "{" in triples_map.subject_map.graph:	
@@ -2142,6 +2154,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
+				subject = subject.replace(" ","_")
+				if ("<" in object) and (">" in object):
+					object = object.replace(" ","_")
 				triple = subject + " " + predicate + " " + object + ".\n"
 				if triples_map.subject_map.graph is not None:
 					if "{" in triples_map.subject_map.graph:
@@ -2149,7 +2164,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					else:
 						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
 				if duplicate == "yes":
-					if predicate not in g_triples:
+					if predicate not in g_triples:					
 						output_file_descriptor.write(triple)
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
@@ -2169,6 +2184,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
+				subject = subject.replace(" ","_")
 				for obj in object_list:
 					if obj is not None:
 						if predicate_object_map.object_map.term is not None:
@@ -2513,6 +2529,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 		obj = "<{}>".format(triples_map.subject_map.rdf_class)
+		subject = subject.replace(" ","_")
 		rdf_type = subject + " " + predicate + " " + obj +" .\n"
 		if triples_map.subject_map.graph is not None:
 			if "{" in triples_map.subject_map.graph:	
@@ -2692,6 +2709,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
+			subject = subject.replace(" ","_")
+			if ("<" in object) and (">" in object):
+				object = object.replace(" ","_")
 			triple = subject + " " + predicate + " " + object + ".\n"
 			if triples_map.subject_map.graph is not None:
 				if "{" in triples_map.subject_map.graph:
@@ -2726,6 +2746,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
+			subject = subject.replace(" ","_")
 			for obj in object_list:
 				triple = subject + " " + predicate + " " + obj + ".\n"
 				if triples_map.subject_map.graph is not None:
@@ -3072,6 +3093,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 		obj = "<{}>".format(triples_map.subject_map.rdf_class)
+		subject = subject.replace(" ","_")
 		rdf_type = subject + " " + predicate + " " + obj + " .\n".format(triples_map.subject_map.rdf_class)
 		if triples_map.subject_map.graph is not None:
 			if "{" in triples_map.subject_map.graph:	
@@ -3203,6 +3225,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
+			subject = subject.replace(" ","_")
+			if ("<" in object) and (">" in object):
+				object = object.replace(" ","_")
 			triple = subject + " " + predicate + " " + object + ".\n"
 			if triples_map.subject_map.graph is not None:
 				if "{" in triples_map.subject_map.graph:
@@ -3237,6 +3262,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 				i += 1
 		elif predicate is not None and subject is not None and object_list:
+			subject = subject.replace(" ","_")
 			for obj in object_list:
 				if "IRI" in predicate_object_map.object_map.term:
 					triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
