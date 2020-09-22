@@ -3,6 +3,7 @@ import re
 import datetime
 import sys
 import xml.etree.ElementTree as ET
+import urllib
 
 def sublist(part_list, full_list):
 	for part in part_list:
@@ -62,6 +63,7 @@ def string_substitution_json(string, pattern, row, term):
 				if (type(value).__name__) == "int":
 					value = str(row[match]) 
 				if re.search("^[\s|\t]*$", value) is None:
+					value = urllib.parse.quote(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 					offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					if "\\" in new_string:
@@ -120,15 +122,15 @@ def string_substitution_xml(string, pattern, row, term):
 					match = match.split("@")[1]
 				if row.attrib[match] is not None:
 					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
+						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 
 					else:
 						return None
 			else:
 				if re.search("^[\s|\t]*$", row.find(match).text) is None:
-					new_string = new_string[:start + offset_current_substitution] + row.find(match).text.strip() + new_string[ end + offset_current_substitution:]
-					offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+					new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row.find(match).text.strip()) + new_string[ end + offset_current_substitution:]
+					offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row.find(match).text.strip())) - (end - start)
 
 				else:
 					return None
@@ -206,8 +208,8 @@ def string_substitution(string, pattern, row, term):
 					if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match]) 
 					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row[match])) - (end - start)
 						if "\\" in new_string:
 							new_string = new_string.replace("\\", "")
 							count = new_string.count("}")
@@ -295,6 +297,7 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
+						value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 						if "\\" in new_string:
@@ -390,6 +393,7 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
+						value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					else:
