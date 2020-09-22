@@ -128,10 +128,13 @@ def string_substitution_xml(string, pattern, row, term):
 					else:
 						return None
 			else:
-				if re.search("^[\s|\t]*$", row.find(match).text) is None:
-					new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row.find(match).text.strip()) + new_string[ end + offset_current_substitution:]
-					offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row.find(match).text.strip())) - (end - start)
+				if row.find(match) is not None:
+					if re.search("^[\s|\t]*$", row.find(match).text) is None:
+						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row.find(match).text.strip()) + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row.find(match).text.strip())) - (end - start)
 
+					else:
+						return None
 				else:
 					return None
 
@@ -156,10 +159,13 @@ def string_substitution_xml(string, pattern, row, term):
 					else:
 						return None
 			else:
-				if re.search("^[\s|\t]*$", row.find(match).text) is None:
-					new_string = new_string[:start + offset_current_substitution] + "\"" + row.find(match).text.strip() + "\"" + new_string[ end + offset_current_substitution:]
-					offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+				if row.find(match) is not None:
+					if re.search("^[\s|\t]*$", row.find(match).text) is None:
+						new_string = new_string[:start + offset_current_substitution] + "\"" + row.find(match).text.strip() + "\"" + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
 
+					else:
+						return None
 				else:
 					return None
 		else:

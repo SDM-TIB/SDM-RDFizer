@@ -196,7 +196,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 						hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
 				else:
 					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
+						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
@@ -209,7 +209,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
-				value = string_substitution(parent_subject.subject_map.value, ".+", row, "object")
+				value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
 				if value is not None:
 					if "http" in value:
 						value = "<" + value[1:-1] + ">"
@@ -499,6 +499,7 @@ def mapping_parser(mapping_file):
 
 
 def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
+	print("\n\nTM:",triples_map.triples_map_name)
 	i = 0
 	triples_map_triples = {}
 	generated_triples = {}
@@ -850,11 +851,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 				elif predicate_object_map.object_map.mapping_type == "template":
 					try:
 						if predicate_object_map.object_map.term is None:
-							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object") + ">"
 						elif "IRI" in predicate_object_map.object_map.term:
-							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + ">"
+							object = "<" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object") + ">"
 						else:
-							object = "\"" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", row, "object") + "\""
+							object = "\"" + string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object") + "\""
 					except TypeError:
 						object = None
 				elif predicate_object_map.object_map.mapping_type == "reference":
@@ -905,15 +906,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									if predicate_object_map.object_map.parent is not None:
 										if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-													hash_maker(data, triples_map_element, predicate_object_map.object_map)
-												else:
-													data = json.load(input_file_descriptor)
-													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-										if 	predicate_object_map.object_map.child[0] in row.keys():
-											if row[predicate_object_map.object_map.child[0]] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
+												child_tree = ET.parse(input_file_descriptor)
+												child_root = child_tree.getroot()
+												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)
+
+										if child.find(predicate_object_map.object_map.child[0]) is not None:
+											if child.find(predicate_object_map.object_map.child[0]).text in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][child.find(predicate_object_map.object_map.child[0]).text]
 											else:
 												object_list = []
 										object = None
