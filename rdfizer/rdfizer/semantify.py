@@ -3645,7 +3645,12 @@ def semantify(config_path):
 							elif triples_map.file_format == "JSONPath":
 								with open(str(triples_map.data_source), "r") as input_file_descriptor:
 									data = json.load(input_file_descriptor)
-									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], data[0]).results()
+									if isinstance(data, list):
+										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+									elif len(data) < 2:
+										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
+									else:
+										number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 							elif triples_map.file_format == "XPath":
 									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 							elif config["datasets"]["dbType"] == "mysql":
