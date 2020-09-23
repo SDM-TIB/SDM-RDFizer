@@ -324,7 +324,7 @@ def mapping_parser(mapping_file):
 			OPTIONAL { ?_source rml:iterator ?iterator . }
 			OPTIONAL { ?_source rr:tableName ?tablename .}
 			OPTIONAL { ?_source rml:query ?query .}
-			
+
 			?triples_map_id rr:subjectMap ?_subject_map .
 			OPTIONAL {?_subject_map rr:template ?subject_template .}
 			OPTIONAL {?_subject_map rml:reference ?subject_reference .}
@@ -400,6 +400,11 @@ def mapping_parser(mapping_file):
 					?_object_map rr:datatype ?object_datatype .
 				}
 			}
+			OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
+			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+					   ?_graph_structure rr:constant ?predicate_object_graph  . }
+			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+					   ?_graph_structure rr:template ?predicate_object_graph  . }	
 			}
 			OPTIONAL {
 				?_source a d2rq:Database;
@@ -423,24 +428,24 @@ def mapping_parser(mapping_file):
 			if result_triples_map.subject_template is not None:
 				if result_triples_map.rdf_class is None:
 					reference, condition = string_separetion(str(result_triples_map.subject_template))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template", result_triples_map.rdf_class, result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template", [result_triples_map.rdf_class], result_triples_map.termtype, [result_triples_map.graph])
 				else:
 					reference, condition = string_separetion(str(result_triples_map.subject_template))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template", str(result_triples_map.rdf_class), result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template", [str(result_triples_map.rdf_class)], result_triples_map.termtype, [result_triples_map.graph])
 			elif result_triples_map.subject_reference is not None:
 				if result_triples_map.rdf_class is None:
 					reference, condition = string_separetion(str(result_triples_map.subject_reference))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference", result_triples_map.rdf_class, result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference", [result_triples_map.rdf_class], result_triples_map.termtype, [result_triples_map.graph])
 				else:
 					reference, condition = string_separetion(str(result_triples_map.subject_reference))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference", str(result_triples_map.rdf_class), result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference", [str(result_triples_map.rdf_class)], result_triples_map.termtype, [result_triples_map.graph])
 			elif result_triples_map.subject_constant is not None:
 				if result_triples_map.rdf_class is None:
 					reference, condition = string_separetion(str(result_triples_map.subject_constant))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant", result_triples_map.rdf_class, result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant", [result_triples_map.rdf_class], result_triples_map.termtype, [result_triples_map.graph])
 				else:
 					reference, condition = string_separetion(str(result_triples_map.subject_constant))
-					subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant", str(result_triples_map.rdf_class), result_triples_map.termtype, result_triples_map.graph)
+					subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant", [str(result_triples_map.rdf_class)], result_triples_map.termtype, [result_triples_map.graph])
 				
 			mapping_query_prepared = prepareQuery(mapping_query)
 
@@ -449,13 +454,15 @@ def mapping_parser(mapping_file):
 
 			join_predicate = {}
 			predicate_object_maps_list = []
-
+			predicate_object_graph = {}
 			for result_predicate_object_map in mapping_query_prepared_results:
 				join = True
 				if result_predicate_object_map.predicate_constant is not None:
 					predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "")
+					predicate_object_graph[str(result_predicate_object_map.predicate_constant)] = result_triples_map.predicate_object_graph
 				elif result_predicate_object_map.predicate_constant_shortcut is not None:
 					predicate_map = tm.PredicateMap("constant shortcut", str(result_predicate_object_map.predicate_constant_shortcut), "")
+					predicate_object_graph[str(result_predicate_object_map.predicate_constant_shortcut)] = result_triples_map.predicate_object_graph
 				elif result_predicate_object_map.predicate_template is not None:
 					template, condition = string_separetion(str(result_predicate_object_map.predicate_template))
 					predicate_map = tm.PredicateMap("template", template, condition)
@@ -482,18 +489,25 @@ def mapping_parser(mapping_file):
 					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				else:
 					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None")
-
 				if join:
-					predicate_object_maps_list += [tm.PredicateObjectMap(predicate_map, object_map)]
+					predicate_object_maps_list += [tm.PredicateObjectMap(predicate_map, object_map,predicate_object_graph)]
 				join = True
-
 			if join_predicate:
 				for jp in join_predicate.keys():
 					object_map = tm.ObjectMap("parent triples map", join_predicate[jp]["triples_map"], str(result_predicate_object_map.object_datatype), join_predicate[jp]["childs"], join_predicate[jp]["parents"],result_predicate_object_map.term, result_predicate_object_map.language)
-					predicate_object_maps_list += [tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map)]
+					predicate_object_maps_list += [tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map,predicate_object_graph)]
 
 			current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.data_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
 			triples_map_list += [current_triples_map]
+
+		else:
+			for triples_map in triples_map_list:
+				if str(triples_map.triples_map_id) == str(result_triples_map.triples_map_id):
+					if result_triples_map.rdf_class not in triples_map.subject_map.rdf_class:
+						triples_map.subject_map.rdf_class.append(result_triples_map.rdf_class)
+					if result_triples_map.graph not in triples_map.subject_map.graph:
+						triples_map.graph.append(result_triples_map.graph)
+
 
 	return triples_map_list
 
@@ -786,31 +800,34 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 
 			if triples_map.subject_map.rdf_class is not None and subject is not None:
 				predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-				obj = "<{}>".format(triples_map.subject_map.rdf_class)
-				rdf_type = subject + " " + predicate + " " + obj + " .\n"
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:	
-						rdf_type = rdf_type[:-2] + " <" + string_substitution_xml(triples_map.subject_map.graph, "{(.+?)}", child, "subject") + "> .\n"
-					else:
-						rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-				if duplicate == "yes":
-					if predicate not in g_triples:
-						output_file_descriptor.write(rdf_type)
-						if (number_triple + i + 1) % 10000 == 0:
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
-						i += 1
-					elif subject + "_" + obj not in g_triples[predicate]:
-						output_file_descriptor.write(rdf_type)
-						if (number_triple + i + 1) % 10000 == 0:
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples[predicate].update({subject + "_" + obj: rdf_type})
-						i += 1
-				else:
-					output_file_descriptor.write(rdf_type)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					i += 1
+				for rdf_class in triples_map.subject_map.rdf_class:
+					if rdf_class is not None:
+						obj = "<{}>".format(rdf_class)
+						for graph in triples_map.subject_map.graph:
+							rdf_type = subject + " " + predicate + " " + obj + " .\n"
+							if graph is not None and "defaultGraph" not in graph:
+								if "{" in graph:	
+									rdf_type = rdf_type[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + "> .\n"
+								else:
+									rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+							if duplicate == "yes":
+								if predicate not in g_triples:
+									output_file_descriptor.write(rdf_type)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
+									i += 1
+								elif subject + "_" + obj not in g_triples[predicate]:
+									output_file_descriptor.write(rdf_type)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples[predicate].update({subject + "_" + obj: rdf_type})
+									i += 1
+							else:
+								output_file_descriptor.write(rdf_type)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
 
 
 			for predicate_object_map in triples_map.predicate_object_maps_list:
@@ -934,64 +951,124 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 				if predicate is not None and object is not None and subject is not None:
-					triple = subject + " " + predicate + " " + object + ".\n"
-					if triples_map.subject_map.graph is not None:
-						if "{" in triples_map.subject_map.graph:
-							triple = triple[:-2] + " <" + string_substitution_xml(triples_map.subject_map.graph, "{(.+?)}", child, "subject") + ">.\n"
-						else:
-							triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-					if duplicate == "yes":
-						if predicate not in g_triples:
-							output_file_descriptor.write(triple)
-							if (number_triple + i + 1) % 10000 == 0:
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							g_triples.update({predicate : {subject + "_" + object: triple}})
-							i += 1
-						elif subject + "_" + object not in g_triples[predicate]:
-							output_file_descriptor.write(triple)
-							if (number_triple + i + 1) % 10000 == 0:
-								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							g_triples[predicate].update({subject + "_" + object: triple})
-							i += 1
-					else:
-						output_file_descriptor.write(triple)
-						if (number_triple + i + 1) % 10000 == 0:
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						i += 1
-				elif predicate is not None and subject is not None and object_list:
-					for obj in object_list:
-						if predicate_object_map.object_map.term is not None:
-							if "IRI" in predicate_object_map.object_map.term:
-								triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+					for graph in triples_map.subject_map.graph:
+						triple = subject + " " + predicate + " " + object + ".\n"
+						if graph is not None and "defaultGraph" not in graph:
+							if "{" in graph:
+								triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + ">.\n"
 							else:
-								triple = subject + " " + predicate + " " + obj + ".\n"
-						else:
-							triple = subject + " " + predicate + " " + obj + ".\n"
-
-						if triples_map.subject_map.graph is not None:
-							if "{" in triples_map.subject_map.graph:
-								triple = triple[:-2] + " <" + string_substitution_xml(triples_map.subject_map.graph, "{(.+?)}", child, "subject") + ">.\n"
-							else:
-								triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-
+								triple = triple[:-2] + " <" + graph + ">.\n"
 						if duplicate == "yes":
 							if predicate not in g_triples:
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								g_triples.update({predicate : {subject + "_" + obj: triple}})
+								g_triples.update({predicate : {subject + "_" + object: triple}})
 								i += 1
-							elif subject + "_" + obj not in g_triples[predicate]:
+							elif subject + "_" + object not in g_triples[predicate]:
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								g_triples[predicate].update({subject + "_" + obj: triple})
+								g_triples[predicate].update({subject + "_" + object: triple})
 								i += 1
 						else:
 							output_file_descriptor.write(triple)
 							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
+					if predicate[1:-1] in predicate_object_map.graph:
+						triple = subject + " " + predicate + " " + object + ".\n"
+						if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+							if "{" in triples_map.subject_map.graph:
+								triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject") + ">.\n"
+							else:
+								triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+							if duplicate == "yes":
+								if predicate not in g_triples:					
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									generated_triples.update({triple : number_triple})
+									g_triples.update({predicate : {subject + "_" + object: triple}})
+									i += 1
+								elif subject + "_" + object not in g_triples[predicate]:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									generated_triples.update({triple : number_triple})
+									g_triples[predicate].update({subject + "_" + object: triple})
+									i += 1
+							else:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+				elif predicate is not None and subject is not None and object_list:
+					for obj in object_list:
+						for graph in triples_map.subject_map.graph:
+							if predicate_object_map.object_map.term is not None:
+								if "IRI" in predicate_object_map.object_map.term:
+									triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+								else:
+									triple = subject + " " + predicate + " " + obj + ".\n"
+							else:
+								triple = subject + " " + predicate + " " + obj + ".\n"
+
+							if graph is not None and "defaultGraph" not in graph:
+								if "{" in graph:
+									triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + ">.\n"
+								else:
+									triple = triple[:-2] + " <" + graph + ">.\n"
+
+							if duplicate == "yes":
+								if predicate not in g_triples:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples.update({predicate : {subject + "_" + obj: triple}})
+									i += 1
+								elif subject + "_" + obj not in g_triples[predicate]:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples[predicate].update({subject + "_" + obj: triple})
+									i += 1
+							else:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						if predicate[1:-1] in predicate_object_map.graph:
+							triple = subject + " " + predicate + " " + obj + ".\n"
+							if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+								if "{" in triples_map.subject_map.graph:
+									triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject") + ">.\n"
+								else:
+									triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+								if duplicate == "yes":
+									if predicate not in g_triples:					
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										generated_triples.update({triple : number_triple})
+										g_triples.update({predicate : {subject + "_" + object: triple}})
+										i += 1
+									elif subject + "_" + object not in g_triples[predicate]:
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										generated_triples.update({triple : number_triple})
+										g_triples[predicate].update({subject + "_" + object: triple})
+										i += 1
+									elif triple not in g_triples[predicate][subject + "_" + obj]: 
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										i += 1
+								else:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									i += 1
 					object_list = []
 				else:
 					continue
@@ -1022,24 +1099,27 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				subject = None
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
-			rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
-			if triples_map.subject_map.graph is not None:
-				if "{" in triples_map.subject_map.graph:	
-					rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
-				else:
-					rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-			if duplicate == "yes":
-				if rdf_type not in generated_triples:
-					output_file_descriptor.write(rdf_type)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					generated_triples.update({rdf_type : number_triple + i + 1})
-					i += 1
-			else:
-				output_file_descriptor.write(rdf_type)
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
+			for rdf_class in triples_map.subject_map.rdf_class:
+				if rdf_class is not None:
+					for graph in triples_map.subject_map.graph:
+						rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(rdf_class)
+						if graph is not None and "defaultGraph" not in graph:
+							if "{" in graph:	
+								rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject") + "> .\n"
+							else:
+								rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+						if duplicate == "yes":
+							if rdf_type not in generated_triples:
+								output_file_descriptor.write(rdf_type)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({rdf_type : number_triple + i + 1})
+								i += 1
+						else:
+							output_file_descriptor.write(rdf_type)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							i += 1
 
 
 		for predicate_object_map in triples_map.predicate_object_maps_list:
@@ -1147,7 +1227,6 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
 			elif predicate is not None and subject is not None and object_list:
-				subject.replace(" ","_")
 				for obj in object_list:
 					if predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
@@ -1453,24 +1532,27 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				subject = None
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
-		rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(triples_map.subject_map.rdf_class)
-		if triples_map.subject_map.graph is not None:
-			if "{" in triples_map.subject_map.graph:	
-				rdf_type = rdf_type[:-2] + " <" + string_substitution_json(triples_map.subject_map.graph, "{(.+?)}", data, "subject") + "> .\n"
-			else:
-				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-		if duplicate == "yes":
-			if rdf_type not in generated_triples:
-				output_file_descriptor.write(rdf_type)
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				generated_triples.update({rdf_type : number_triple + i + 1})
-				i += 1
-		else:
-			output_file_descriptor.write(rdf_type)
-			if (number_triple + i + 1) % 10000 == 0:
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-			i += 1
+		for rdf_class in triples_map.subject_map.rdf_class:
+			if rdf_class is not None:
+				for graph in triples_map.subject_map.graph:
+					rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(rdf_class)
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in graph:	
+							rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject") + "> .\n"
+						else:
+							rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+					if duplicate == "yes":
+						if rdf_type not in generated_triples:
+							output_file_descriptor.write(rdf_type)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({rdf_type : number_triple + i + 1})
+							i += 1
+					else:
+						output_file_descriptor.write(rdf_type)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 
 	
 	for predicate_object_map in triples_map.predicate_object_maps_list:
@@ -1590,39 +1672,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
-			triple = subject + " " + predicate + " " + object + ".\n"
-			if triples_map.subject_map.graph is not None:
-				if "{" in triples_map.subject_map.graph:
-					triple = triple[:-2] + " <" + string_substitution_json(triples_map.subject_map.graph, "{(.+?)}", data, "subject") + ">.\n"
-				else:
-					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-			if duplicate == "yes":
-				if (triple not in generated_triples) and (triple not in g_triples):
-					output_file_descriptor.write(triple)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					generated_triples.update({triple : number_triple})
-					g_triples.update({triple : number_triple})
-					i += 1
-			else:
-				output_file_descriptor.write(triple)
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
-		elif predicate is not None and subject is not None and object_list:
-			for obj in object_list:
-				if predicate_object_map.object_map.term is not None:
-					if "IRI" in predicate_object_map.object_map.term:
-						triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+			for graph in triples_map.subject_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if graph is not None and "defaultGraph" not in graph:
+					if "{" in graph:
+						triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject") + ">.\n"
 					else:
-						triple = subject + " " + predicate + " " + obj + ".\n"
-				else:
-					triple = subject + " " + predicate + " " + obj + ".\n"
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution_json(triples_map.subject_map.graph, "{(.+?)}", data, "subject") + ">.\n"
-					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
+						triple = triple[:-2] + " <" + graph + ">.\n"
 				if duplicate == "yes":
 					if (triple not in generated_triples) and (triple not in g_triples):
 						output_file_descriptor.write(triple)
@@ -1636,6 +1692,93 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
+			if predicate[1:-1] in predicate_object_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+					if "{" in triples_map.subject_map.graph:
+						triple = triple[:-2] + " <" + string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject") + ">.\n"
+					else:
+						triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:					
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples.update({predicate : {subject + "_" + object: triple}})
+							i += 1
+						elif subject + "_" + object not in g_triples[predicate]:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples[predicate].update({subject + "_" + object: triple})
+							i += 1
+					else:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+		elif predicate is not None and subject is not None and object_list:
+			for obj in object_list:
+				for graph in triples_map.subject_map.graph:
+					if predicate_object_map.object_map.term is not None:
+						if "IRI" in predicate_object_map.object_map.term:
+							triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+						else:
+							triple = subject + " " + predicate + " " + obj + ".\n"
+					else:
+						triple = subject + " " + predicate + " " + obj + ".\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in graph:
+							triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + graph + ">.\n"
+					if duplicate == "yes":
+						if (triple not in generated_triples) and (triple not in g_triples):
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples.update({triple : number_triple})
+							i += 1
+					else:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+				if predicate[1:-1] in predicate_object_map.graph:
+					triple = subject + " " + predicate + " " + obj + ".\n"
+					if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+						if "{" in triples_map.subject_map.graph:
+							triple = triple[:-2] + " <" + string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+						if duplicate == "yes":
+							if predicate not in g_triples:					
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples.update({predicate : {subject + "_" + object: triple}})
+								i += 1
+							elif subject + "_" + object not in g_triples[predicate]:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples[predicate].update({subject + "_" + object: triple})
+								i += 1
+							elif triple not in g_triples[predicate][subject + "_" + obj]: 
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						else:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							i += 1
 			object_list = []
 		else:
 			continue
@@ -1951,31 +2094,34 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 
 		if triples_map.subject_map.rdf_class is not None and subject is not None:
 			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-			obj = "<{}>".format(triples_map.subject_map.rdf_class)
-			rdf_type = subject + " " + predicate + " " + obj + ".\n"
-			if triples_map.subject_map.graph is not None:
-				if "{" in triples_map.subject_map.graph:	
-					rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
-				else:
-					rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-			if duplicate == "yes":
-				if predicate not in g_triples:
-					output_file_descriptor.write(rdf_type)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
-					i += 1
-				elif subject + "_" + obj not in g_triples[predicate]:
-					output_file_descriptor.write(rdf_type)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples[predicate].update({subject + "_" + obj : rdf_type})
-					i += 1
-			else:
-				output_file_descriptor.write(rdf_type)
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
+			for rdf_class in triples_map.subject_map.rdf_class:
+				if rdf_class is not None:
+					obj = "<{}>".format(rdf_class)
+					rdf_type = subject + " " + predicate + " " + obj + ".\n"
+					for graph in triples_map.subject_map.graph:
+						if graph is not None and "defaultGraph" not in graph:
+							if "{" in graph:	
+								rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject") + "> .\n"
+							else:
+								rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:
+							output_file_descriptor.write(rdf_type)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
+							i += 1
+						elif subject + "_" + obj not in g_triples[predicate]:
+							output_file_descriptor.write(rdf_type)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples[predicate].update({subject + "_" + obj : rdf_type})
+							i += 1
+					else:
+						output_file_descriptor.write(rdf_type)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 
 		
 		for predicate_object_map in triples_map.predicate_object_maps_list:
@@ -2143,66 +2289,133 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
-				triple = subject + " " + predicate + " " + object + ".\n"
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + ">.\n"
-					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-				if duplicate == "yes":
-					if predicate not in g_triples:					
-						output_file_descriptor.write(triple)
-						if (number_triple + i + 1) % 10000 == 0:
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						generated_triples.update({triple : number_triple})
-						g_triples.update({predicate : {subject + "_" + object: triple}})
-						i += 1
-					elif subject + "_" + object not in g_triples[predicate]:
-						output_file_descriptor.write(triple)
-						if (number_triple + i + 1) % 10000 == 0:
-							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						generated_triples.update({triple : number_triple})
-						g_triples[predicate].update({subject + "_" + object: triple})
-						i += 1 
-				else:
-					output_file_descriptor.write(triple)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					i += 1
-			elif predicate is not None and subject is not None and object_list:
-				for obj in object_list:
-					if obj is not None:
-						if predicate_object_map.object_map.term is not None:
-							if "IRI" in predicate_object_map.object_map.term:
-								triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
-							else:
-								triple = subject + " " + predicate + " " + obj + ".\n"
+				for graph in triples_map.subject_map.graph:
+					triple = subject + " " + predicate + " " + object + ".\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in triples_map.subject_map.graph:
+							triple = triple[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject") + ">.\n"
 						else:
-							triple = subject + " " + predicate + " " + obj + ".\n"
-						if triples_map.subject_map.graph is not None:
-							if "{" in triples_map.subject_map.graph:
-								triple = triple[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + ">.\n"
-							else:
-								triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
+							triple = triple[:-2] + " <" + graph + ">.\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:					
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples.update({predicate : {subject + "_" + object: triple}})
+							i += 1
+						elif subject + "_" + object not in g_triples[predicate]:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples[predicate].update({subject + "_" + object: triple})
+							i += 1 
+					else:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+				if predicate[1:-1] in predicate_object_map.graph:
+					triple = subject + " " + predicate + " " + object + ".\n"
+					if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+						if "{" in triples_map.subject_map.graph:
+							triple = triple[:-2] + " <" + string_substitution(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, "subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
 						if duplicate == "yes":
-							if predicate not in g_triples:
+							if predicate not in g_triples:					
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								g_triples.update({predicate : {subject + "_" + obj: triple}})
+								generated_triples.update({triple : number_triple})
+								g_triples.update({predicate : {subject + "_" + object: triple}})
 								i += 1
-							elif subject + "_" + obj not in g_triples[predicate]:
+							elif subject + "_" + object not in g_triples[predicate]:
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								g_triples[predicate].update({subject + "_" + obj: triple})
+								generated_triples.update({triple : number_triple})
+								g_triples[predicate].update({subject + "_" + object: triple})
 								i += 1
-
 						else:
 							output_file_descriptor.write(triple)
 							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-							i += 1
+
+			elif predicate is not None and subject is not None and object_list:
+				for obj in object_list:
+					if obj is not None:
+						for graph in triples_map.subject_map.graph:
+							if predicate_object_map.object_map.term is not None:
+								if "IRI" in predicate_object_map.object_map.term:
+									triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+								else:
+									triple = subject + " " + predicate + " " + obj + ".\n"
+							else:
+								triple = subject + " " + predicate + " " + obj + ".\n"
+							if graph is not None and "defaultGraph" not in graph:
+								if "{" in triples_map.subject_map.graph:
+									triple = triple[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject") + ">.\n"
+								else:
+									triple = triple[:-2] + " <" + graph + ">.\n"
+							if duplicate == "yes":
+								if predicate not in g_triples:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples.update({predicate : {subject + "_" + obj: triple}})
+									i += 1
+								elif subject + "_" + obj not in g_triples[predicate]:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									g_triples[predicate].update({subject + "_" + obj: triple})
+									i += 1
+
+							else:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						if predicate[1:-1] in predicate_object_map.graph:
+							if predicate_object_map.object_map.term is not None:
+								if "IRI" in predicate_object_map.object_map.term:
+									triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+								else:
+									triple = subject + " " + predicate + " " + obj + ".\n"
+							else:
+								triple = subject + " " + predicate + " " + obj + ".\n"
+							if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+								if "{" in triples_map.subject_map.graph:
+									triple = triple[:-2] + " <" + string_substitution(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, "subject") + ">.\n"
+								else:
+									triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+								if duplicate == "yes":
+									if predicate not in g_triples:					
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										generated_triples.update({triple : number_triple})
+										g_triples.update({predicate : {subject + "_" + object: triple}})
+										i += 1
+									elif subject + "_" + obj not in g_triples[predicate]:
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										generated_triples.update({triple : number_triple})
+										g_triples[predicate].update({subject + "_" + object: triple})
+										i += 1
+									elif triple not in g_triples[predicate][subject + "_" + obj]: 
+										output_file_descriptor.write(triple)
+										if (number_triple + i + 1) % 10000 == 0:
+											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+										i += 1
+								else:
+									output_file_descriptor.write(triple)
+									if (number_triple + i + 1) % 10000 == 0:
+										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+									i += 1
 				object_list = []
 			else:
 				continue
@@ -2513,37 +2726,40 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-		obj = "<{}>".format(triples_map.subject_map.rdf_class)
-		rdf_type = subject + " " + predicate + " " + obj +" .\n"
-		if triples_map.subject_map.graph is not None:
-			if "{" in triples_map.subject_map.graph:	
-				rdf_type = rdf_type[:-2] + " <" + string_substitution(triples_map.subject_map.graph, "{(.+?)}", row, "subject") + "> .\n"
-			else:
-				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-		if duplicate == "yes":
-			if predicate not in g_triples:
-				try:
+		for rdf_class in triples_map.subject_map.rdf_class:
+			if rdf_class is not None:
+				obj = "<{}>".format(rdf_class)
+				for graph in graph:
+					rdf_type = subject + " " + predicate + " " + obj +" .\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in triples_map.subject_map.graph:	
+							rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject") + "> .\n"
+						else:
+							rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:
+							try:
+								output_file_descriptor.write(rdf_type)
+							except:
+								output_file_descriptor.write(rdf_type.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
+							i += 1
+						elif subject + "_" + obj not in g_triples[predicate]:
+							try:
+								output_file_descriptor.write(rdf_type)
+							except:
+								output_file_descriptor.write(rdf_type.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples[predicate].update({subject + "_" + obj: rdf_type})
+							i += 1
+				else:
 					output_file_descriptor.write(rdf_type)
-				except:
-					output_file_descriptor.write(rdf_type.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
-				i += 1
-			elif subject + "_" + obj not in g_triples[predicate]:
-				try:
-					output_file_descriptor.write(rdf_type)
-				except:
-					output_file_descriptor.write(rdf_type.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				g_triples[predicate].update({subject + "_" + obj: rdf_type})
-				i += 1
-		else:
-			output_file_descriptor.write(rdf_type)
-			if (number_triple + i + 1) % 10000 == 0:
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-			i += 1
+					if (number_triple + i + 1) % 10000 == 0:
+						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+					i += 1
 
 
 
@@ -2693,48 +2909,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
-			triple = subject + " " + predicate + " " + object + ".\n"
-			if triples_map.subject_map.graph is not None:
-				if "{" in triples_map.subject_map.graph:
-					triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
-				else:
-					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-			if duplicate == "yes":
-				if predicate not in g_triples:
-					try:
-						output_file_descriptor.write(triple)
-					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples.update({predicate : {subject + "_" + object: triple}})
-					i += 1
-				elif subject + "_" + object not in g_triples[predicate]:
-					try:
-						output_file_descriptor.write(triple)
-					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples[predicate].update({subject + "_" + object: triple})
-					i += 1
-			else:
-				try:
-					output_file_descriptor.write(triple)
-				except:
-					output_file_descriptor.write(triple.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
-		elif predicate is not None and subject is not None and object_list:
-			for obj in object_list:
-				triple = subject + " " + predicate + " " + obj + ".\n"
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+			for graph in triples_map.subject_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if graph is not None and "defaultGraph" not in graph:
+					if "{" in graph:
+						triple = triple[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
 					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-
+						triple = triple[:-2] + " <" + graph + ">.\n"
 				if duplicate == "yes":
 					if predicate not in g_triples:
 						try:
@@ -2743,16 +2924,16 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							output_file_descriptor.write(triple.encode("utf-8"))
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples.update({predicate : {subject + "_" + obj: triple}})
+						g_triples.update({predicate : {subject + "_" + object: triple}})
 						i += 1
-					elif subject + "_" + obj not in g_triples[predicate]:
+					elif subject + "_" + object not in g_triples[predicate]:
 						try:
 							output_file_descriptor.write(triple)
 						except:
 							output_file_descriptor.write(triple.encode("utf-8"))
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples[predicate].update({subject + "_" + obj: triple})
+						g_triples[predicate].update({subject + "_" + object: triple})
 						i += 1
 				else:
 					try:
@@ -2762,6 +2943,102 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
+			if predicate[1:-1] in predicate_object_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+					if "{" in triples_map.subject_map.graph:
+						triple = triple[:-2] + " <" + string_substitution_array(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, row_headers,"subject") + ">.\n"
+					else:
+						triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:					
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples.update({predicate : {subject + "_" + object: triple}})
+							i += 1
+						elif subject + "_" + object not in g_triples[predicate]:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples[predicate].update({subject + "_" + object: triple})
+							i += 1
+					else:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+		elif predicate is not None and subject is not None and object_list:
+			for obj in object_list:
+				for graph in triples_map.subject_map.graph:
+					triple = subject + " " + predicate + " " + obj + ".\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in graph:
+							triple = triple[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + graph + ">.\n"
+
+					if duplicate == "yes":
+						if predicate not in g_triples:
+							try:
+								output_file_descriptor.write(triple)
+							except:
+								output_file_descriptor.write(triple.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples.update({predicate : {subject + "_" + obj: triple}})
+							i += 1
+						elif subject + "_" + obj not in g_triples[predicate]:
+							try:
+								output_file_descriptor.write(triple)
+							except:
+								output_file_descriptor.write(triple.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples[predicate].update({subject + "_" + obj: triple})
+							i += 1
+					else:
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+				if predicate[1:-1] in predicate_object_map.graph:
+					triple = subject + " " + predicate + " " + obj + ".\n"
+					if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+						if "{" in triples_map.subject_map.graph:
+							triple = triple[:-2] + " <" + string_substitution_array(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, row_headers,"subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+						if duplicate == "yes":
+							if predicate not in g_triples:					
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples.update({predicate : {subject + "_" + object: triple}})
+								i += 1
+							elif subject + "_" + object not in g_triples[predicate]:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples[predicate].update({subject + "_" + object: triple})
+								i += 1
+							elif triple not in g_triples[predicate][subject + "_" + obj]: 
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						else:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							i += 1
 			object_list = []
 		else:
 			continue
@@ -3072,37 +3349,40 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 
 	if triples_map.subject_map.rdf_class is not None and subject is not None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-		obj = "<{}>".format(triples_map.subject_map.rdf_class)
-		rdf_type = subject + " " + predicate + " " + obj + " .\n".format(triples_map.subject_map.rdf_class)
-		if triples_map.subject_map.graph is not None:
-			if "{" in triples_map.subject_map.graph:	
-				rdf_type = rdf_type[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
-			else:
-				rdf_type = rdf_type[:-2] + " <" + triples_map.subject_map.graph + "> .\n"
-		if duplicate == "yes":
-			if predicate not in g_triples:
-				try:
-					output_file_descriptor.write(rdf_type)
-				except:
-					output_file_descriptor.write(rdf_type.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
-				i += 1
-			elif subject + "_" + obj not in g_triples[predicate]:
-				try:
-					output_file_descriptor.write(rdf_type)
-				except:
-					output_file_descriptor.write(rdf_type.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				g_triples[predicate].update({subject + "_" + obj: rdf_type})
-				i += 1
-		else:
-			output_file_descriptor.write(rdf_type)
-			if (number_triple + i + 1) % 10000 == 0:
-				csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-			i += 1
+		for rdf_class in triples_map.subject_map.rdf_class:
+			if rdf_class is not None:
+				obj = "<{}>".format(rdf_class)
+				for graph in triples_map.subject_map.graph:
+					rdf_type = subject + " " + predicate + " " + obj + " .\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in graph:	
+							rdf_type = rdf_type[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row, row_headers,"subject") + "> .\n"
+						else:
+							rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:
+							try:
+								output_file_descriptor.write(rdf_type)
+							except:
+								output_file_descriptor.write(rdf_type.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples.update({predicate : {subject + "_" + obj: rdf_type}})
+							i += 1
+						elif subject + "_" + obj not in g_triples[predicate]:
+							try:
+								output_file_descriptor.write(rdf_type)
+							except:
+								output_file_descriptor.write(rdf_type.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples[predicate].update({subject + "_" + obj: rdf_type})
+							i += 1
+					else:
+						output_file_descriptor.write(rdf_type)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 
 
 
@@ -3204,50 +3484,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
-			triple = subject + " " + predicate + " " + object + ".\n"
-			if triples_map.subject_map.graph is not None:
-				if "{" in triples_map.subject_map.graph:
-					triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
-				else:
-					triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
-			if duplicate == "yes":
-				if predicate not in g_triples:
-					try:
-						output_file_descriptor.write(triple)
-					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples.update({predicate : {subject + "_" + object: triple}})
-					i += 1
-				elif subject + "_" + object not in g_triples[predicate]:
-					try:
-						output_file_descriptor.write(triple)
-					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					g_triples[predicate].update({subject + "_" + object: triple})
-					i += 1
-			else:
-				try:
-					output_file_descriptor.write(triple)
-				except:
-					output_file_descriptor.write(triple.encode("utf-8"))
-				if (number_triple + i + 1) % 10000 == 0:
-					csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-				i += 1
-		elif predicate is not None and subject is not None and object_list:
-			for obj in object_list:
-				if "IRI" in predicate_object_map.object_map.term:
-					triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
-				else:
-					triple = subject + " " + predicate + " " + obj + ".\n"
-				if triples_map.subject_map.graph is not None:
-					if "{" in triples_map.subject_map.graph:
-						triple = triple[:-2] + " <" + string_substitution_array(triples_map.subject_map.graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+			for graph in triples_map.subject_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if graph is not None and "defaultGraph" not in graph:
+					if "{" in graph:
+						triple = triple[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
 					else:
-						triple = triple[:-2] + " <" + triples_map.subject_map.graph + ">.\n"
+						triple = triple[:-2] + " <" + graph + ">.\n"
 				if duplicate == "yes":
 					if predicate not in g_triples:
 						try:
@@ -3256,16 +3499,16 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							output_file_descriptor.write(triple.encode("utf-8"))
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples.update({predicate : {subject + "_" + obj: triple}})
+						g_triples.update({predicate : {subject + "_" + object: triple}})
 						i += 1
-					elif subject + "_" + obj not in g_triples[predicate]:
+					elif subject + "_" + object not in g_triples[predicate]:
 						try:
 							output_file_descriptor.write(triple)
 						except:
 							output_file_descriptor.write(triple.encode("utf-8"))
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-						g_triples[predicate].update({subject + "_" + obj: triple})
+						g_triples[predicate].update({subject + "_" + object: triple})
 						i += 1
 				else:
 					try:
@@ -3275,6 +3518,103 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					if (number_triple + i + 1) % 10000 == 0:
 						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 					i += 1
+			if predicate[1:-1] in predicate_object_map.graph:
+				triple = subject + " " + predicate + " " + object + ".\n"
+				if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+					if "{" in triples_map.subject_map.graph:
+						triple = triple[:-2] + " <" + string_substitution_array(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, row_headers,"subject") + ">.\n"
+					else:
+						triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:					
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples.update({predicate : {subject + "_" + object: triple}})
+							i += 1
+						elif subject + "_" + object not in g_triples[predicate]:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							generated_triples.update({triple : number_triple})
+							g_triples[predicate].update({subject + "_" + object: triple})
+							i += 1
+					else:
+						output_file_descriptor.write(triple)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+		elif predicate is not None and subject is not None and object_list:
+			for obj in object_list:
+				for graph in triples_map.subject_map.graph:
+					if "IRI" in predicate_object_map.object_map.term:
+						triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+					else:
+						triple = subject + " " + predicate + " " + obj + ".\n"
+					if graph is not None and "defaultGraph" not in graph:
+						if "{" in graph:
+							triple = triple[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row, row_headers,"subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + graph + ">.\n"
+					if duplicate == "yes":
+						if predicate not in g_triples:
+							try:
+								output_file_descriptor.write(triple)
+							except:
+								output_file_descriptor.write(triple.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples.update({predicate : {subject + "_" + obj: triple}})
+							i += 1
+						elif subject + "_" + obj not in g_triples[predicate]:
+							try:
+								output_file_descriptor.write(triple)
+							except:
+								output_file_descriptor.write(triple.encode("utf-8"))
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							g_triples[predicate].update({subject + "_" + obj: triple})
+							i += 1
+					else:
+						try:
+							output_file_descriptor.write(triple)
+						except:
+							output_file_descriptor.write(triple.encode("utf-8"))
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
+				if predicate[1:-1] in predicate_object_map.graph:
+					triple = subject + " " + predicate + " " + obj + ".\n"
+					if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+						if "{" in triples_map.subject_map.graph:
+							triple = triple[:-2] + " <" + string_substitution_array(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", row, row_headers,"subject") + ">.\n"
+						else:
+							triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+						if duplicate == "yes":
+							if predicate not in g_triples:					
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples.update({predicate : {subject + "_" + object: triple}})
+								i += 1
+							elif subject + "_" + object not in g_triples[predicate]:
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								generated_triples.update({triple : number_triple})
+								g_triples[predicate].update({subject + "_" + object: triple})
+								i += 1
+							elif triple not in g_triples[predicate][subject + "_" + obj]: 
+								output_file_descriptor.write(triple)
+								if (number_triple + i + 1) % 10000 == 0:
+									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+								i += 1
+						else:
+							output_file_descriptor.write(triple)
+							if (number_triple + i + 1) % 10000 == 0:
+								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+							i += 1
 			object_list = []
 		else:
 			continue

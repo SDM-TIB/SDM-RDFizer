@@ -43,6 +43,7 @@ class TriplesMap:
 
 		self.predicate_object_maps_list = predicate_object_maps_list
 
+
 	def __repr__(self):
 
 		"""
@@ -92,7 +93,7 @@ class SubjectMap:
 
 class PredicateObjectMap:
 	
-	def __init__(self, predicate_map, object_map):
+	def __init__(self, predicate_map, object_map, graph):
 
 		"""
 		Constructor of a PredicateObjectMap object
@@ -108,6 +109,7 @@ class PredicateObjectMap:
 
 		self.predicate_map = predicate_map
 		self.object_map = object_map
+		self.graph = graph
 
 class PredicateMap:
 
