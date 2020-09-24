@@ -14,19 +14,26 @@ def sublist(part_list, full_list):
 def child_list(childs):
 	value = ""
 	for child in childs:
-		value += child + "_"
+		if child not in value:
+			value += child + "_"
 	return value[:-1]
 
 def child_list_value(childs,row):
 	value = ""
+	v = []
 	for child in childs:
-		value += row[child] + "_"
+		if child not in v:
+			value += row[child] + "_"
+			v.append(child)
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):
 	value = ""
+	v = []
 	for child in childs:
-		value += row[row_headers.index(child)] + "_"
+		if child not in v:
+			value += row[row_headers.index(child)] + "_"
+			v.append(child)
 	return value[:-1]
 
 def string_substitution_json(string, pattern, row, term):

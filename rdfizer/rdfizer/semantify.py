@@ -897,7 +897,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 													hash_maker(data, triples_map_element, predicate_object_map.object_map)
 												else:
 													data = json.load(input_file_descriptor)
-													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+													if isinstance(data, list):
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 										elif triples_map_element.file_format == "XPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -906,7 +909,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)							
 										else:
 											database, query_list = translate_sql(triples_map)
-											db = connector.connect(host=host, port=port, user=user, password=password)
+											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
@@ -1178,10 +1181,16 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 											else:
 												data = json.load(input_file_descriptor)
-											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)							
+											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+
+									elif triples_map_element.file_format == "XPath":
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											child_tree = ET.parse(input_file_descriptor)
+											child_root = child_tree.getroot()
+											hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)							
 									else:
 										database, query_list = translate_sql(triples_map)
-										db = connector.connect(host=host, port=port, user=user, password=password)
+										db = connector.connect(host=host, port=int(port), user=user, password=password)
 										cursor = db.cursor(buffered=True)
 										cursor.execute("use " + database)
 										for query in query_list:
@@ -1622,10 +1631,16 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 											hash_maker(data, triples_map_element, predicate_object_map.object_map)
 										else:
 											data = json.load(input_file_descriptor)
-											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)							
+											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+
+								elif triples_map_element.file_format == "XPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										child_tree = ET.parse(input_file_descriptor)
+										child_root = child_tree.getroot()
+										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)							
 								else:
 									database, query_list = translate_sql(triples_map)
-									db = connector.connect(host=host, port=port, user=user, password=password)
+									db = connector.connect(host=host, port=int(port), user=user, password=password)
 									cursor = db.cursor(buffered=True)
 									cursor.execute("use " + database)
 									for query in query_list:
@@ -2195,10 +2210,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													if isinstance(data, list):
 														hash_maker(data, triples_map_element, predicate_object_map.object_map)
 													elif len(data) < 2:
-														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
+														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+
+										elif triples_map_element.file_format == "XPath":
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												child_tree = ET.parse(input_file_descriptor)
+												child_root = child_tree.getroot()
+												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
 										else:
 											database, query_list = translate_sql(triples_map)
-											db = connector.connect(host=host, port=port, user=user, password=password)
+											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
@@ -2237,10 +2258,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													if isinstance(data, list):
 														hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 													elif len(data) < 2:
-														hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
+														hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+
+										elif triples_map_element.file_format == "XPath":
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												child_tree = ET.parse(input_file_descriptor)
+												child_root = child_tree.getroot()
+												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)						
 										else:
 											database, query_list = translate_sql(triples_map)
-											db = connector.connect(host=host, port=port, user=user, password=password)
+											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + database)
 											for query in query_list:
@@ -2821,10 +2848,15 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 											hash_maker(data, triples_map_element, predicate_object_map.object_map)
 										else:
 											data = json.load(input_file_descriptor)
-											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
+											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+								elif triples_map_element.file_format == "XPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										child_tree = ET.parse(input_file_descriptor)
+										child_root = child_tree.getroot()
+										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
 								else:
 									database, query_list = translate_sql(triples_map_element)
-									db = connector.connect(host = host, port = port, user = user, password = password)
+									db = connector.connect(host = host, port = int(port), user = user, password = password)
 									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
@@ -2851,10 +2883,16 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 											if isinstance(data, list):
 												hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 											elif len(data) < 2:
-												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)						
+												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+
+								elif triples_map_element.file_format == "XPath":
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										child_tree = ET.parse(input_file_descriptor)
+										child_root = child_tree.getroot()
+										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)						
 								else:
 									database, query_list = translate_sql(triples_map_element)
-									db = connector.connect(host=host, port=port, user=user, password=password)
+									db = connector.connect(host=host, port=int(port), user=user, password=password)
 									cursor = db.cursor(buffered=True)
 									if database != "None":
 										cursor.execute("use " + database)
@@ -2879,7 +2917,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						try:
 							database, query_list = translate_sql(triples_map)
 							database2, query_list_origin = translate_sql(triples_map_element)
-							db = connector.connect(host = host, port = port, user = user, password = password)
+							db = connector.connect(host = host, port = int(port), user = user, password = password)
 							cursor = db.cursor(buffered=True)
 							if database != "None":
 								cursor.execute("use " + database)
@@ -3442,7 +3480,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 										hash_maker(data, triples_map_element, predicate_object_map.object_map)
 									else:
 										data = json.load(input_file_descriptor)
-										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)								
+										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+
+							elif triples_map_element.file_format == "XPath":
+								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+									child_tree = ET.parse(input_file_descriptor)
+									child_root = child_tree.getroot()
+									hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
 							else:
 								database, query_list = translate_postgressql(triples_map_element)
 								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
