@@ -608,23 +608,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject")
 							if subject_value is not None:
 								subject_value = subject_value[1:-1]
-								if "/" in subject_value:
-									i = len(subject_value) - 1
-									temp = ""
-									while  0 < i:
-										if subject_value[i] == "/":
-											break
-										else:
-											temp = subject_value[i] + temp
-										i -= 1
-									subject_value = temp
-								if triples_map.subject_map.condition == "":
-
-									try:
+								try:
+									if " " not in subject_value:
 										subject = "<http://example.com/base/" + subject_value + ">"
-										triples_map_triples.update(triple_entry) 
-									except:
-										subject = None
+										triples_map_triples.update(triple_entry)
+									else:
+										print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+										subject = None 
+								except:
+									subject = None
 
 							else:
 							#	field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -734,19 +726,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if triples_map.subject_map.condition == "":
 							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject")
 							subject_value = subject_value[1:-1]
-							if "/" in subject_value:
-								i = len(subject_value) - 1
-								temp = ""
-								while  0 < i:
-									if subject_value[i] == "/":
-										break
-									else:
-										temp = subject_value[i] + temp 
-									i -= 1
-								subject_value = temp
 							try:
-								subject = "<http://example.com/base/" + subject_value + ">"
-								triples_map_triples.update(triple_entry) 
+								if " " not in subject_value:
+									subject = "<http://example.com/base/" + subject_value + ">"
+									triples_map_triples.update(triple_entry)
+								else:
+									print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+									subject = None 
 							except:
 								subject = None
 
@@ -883,7 +869,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 							object += "@en"
 						elif "IRI" in predicate_object_map.object_map.term:
-							object = "<" + object + ">" 
+							if " " not in object:
+								object = "<" + object + ">"
+							else:
+								print("<" + object + "> is not a valid URL")
+								object = None 
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
 					if subject is not None:
 						for triples_map_element in triples_map_list:
@@ -1351,32 +1341,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				elif "reference" in triples_map.subject_map.subject_mapping_type:
 					subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp
-							i -= 1
-						subject_value = temp
-					if triples_map.subject_map.condition == "":
-
-						try:
+					try:
+						if " " not in subject_value:
 							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
-
-					else:
-					#	field, condition = condition_separetor(triples_map.subject_map.condition)
-					#	if row[field] == condition:
-						try:
-							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
+					except:
+						subject = None
 
 				elif "constant" in triples_map.subject_map.subject_mapping_type:
 						subject = "<" + subject_value + ">"
@@ -1476,19 +1449,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				if triples_map.subject_map.condition == "":
 					subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp 
-							i -= 1
-						subject_value = temp
 					try:
-						subject = "<http://example.com/base/" + subject_value + ">"
-						triples_map_triples.update(triple_entry) 
+						if " " not in subject_value:
+							subject = "<http://example.com/base/" + subject_value + ">"
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
 					except:
 						subject = None
 
@@ -1617,7 +1584,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
 				elif "IRI" in predicate_object_map.object_map.term:
-						object = "<" + object + ">" 
+					if " " not in object:
+						object = "<" + object + ">"
+					else:
+						print("<" + object + "> is not a valid URL")
+						object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			if subject is not None:
 				for triples_map_element in triples_map_list:
@@ -1917,21 +1888,15 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject")
 						if subject_value is not None:
 							subject_value = subject_value[1:-1]
-							if "/" in subject_value:
-								i = len(subject_value) - 1
-								temp = ""
-								while  0 < i:
-									if subject_value[i] == "/":
-										break
-									else:
-										temp = subject_value[i] + temp
-									i -= 1
-								subject_value = temp
 							if triples_map.subject_map.condition == "":
 
 								try:
-									subject = "<http://example.com/base/" + subject_value + ">"
-									triples_map_triples.update(triple_entry) 
+									if " " not in subject_value:
+										subject = "<http://example.com/base/" + subject_value + ">"
+										triples_map_triples.update(triple_entry)
+									else:
+										print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+										subject = None 
 								except:
 									subject = None
 
@@ -2043,19 +2008,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject")
 						subject_value = subject_value[1:-1]
-						if "/" in subject_value:
-							i = len(subject_value) - 1
-							temp = ""
-							while  0 < i:
-								if subject_value[i] == "/":
-									break
-								else:
-									temp = subject_value[i] + temp 
-								i -= 1
-							subject_value = temp
 						try:
-							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
+							if " " not in subject_value:
+								subject = "<http://example.com/base/" + subject_value + ">"
+								triples_map_triples.update(triple_entry)
+							else:
+								print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+								subject = None 
 						except:
 							subject = None
 
@@ -2192,7 +2151,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 						object += "@en"
 					elif "IRI" in predicate_object_map.object_map.term:
-						object = "<" + object + ">" 
+						if " " not in object:
+							object = "<" + object + ">"
+						else:
+							object = None 
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -2561,32 +2523,15 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				elif triples_map.subject_map.subject_mapping_type == "reference":
 					subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers,"subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp
-							i -= 1
-						subject_value = temp
-					if triples_map.subject_map.condition == "":
-
-						try:
+					try:
+						if " " not in subject_value:
 							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
-
-					else:
-					#	field, condition = condition_separetor(triples_map.subject_map.condition)
-					#	if row[field] == condition:
-						try:
-							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
+					except:
+						subject = None
 
 				elif "constant" in triples_map.subject_map.subject_mapping_type:
 					subject = "<" + subject_value + ">"
@@ -2687,19 +2632,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				if triples_map.subject_map.condition == "":
 					subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers, "subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp 
-							i -= 1
-						subject_value = temp
 					try:
-						subject = "<http://example.com/base/" + subject_value + ">"
-						triples_map_triples.update(triple_entry) 
+						if " " not in subject_value:
+							subject = "<http://example.com/base/" + subject_value + ">"
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
 					except:
 						subject = None
 
@@ -2833,7 +2772,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
 				elif "IRI" in predicate_object_map.object_map.term:
-						object = "<" + object + ">" 
+						if " " not in object:
+							object = "<" + object + ">" 
+						else:
+							print("<" + object + "> is not a valid URL")
+							object = None
 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
@@ -3195,32 +3138,15 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				elif triples_map.subject_map.subject_mapping_type == "reference":
 					subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers,"subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp
-							i -= 1
-						subject_value = temp
-					if triples_map.subject_map.condition == "":
-
-						try:
+					try:
+						if " " not in subject_value:
 							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
-
-					else:
-					#	field, condition = condition_separetor(triples_map.subject_map.condition)
-					#	if row[field] == condition:
-						try:
-							subject = "<http://example.com/base/" + subject_value + ">"
-							triples_map_triples.update(triple_entry) 
-						except:
-							subject = None
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
+					except:
+						subject = None
 				
 				elif "constant" in triples_map.subject_map.subject_mapping_type:
 					subject = "<" + subject_value + ">"
@@ -3321,19 +3247,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				if triples_map.subject_map.condition == "":
 					subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers,"subject")
 					subject_value = subject_value[1:-1]
-					if "/" in subject_value:
-						i = len(subject_value) - 1
-						temp = ""
-						while  0 < i:
-							if subject_value[i] == "/":
-								break
-							else:
-								temp = subject_value[i] + temp 
-							i -= 1
-						subject_value = temp
 					try:
-						subject = "<http://example.com/base/" + subject_value + ">"
-						triples_map_triples.update(triple_entry) 
+						if " " not in subject_value:
+							subject = "<http://example.com/base/" + subject_value + ">"
+							triples_map_triples.update(triple_entry)
+						else:
+							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							subject = None 
 					except:
 						subject = None
 
@@ -3467,7 +3387,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 					object += "@en"
 				elif "IRI" in predicate_object_map.object_map.term:
-						object = "<" + object + ">" 
+						if " " not in object:
+							object = "<" + object + ">"
+						else:
+							print("<" + object + "> is not a valid URL")
+							object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
