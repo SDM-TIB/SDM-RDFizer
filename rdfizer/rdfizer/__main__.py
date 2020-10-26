@@ -1,5 +1,6 @@
 from rdfizer import semantify
 import sys
+import getopt
 
 
 
@@ -40,4 +41,4 @@ for opt, arg in opts:
 	elif opt == '-c' or opt == '--config_file':
 		config_path = arg
 
-semantify(config_path)
+	semantify(config_path)
