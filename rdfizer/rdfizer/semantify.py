@@ -228,7 +228,7 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 			element = str(element)
 		if row[row_headers.index(child_object.parent[0])] in hash_table:
 			if duplicate == "yes":
-				if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[row[child_object.parent[0]]]:
+				if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" not in hash_table[row[row_headers.index(child_object.parent[0])]]:
 					hash_table[element].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object") + ">" : "object"})
 			else:
 				hash_table[element].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object") + ">" : "object"})
@@ -2871,7 +2871,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								for q in query_list_origin:
 									query_1 = q.split("FROM")
 									query_2 = query.split("SELECT")[1].split("FROM")[0]
-									query_new = query_1[0] + " , " + query_2 + " FROM " + query_1[1]
+									query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
 									cursor.execute(query_new)
 									r_h=[x[0] for x in cursor.description]
 									for r in cursor:
