@@ -3654,7 +3654,7 @@ def translate_sql(triples_map):
     temp_query = "SELECT DISTINCT "
     for p in proyections:
         if type(p) == str:
-            if p is not "None":
+            if p != "None":
                 temp_query += "`" + p + "`, "
         elif type(p) == list:
             for pr in p:
@@ -3730,7 +3730,7 @@ def translate_postgressql(triples_map):
 
 	temp_query = "SELECT "
 	for p in proyections:
-		if p is not "None":
+		if p != "None":
 			if p == proyections[len(proyections)-1]:
 				temp_query += "\"" + p + "\""
 			else:
