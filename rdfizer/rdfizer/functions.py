@@ -349,7 +349,7 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 						value = value.strftime("%Y-%m-%d T%H:%M:%S")
 
 					if re.search("^[\s|\t]*$", str(value)) is None:
-						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+						new_string = new_string[:start] + str(value).strip().replace("\"", "'") + new_string[end:]
 						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
 					else:
 						return None
