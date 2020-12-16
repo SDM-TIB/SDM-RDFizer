@@ -39,7 +39,7 @@ The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national proje
 - H2020 - SPRINT (http://sprint-transport.eu/): performance and scalability to test a semantic architecture for the Interoperability Framework on Transport across Europe.
 - EIT-SNAP (https://www.snap-project.eu/): innovation project on the application of semantic technologies for national access points.
 - Open Cities (https://ciudades-abiertas.es/): national project on creating common and shared vocabularies for Spanish Cities
-- Drugs4Covid (https://drugs4covid.oeg-upm.net/): NLP annotations and metadata from more than 60,000 scientific papers about COVID viruses are integrated in a KG with almost 44M of facts (triples). SDM-RDFizer was used for creating this KG.
+- Drugs4Covid (https://drugs4covid.oeg.fi.upm.es/): NLP annotations and metadata from more than 60,000 scientific papers about COVID viruses are integrated in a KG with almost 44M of facts (triples). SDM-RDFizer was used for creating this KG.
 
 
 # Installing and Running the SDM-RDFizer 
