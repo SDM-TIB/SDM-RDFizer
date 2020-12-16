@@ -24,7 +24,6 @@ def child_list_value(childs,row):
 	for child in childs:
 		if child not in v:
 			value += row[child] + "_"
-			v.append(child)
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):

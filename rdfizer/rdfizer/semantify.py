@@ -863,17 +863,20 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = None
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object")
-					if (predicate_object_map.object_map.language is not None) and (object is not None):
-						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-							object += "@es"
-						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-							object += "@en"
-						elif "IRI" in predicate_object_map.object_map.term:
-							if " " not in object:
-								object = "<" + object + ">"
-							else:
-								print("<" + object + "> is not a valid URL")
-								object = None 
+					if object is not None: 
+						if predicate_object_map.object_map.datatype is not None:
+							object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+						elif predicate_object_map.object_map.language is not None:
+							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+								object += "@es"
+							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+								object += "@en"
+							elif "IRI" in predicate_object_map.object_map.term:
+								if " " not in object:
+									object = "<" + object + ">"
+								else:
+									print("<" + object + "> is not a valid URL")
+									object = None 
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
 					if subject is not None:
 						for triples_map_element in triples_map_list:
@@ -938,10 +941,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = None
 				else:
 					object = None
-
-				
-				if object is not None and predicate_object_map.object_map.datatype is not None:
-					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 				if predicate is not None and object is not None and subject is not None:
 					for graph in triples_map.subject_map.graph:
@@ -1159,6 +1158,8 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
+				if object is not None and predicate_object_map.object_map.datatype is not None:
+					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -1205,10 +1206,6 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					object = None
 			else:
 				object = None
-
-
-			if object is not None and predicate_object_map.object_map.datatype is not None:
-				object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
 				triple = subject + " " + predicate + " " + object + ".\n"
@@ -1578,17 +1575,20 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object")
-			if (predicate_object_map.object_map.language is not None) and (object is not None):
-				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-					object += "@es"
-				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-					object += "@en"
-				elif "IRI" in predicate_object_map.object_map.term:
-					if " " not in object:
-						object = "<" + object + ">"
-					else:
-						print("<" + object + "> is not a valid URL")
-						object = None 
+			if object is not None:
+				if predicate_object_map.object_map.datatype is not None:
+					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+				elif predicate_object_map.object_map.language is not None:
+					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+						object += "@es"
+					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+						object += "@en"
+					elif "IRI" in predicate_object_map.object_map.term:
+						if " " not in object:
+							object = "<" + object + ">"
+						else:
+							print("<" + object + "> is not a valid URL")
+							object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			if subject is not None:
 				for triples_map_element in triples_map_list:
@@ -1652,10 +1652,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = None
 		else:
 			object = None
-
-		
-		if object is not None and predicate_object_map.object_map.datatype is not None:
-			object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
 			for graph in triples_map.subject_map.graph:
@@ -2145,16 +2141,19 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object")
-				if (predicate_object_map.object_map.language is not None) and (object is not None):
-					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-						object += "@es"
-					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-						object += "@en"
-					elif "IRI" in predicate_object_map.object_map.term:
-						if " " not in object:
-							object = "<" + object + ">"
-						else:
-							object = None 
+				if object is not None:
+					if predicate_object_map.object_map.datatype is not None:
+						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+					elif predicate_object_map.object_map.language is not None:
+						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+							object += "@es"
+						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+							object += "@en"
+						elif "IRI" in predicate_object_map.object_map.term:
+							if " " not in object:
+								object = "<" + object + ">"
+							else:
+								object = None 
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -2272,10 +2271,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = None
 			else:
 				object = None
-
-			
-			if object is not None and predicate_object_map.object_map.datatype is not None:
-				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 			if predicate is not None and object is not None and subject is not None:
 				for graph in triples_map.subject_map.graph:
@@ -2721,11 +2716,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							g_triples[predicate].update({subject + "_" + obj: rdf_type})
 							i += 1
-				else:
-					output_file_descriptor.write(rdf_type)
-					if (number_triple + i + 1) % 10000 == 0:
-						csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-					i += 1
+					else:
+						output_file_descriptor.write(rdf_type)
+						if (number_triple + i + 1) % 10000 == 0:
+							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
+						i += 1
 
 
 
@@ -2766,17 +2761,20 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if (predicate_object_map.object_map.language is not None) and (object is not None):
-				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-					object += "@es"
-				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-					object += "@en"
-				elif "IRI" in predicate_object_map.object_map.term:
-						if " " not in object:
-							object = "<" + object + ">" 
-						else:
-							print("<" + object + "> is not a valid URL")
-							object = None
+			if object is not None:
+				if predicate_object_map.object_map.datatype is not None:
+					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+				elif predicate_object_map.object_map.language is not None:
+					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+						object += "@es"
+					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+						object += "@en"
+					elif "IRI" in predicate_object_map.object_map.term:
+							if " " not in object:
+								object = "<" + object + ">" 
+							else:
+								print("<" + object + "> is not a valid URL")
+								object = None
 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
@@ -2885,9 +2883,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					continue
 		else:
 			object = None
-
-		if object is not None and predicate_object_map.object_map.datatype is not None:
-			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
 			for graph in triples_map.subject_map.graph:
@@ -3381,17 +3376,20 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_postgres(predicate_object_map.object_map.value, ".+", row, row_headers, "object")
-			if (predicate_object_map.object_map.language is not None) and (object is not None):
-				if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-					object += "@es"
-				elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-					object += "@en"
-				elif "IRI" in predicate_object_map.object_map.term:
-						if " " not in object:
-							object = "<" + object + ">"
-						else:
-							print("<" + object + "> is not a valid URL")
-							object = None 
+			if object is not None:
+				if predicate_object_map.object_map.datatype is not None:
+					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+				elif predicate_object_map.object_map.language is not None:
+					if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+						object += "@es"
+					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+						object += "@en"
+					elif "IRI" in predicate_object_map.object_map.term:
+							if " " not in object:
+								object = "<" + object + ">"
+							else:
+								print("<" + object + "> is not a valid URL")
+								object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
@@ -3447,9 +3445,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					continue
 		else:
 			object = None
-
-		if object is not None and predicate_object_map.object_map.datatype is not None:
-			object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 
 		if predicate is not None and object is not None and subject is not None:
 			for graph in triples_map.subject_map.graph:
