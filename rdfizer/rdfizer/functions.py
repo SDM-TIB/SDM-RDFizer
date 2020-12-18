@@ -35,7 +35,7 @@ def child_list_value_array(childs,row,row_headers):
 			v.append(child)
 	return value[:-1]
 
-def string_substitution_json(string, pattern, row, term):
+def string_substitution_json(string, pattern, row, term, ignore):
 
 	template_references = re.finditer(pattern, string)
 	new_string = string
@@ -51,9 +51,10 @@ def string_substitution_json(string, pattern, row, term):
 					value = row[match]
 				else:
 					print('The attribute ' + match + ' is missing.')
+					if ignore == "yes":
+						return None
 					print('Aborting...')
 					sys.exit(1)
-					return
 
 			elif "." in match:
 				temp = match.split(".")
@@ -109,6 +110,8 @@ def string_substitution_json(string, pattern, row, term):
 				return None
 		else:
 			print("Invalid pattern")
+			if ignore == "yes":
+				return None
 			print("Aborting...")
 			sys.exit(1)
 
@@ -181,7 +184,7 @@ def string_substitution_xml(string, pattern, row, term):
 
 	return new_string
 
-def string_substitution(string, pattern, row, term):
+def string_substitution(string, pattern, row, term, ignore):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -242,9 +245,10 @@ def string_substitution(string, pattern, row, term):
 					#	return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
-				return
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if match in row.keys():
@@ -259,17 +263,20 @@ def string_substitution(string, pattern, row, term):
 					#	return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
-				return
 		else:
 			print("Invalid pattern")
+			if ignore == "yes":
+				return None
 			print("Aborting...")
 			sys.exit(1)
 
 	return new_string
 
-def string_substitution_array(string, pattern, row, row_headers, term):
+def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -325,6 +332,8 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 						return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
 				return
@@ -356,18 +365,22 @@ def string_substitution_array(string, pattern, row, row_headers, term):
 					return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
 				return
 		else:
 			print("Invalid pattern")
+			if ignore == "yes":
+				return None
 			print("Aborting...")
 			sys.exit(1)
 
 	return new_string
 
 
-def string_substitution_postgres(string, pattern, row, row_headers, term):
+def string_substitution_postgres(string, pattern, row, row_headers, term, ignore):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -414,6 +427,8 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 					return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
 				return
@@ -446,11 +461,15 @@ def string_substitution_postgres(string, pattern, row, row_headers, term):
 					return None
 			else:
 				print('The attribute ' + match + ' is missing.')
+				if ignore == "yes":
+					return None
 				print('Aborting...')
 				sys.exit(1)
 				return
 		else:
 			print("Invalid pattern")
+			if ignore == "yes":
+				return None
 			print("Aborting...")
 			sys.exit(1)
 
