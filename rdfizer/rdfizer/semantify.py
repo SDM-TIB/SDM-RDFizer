@@ -873,12 +873,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								object += "@es"
 							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 								object += "@en"
-							elif "IRI" in predicate_object_map.object_map.term:
-								if " " not in object:
-									object = "<" + object + ">"
-								else:
-									print("<" + object + "> is not a valid URL")
-									object = None 
+						elif "IRI" in predicate_object_map.object_map.term:
+							if " " not in object:
+								object = "<" + object + ">"
+							else:
+								print("<" + object + "> is not a valid URL")
+								object = None 
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
 					if subject is not None:
 						for triples_map_element in triples_map_list:
@@ -1601,12 +1601,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object += "@es"
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 						object += "@en"
-					elif "IRI" in predicate_object_map.object_map.term:
-						if " " not in object:
-							object = "<" + object + ">"
-						else:
-							print("<" + object + "> is not a valid URL")
-							object = None 
+				elif "IRI" in predicate_object_map.object_map.term:
+					if " " not in object:
+						object = "<" + object[1:-1] + ">"
+					else:
+						print("<" + object[1:-1] + "> is not a valid URL")
+						object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			if subject is not None:
 				for triples_map_element in triples_map_list:
@@ -2167,11 +2167,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							object += "@es"
 						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 							object += "@en"
-						elif "IRI" in predicate_object_map.object_map.term:
-							if " " not in object:
-								object = "<" + object + ">"
-							else:
-								object = None 
+					elif "IRI" in predicate_object_map.object_map.term:
+						if " " not in object:
+							object = "<" + object[1:-1] + ">"
+						else:
+							object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -2787,12 +2787,12 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						object += "@es"
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 						object += "@en"
-					elif "IRI" in predicate_object_map.object_map.term:
-							if " " not in object:
-								object = "<" + object + ">" 
-							else:
-								print("<" + object + "> is not a valid URL")
-								object = None
+				elif "IRI" in predicate_object_map.object_map.term:
+					if " " not in object:
+						object = "<" + object[1:-1] + ">" 
+					else:
+						print("<" + object[1:-1] + "> is not a valid URL")
+						object = None
 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
@@ -3448,12 +3448,12 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						object += "@es"
 					elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 						object += "@en"
-					elif "IRI" in predicate_object_map.object_map.term:
-							if " " not in object:
-								object = "<" + object + ">"
-							else:
-								print("<" + object + "> is not a valid URL")
-								object = None 
+				elif "IRI" in predicate_object_map.object_map.term:
+					if " " not in object:
+						object = "<" + object[1:-1] + ">"
+					else:
+						print("<" + object[1:-1] + "> is not a valid URL")
+						object = None 
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
