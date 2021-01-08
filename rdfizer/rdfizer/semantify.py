@@ -1580,8 +1580,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 		print(triples_map.iterator != "None")
 		if triples_map.iterator != "None":
-			if iterator != "$.[*]":
-				temp_keys = iterator.split(".")
+			if triples_map.iterator != "$.[*]":
+				temp_keys = triples_map.iterator.split(".")
 				row = data
 				for tp in temp_keys:
 					if "$" != tp:
