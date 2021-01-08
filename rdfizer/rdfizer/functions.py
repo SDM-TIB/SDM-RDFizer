@@ -91,11 +91,14 @@ def string_substitution_json(string, pattern, row, term, ignore):
 			match = reference_match.group(0)
 
 			if "." in match:
-				temp = match.split(".")
-				value = row[temp[1]]
-				temp = temp[2:]
-				for t in temp:
-					value = value[t]
+				if match in row:
+					value = row[match]
+				else:
+					temp = match.split(".")
+					value = row[temp[1]]
+					temp = temp[2:]
+					for t in temp:
+						value = value[t]
 			else:
 				value = row[match]
 
