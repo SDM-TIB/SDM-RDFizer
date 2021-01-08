@@ -44,10 +44,11 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 		if iterator != "$.[*]":
 			temp_keys = iterator.split(".")
 			for tp in temp_keys:
-				if "[*]" in tp:
-					row = row[tp.split("[*]")[0]]
-				else:
-					row = row[tp]
+				if "$" != tp:
+					if "[*]" in tp:
+						row = row[tp.split("[*]")[0]]
+					else:
+						row = row[tp]
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
@@ -237,10 +238,11 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 		if iterator != "$.[*]":
 			temp_keys = iterator.split(".")
 			for tp in temp_keys:
-				if "[*]" in tp:
-					row = row[tp.split("[*]")[0]]
-				else:
-					row = row[tp]
+				if "$" != tp:
+					if "[*]" in tp:
+						row = row[tp.split("[*]")[0]]
+					else:
+						row = row[tp]
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
