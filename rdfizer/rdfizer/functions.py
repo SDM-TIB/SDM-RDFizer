@@ -57,11 +57,14 @@ def string_substitution_json(string, pattern, row, term, ignore):
 					sys.exit(1)
 
 			elif "." in match:
-				temp = match.split(".")
-				value = row[temp[1]]
-				temp = temp[2:]
-				for t in temp:
-					value = value[t]
+				if match in row:
+					value = row[match]
+				else:
+					temp = match.split(".")
+					value = row[temp[0]]
+					for t in temp:
+						if t != temp[0]:
+							value = value[t]
 
 			else:
 				value = match
@@ -97,7 +100,7 @@ def string_substitution_json(string, pattern, row, term, ignore):
 					temp = match.split(".")
 					value = row[temp[0]]
 					for t in temp:
-						if t != temp[0]
+						if t != temp[0]:
 							value = value[t]
 									
 			else:
