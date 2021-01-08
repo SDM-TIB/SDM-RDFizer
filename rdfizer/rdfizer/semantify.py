@@ -1269,6 +1269,8 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 
 def semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
 
+	print("\n\nTM:",triples_map.triples_map_name)
+
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
