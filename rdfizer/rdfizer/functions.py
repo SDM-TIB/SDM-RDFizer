@@ -125,6 +125,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				value = row[match]
 
 			if match is not None:
+				print(value)
 				print(type(value).__name__)
 				if (type(value).__name__) == "int":
 						value = str(value)
