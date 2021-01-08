@@ -1584,11 +1584,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
-					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore) + ">"
+					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore) + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
-					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore) + ">"
+					object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore) + ">"
 				else:
-					object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore) + "\""
+					object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore) + "\""
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
