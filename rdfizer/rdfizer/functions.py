@@ -35,11 +35,19 @@ def child_list_value_array(childs,row,row_headers):
 			v.append(child)
 	return value[:-1]
 
-def string_substitution_json(string, pattern, row, term, ignore):
+def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
+	if iterator != "None":
+		if iterator != "$.[*]":
+			temp_keys = iterator.split(".")
+			for tp in temp_keys:
+				if "[*]" in tp:
+					row = row[tp.split("[*]")[0]]
+				else:
+					row = row[tp]
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
@@ -61,17 +69,20 @@ def string_substitution_json(string, pattern, row, term, ignore):
 					value = row[match]
 				else:
 					temp = match.split(".")
-					value = row[temp[0]]
+					if "[*]" in temp[0]:
+						value = row[temp[0].split("[*]")[0]]
+					else:
+						value = row[temp[0]]
 					for t in temp:
 						if t != temp[0]:
 							value = value[t]
-
+									
 			else:
-				value = match
+				value = row[match]
 			
 			if value is not None:
 				if (type(value).__name__) == "int":
-					value = str(row[match]) 
+					value = str(value) 
 				if re.search("^[\s|\t]*$", value) is None:
 					value = urllib.parse.quote(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
@@ -98,7 +109,10 @@ def string_substitution_json(string, pattern, row, term, ignore):
 					value = row[match]
 				else:
 					temp = match.split(".")
-					value = row[temp[0]]
+					if "[*]" in temp[0]:
+						value = row[temp[0].split("[*]")[0]]
+					else:
+						value = row[temp[0]]
 					for t in temp:
 						if t != temp[0]:
 							value = value[t]
@@ -127,7 +141,6 @@ def string_substitution_json(string, pattern, row, term, ignore):
 	return new_string
 
 def string_substitution_xml(string, pattern, row, term):
-
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
@@ -193,7 +206,7 @@ def string_substitution_xml(string, pattern, row, term):
 
 	return new_string
 
-def string_substitution(string, pattern, row, term, ignore):
+def string_substitution(string, pattern, row, term, ignore, iterator):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -220,6 +233,14 @@ def string_substitution(string, pattern, row, term, ignore):
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
+	if iterator != "None":
+		if iterator != "$.[*]":
+			temp_keys = iterator.split(".")
+			for tp in temp_keys:
+				if "[*]" in tp:
+					row = row[tp.split("[*]")[0]]
+				else:
+					row = row[tp]
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
@@ -227,6 +248,12 @@ def string_substitution(string, pattern, row, term, ignore):
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
+			if "." in match:
+				if match not in row.keys():
+					temp_keys = match.split(".")
+					match = temp_keys[len(temp_keys) - 1]
+					for tp in temp_keys[:-1]:
+						row = row[tp]
 			if match in row.keys():
 				if row[match] is not None:
 					if (type(row[match]).__name__) == "int":
@@ -260,6 +287,12 @@ def string_substitution(string, pattern, row, term, ignore):
 				sys.exit(1)
 		elif pattern == ".+":
 			match = reference_match.group(0)
+			if "." in match:
+				if match not in row.keys():
+					temp_keys = match.split(".")
+					match = temp_keys[len(temp_keys) - 1]
+					for tp in temp_keys[:-1]:
+						row = row[tp]
 			if match in row.keys():
 				if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match])
