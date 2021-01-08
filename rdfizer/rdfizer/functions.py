@@ -40,7 +40,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
-	if iterator != "None":
+	if iterator != "None" and "" != tp:
 		if iterator != "$.[*]":
 			temp_keys = iterator.split(".")
 			for tp in temp_keys:
