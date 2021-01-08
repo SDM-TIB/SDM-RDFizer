@@ -96,9 +96,11 @@ def string_substitution_json(string, pattern, row, term, ignore):
 				temp = temp[2:]
 				for t in temp:
 					value = value[t]
+			else:
+				value = row[match]
 
 			if match is not None:
-				if (type(value).__name__) == "int":
+				if (type(row[match]).__name__) == "int":
 						value = str(row[match])
 				if value is not None:
 					if re.search("^[\s|\t]*$", value) is None:
