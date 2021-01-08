@@ -95,16 +95,17 @@ def string_substitution_json(string, pattern, row, term, ignore):
 					value = row[match]
 				else:
 					temp = match.split(".")
-					value = row[temp[1]]
-					temp = temp[2:]
+					value = row[temp[0]]
 					for t in temp:
-						value = value[t]
+						if t != temp[0]
+							value = value[t]
+									
 			else:
 				value = row[match]
 
 			if match is not None:
-				if (type(row[match]).__name__) == "int":
-						value = str(row[match])
+				if (type(value).__name__) == "int":
+						value = str(value)
 				if value is not None:
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
