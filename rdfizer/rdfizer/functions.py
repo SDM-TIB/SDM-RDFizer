@@ -79,6 +79,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							value = value[t]
 									
 			else:
+				print(row)
 				value = row[match]
 			
 			if value is not None:
