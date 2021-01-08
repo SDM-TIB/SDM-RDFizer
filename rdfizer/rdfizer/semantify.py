@@ -1276,7 +1276,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 	object_list = []
 	
 	i = 0
-	if triples_map.iterator != "None" and if triples_map.iterator != "$.[*]":
+	if triples_map.iterator != "None" and triples_map.iterator != "$.[*]":
 		temp_keys = triples_map.iterator.split(".")
 		row = data
 		for tp in temp_keys:
