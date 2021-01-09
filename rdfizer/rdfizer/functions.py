@@ -79,12 +79,9 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							value = value[t]
 									
 			else:
-				print(match)
 				value = row[match]
 			
 			if value is not None:
-				print(value)
-				print(type(value).__name__)
 				if (type(value).__name__) == "int":
 					value = str(value) 
 				if re.search("^[\s|\t]*$", value) is None:
@@ -125,8 +122,6 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				value = row[match]
 
 			if match is not None:
-				print(value)
-				print(type(value).__name__)
 				if (type(value).__name__) == "int":
 						value = str(value)
 				if value is not None:
