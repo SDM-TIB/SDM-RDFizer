@@ -1287,7 +1287,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				if "[*][*]" in tp:
 					row = row[tp.split("[*][*]")[0]]
 				elif "[*]" in tp:
-					row = row[tp.split("[*][*]")[0]]
+					row = row[tp.split("[*]")[0]]
 				else:
 					row = row[tp]
 			if "[*][*]" in new_iterator:
