@@ -1300,7 +1300,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			else:
 				i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data, iterator.replace(new_iterator[:-1],""))
 	else:
-		subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject",ignore,triples_map.iterator) 	
+		subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject",ignore,iterator) 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(data)]}	
 			if subject_value in triples_map_triples:
@@ -1380,7 +1380,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									except:
 										subject = None 
 					elif "reference" in triples_map.subject_map.subject_mapping_type:
-						subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject",ignore,triples_map.iterator)
+						subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject",ignore,iterator)
 						subject_value = subject_value[1:-1]
 						try:
 							if " " not in subject_value:
@@ -1488,7 +1488,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 				elif "reference" in triples_map.subject_map.subject_mapping_type:
 					if triples_map.subject_map.condition == "":
-						subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject",ignore,triples_map.iterator)
+						subject_value = string_substitution_json(triples_map.subject_map.value, ".+", data, "subject",ignore,iterator)
 						subject_value = subject_value[1:-1]
 						try:
 							if " " not in subject_value:
@@ -1555,7 +1555,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						rdf_type = subject + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> " + "<{}>.\n".format(rdf_class)
 						if graph is not None and "defaultGraph" not in graph:
 							if "{" in graph:	
-								rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore,triples_map.iterator) + "> .\n"
+								rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore,iterator) + "> .\n"
 							else:
 								rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
 						if duplicate == "yes":
