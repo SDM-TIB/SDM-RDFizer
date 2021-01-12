@@ -1288,8 +1288,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					row = row[tp.split("[*][*]")[0]]
 				elif "[*]" in tp:
 					row = row[tp.split("[*]")[0]]
+				elif "*" == tp:
+					pass
 				else:
 					row = row[tp]
+			if "*" == new_iterator[-2]:
+				for sub_row in row:
+					i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_row, iterator.replace(new_iterator[:-1],""))
+				executed = False
+				break
 			if "[*][*]" in new_iterator:
 				for sub_row in row:
 					for sub_sub_row in row[sub_row]:
