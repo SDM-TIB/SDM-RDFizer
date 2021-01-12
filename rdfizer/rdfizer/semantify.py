@@ -1294,7 +1294,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					row = row[tp]
 			if "*" == new_iterator[-2]:
 				for sub_row in row:
-					i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_row, iterator.replace(new_iterator[:-1],""))
+					print(sub_row)
+					i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, row[sub_row], iterator.replace(new_iterator[:-1],""))
 				executed = False
 				break
 			if "[*][*]" in new_iterator:
