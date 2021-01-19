@@ -259,21 +259,26 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if match in row.keys():
 				if row[match] is not None:
 					if (type(row[match]).__name__) == "int":
-						row[match] = str(row[match]) 
-					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row[match])) - (end - start)
-						if "\\" in new_string:
-							new_string = new_string.replace("\\", "")
-							count = new_string.count("}")
-							i = 0
-							while i < count:
-								new_string = "{" + new_string
-								i += 1
-							new_string = new_string.replace(" ", "")
-
-					else:
+						row[match] = str(row[match])
+					if isinstance(row[match],dict):
+						print("The key " + match + " has a Json structure as a value.\n")
+						print("The index needs to be indicated.\n")
 						return None
+					else: 
+						if re.search("^[\s|\t]*$", row[match]) is None:
+							new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
+							offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row[match])) - (end - start)
+							if "\\" in new_string:
+								new_string = new_string.replace("\\", "")
+								count = new_string.count("}")
+								i = 0
+								while i < count:
+									new_string = "{" + new_string
+									i += 1
+								new_string = new_string.replace(" ", "")
+
+						else:
+							return None
 					# To-do:
 					# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
 					#if term == "subject":
@@ -298,12 +303,17 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if match in row.keys():
 				if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match])
-				if row[match] is not None:
-					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
-						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
-					else:
-						return None
+				if isinstance(row[match],dict):
+					print("The key " + match + " has a Json structure as a value.\n")
+					print("The index needs to be indicated.\n")
+					return None
+				else:
+					if row[match] is not None:
+						if re.search("^[\s|\t]*$", row[match]) is None:
+							new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
+							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+						else:
+							return None
 					#	return None
 			else:
 				print('The attribute ' + match + ' is missing.')
