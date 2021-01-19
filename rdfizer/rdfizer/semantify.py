@@ -2208,11 +2208,12 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							object += "@es"
 						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
 							object += "@en"
-					elif "IRI" in predicate_object_map.object_map.term:
-						if " " not in object:
-							object = "<" + object[1:-1] + ">"
-						else:
-							object = None
+					elif predicate_object_map.object_map.term is not None:
+						if "IRI" in predicate_object_map.object_map.term:
+							if " " not in object:
+								object = "<" + object[1:-1] + ">"
+							else:
+								object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
