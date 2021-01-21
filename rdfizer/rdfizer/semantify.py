@@ -1713,8 +1713,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			else:
 				object = None
 			print(subject)
-			print(predicate)
-			print(object)
 			if predicate is not None and object is not None and subject is not None:
 				for graph in triples_map.subject_map.graph:
 					triple = subject + " " + predicate + " " + object + ".\n"
