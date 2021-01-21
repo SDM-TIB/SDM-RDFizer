@@ -79,7 +79,10 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							value = value[t]
 									
 			else:
-				value = row[match]
+				if match in row:
+					value = row[match]
+				else:
+					return None
 			
 			if value is not None:
 				if (type(value).__name__) == "int":
@@ -116,10 +119,12 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						value = row[temp[0]]
 					for t in temp:
 						if t != temp[0]:
-							value = value[t]
-									
+							value = value[t]						
 			else:
-				value = row[match]
+				if match in row:
+					value = row[match]
+				else:
+					return None
 
 			if match is not None:
 				if (type(value).__name__) == "int":
