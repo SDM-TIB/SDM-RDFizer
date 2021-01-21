@@ -1292,6 +1292,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					pass
 				else:
 					row = row[tp]
+			print(new_iterator)
 			if new_iterator != ".":
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
@@ -1316,7 +1317,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			else:
 				i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data, iterator.replace(new_iterator[:-1],""))
 	else:
-		print(iterator)
 		subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject",ignore,iterator) 	
 		if duplicate == "yes":
 			triple_entry = {subject_value: [dictionary_maker(data)]}	
