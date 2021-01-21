@@ -3933,6 +3933,7 @@ def semantify(config_path):
 										data = csv.DictReader(input_file_descriptor, delimiter=',')
 										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
+									print(triples_map.iterator)
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
 										if isinstance(data, list):
