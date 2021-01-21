@@ -49,7 +49,6 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						row = row[tp.split("[*]")[0]]
 					else:
 						row = row[tp]
-	print(row)
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
