@@ -3940,6 +3940,7 @@ def semantify(config_path):
 										elif len(data) < 2:
 											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
 										else:
+											print(triples_map.iterator)
 											number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
 								elif triples_map.file_format == "XPath":
 									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
