@@ -1293,23 +1293,23 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					pass
 				else:
 					row = row[tp]
-			print(new_iterator)
-			if "*" == new_iterator[-2]:
-				for sub_row in row:
-					i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, row[sub_row], iterator.replace(new_iterator[:-1],""))
-				executed = False
-				break
-			if "[*][*]" in new_iterator:
-				for sub_row in row:
-					for sub_sub_row in row[sub_row]:
-						i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_sub_row, iterator.replace(new_iterator[:-1],""))
-				executed = False
-				break
-			if isinstance(row,list):
-				for sub_row in row:
-					i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_row, iterator.replace(new_iterator[:-1],""))
-				executed = False
-				break
+			if new_iterator != ".":
+				if "*" == new_iterator[-2]:
+					for sub_row in row:
+						i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, row[sub_row], iterator.replace(new_iterator[:-1],""))
+					executed = False
+					break
+				if "[*][*]" in new_iterator:
+					for sub_row in row:
+						for sub_sub_row in row[sub_row]:
+							i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_sub_row, iterator.replace(new_iterator[:-1],""))
+					executed = False
+					break
+				if isinstance(row,list):
+					for sub_row in row:
+						i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, sub_row, iterator.replace(new_iterator[:-1],""))
+					executed = False
+					break
 		if executed:
 			if isinstance(row,list):
 				for sub_row in row:
@@ -3933,7 +3933,6 @@ def semantify(config_path):
 										data = csv.DictReader(input_file_descriptor, delimiter=',')
 										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
-									print(triples_map.iterator)
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
 										if isinstance(data, list):
@@ -3941,7 +3940,6 @@ def semantify(config_path):
 										elif len(data) < 2:
 											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
 										else:
-											print(triples_map.iterator)
 											number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
 								elif triples_map.file_format == "XPath":
 									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
