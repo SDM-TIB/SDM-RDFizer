@@ -127,13 +127,20 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 			if match is not None:
 				if (type(value).__name__) == "int":
-						value = str(value)		
-				if value is not None:
-					if re.search("^[\s|\t]*$", value) is None:
-						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
-						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+						value = str(value)
+				if isinstance(value, dict):
+					if value:
+						print("Index needed")
+						return None
 					else:
 						return None
+				else:		
+					if value is not None:
+						if re.search("^[\s|\t]*$", value) is None:
+							new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+						else:
+							return None
 			else:
 				return None
 		else:
