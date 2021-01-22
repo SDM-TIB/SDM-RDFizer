@@ -114,9 +114,11 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				else:
 					temp = match.split(".")
 					value = row[temp[0]]
+					print(value)
 					for element in temp:
 						if element in value:
 							value = value[element]
+							print(value)
 			else:
 				if match in row:
 					value = row[match]
@@ -125,7 +127,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 			if match is not None:
 				if (type(value).__name__) == "int":
-						value = str(value)
+						value = str(value)		
 				if value is not None:
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
