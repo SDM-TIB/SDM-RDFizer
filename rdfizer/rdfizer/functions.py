@@ -107,19 +107,16 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 		elif pattern == ".+":
 			match = reference_match.group(0)
-
+			print(match)
 			if "." in match:
 				if match in row:
 					value = row[match]
 				else:
 					temp = match.split(".")
-					if "[*]" in temp[0]:
-						value = row[temp[0].split("[*]")[0]]
-					else:
-						value = row[temp[0]]
-					for t in temp:
-						if t != temp[0]:
-							value = value[t]						
+					value = row[temp[0]]
+					for element in temp:
+						if element in value:
+							value = value[element]
 			else:
 				if match in row:
 					value = row[match]
