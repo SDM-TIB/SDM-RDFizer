@@ -1143,11 +1143,12 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 							else:
 								rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
 						if duplicate == "yes":
-							if rdf_type not in generated_triples:
+							if (rdf_type not in triple_array) and (rdf_type not in triples):
 								output_file_descriptor.write(rdf_type)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
-								generated_triples.update({rdf_type : number_triple + i + 1})
+								triple_array.append(rdf_type)
+								triples.append(rdf_type)
 								i += 1
 						else:
 							output_file_descriptor.write(rdf_type)
@@ -4078,7 +4079,6 @@ def semantify(config_path):
 								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
 									with open(str(triples_map.data_source), "r") as input_file_descriptor:
 										data = json.load(input_file_descriptor)
-										print(isinstance(data, list))
 										if isinstance(data, list):
 											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 										else:
