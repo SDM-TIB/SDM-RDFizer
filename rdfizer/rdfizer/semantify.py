@@ -1117,7 +1117,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 
 	i = 0
 	for row in data:
-		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject",ignore, iterator) 	
+		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject",ignore, triples_map.iterator) 	
 		if triples_map.subject_map.condition == "":
 			try:
 				subject = "<" + subject_value  + ">"
@@ -1255,7 +1255,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 									object = None
 								else:
 									try:
-										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object",ignore, iterator) + ">"
+										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 									except TypeError:
 										object = None
 							break
@@ -2190,15 +2190,18 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				elif "reference" in triples_map.subject_map.subject_mapping_type:
 					if triples_map.subject_map.condition == "":
 						subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject",ignore , triples_map.iterator)
-						subject_value = subject_value[1:-1]
-						try:
-							if " " not in subject_value:
-								subject = "<http://example.com/base/" + subject_value + ">"
-								triples_map_triples.update(triple_entry)
-							else:
-								print("<http://example.com/base/" + subject_value + "> is an invalid URL")
-								subject = None 
-						except:
+						if subject_value is not None:
+							subject_value = subject_value[1:-1]
+							try:
+								if " " not in subject_value:
+									subject = "<http://example.com/base/" + subject_value + ">"
+									triples_map_triples.update(triple_entry)
+								else:
+									print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+									subject = None 
+							except:
+								subject = None
+						else:
 							subject = None
 
 					else:
