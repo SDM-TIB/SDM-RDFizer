@@ -1200,7 +1200,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
-				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, iterator)
+				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, triples_map.iterator)
 				if object is not None and predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
