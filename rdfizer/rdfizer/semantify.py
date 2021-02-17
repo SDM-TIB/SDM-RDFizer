@@ -909,7 +909,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if "'" in object[1:-1]:
 							object = "\"" + object[1:-1].replace("'","\\'") + "\""
 						if "\n" in object:
-							object = object.replace("\n","\\") 
+							object = object.replace("\n","\\n") 
 						if predicate_object_map.object_map.datatype is not None:
 							object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 						elif predicate_object_map.object_map.language is not None:
@@ -1209,7 +1209,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					if "'" in object[1:-1]:
 						object = "\"" + object[1:-1].replace("'","\\'") + "\""
 					if "\n" in object:
-						object = object.replace("\n","\\")
+						object = object.replace("\n","\\n")
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
@@ -1688,7 +1688,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					if "'" in object[1:-1]:
 						object = "\"" + object[1:-1].replace("'","\\'") + "\""
 					if "\n" in object:
-						object = object.replace("\n","\\")
+						object = object.replace("\n","\\n")
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 					elif predicate_object_map.object_map.language is not None:
@@ -2347,7 +2347,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if "'" in object[1:-1]:
 						object = "\"" + object[1:-1].replace("'","\\'") + "\""
 					if "\n" in object:
-						object = object.replace("\n","\\")
+						object = object.replace("\n","\\n")
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 					elif predicate_object_map.object_map.language is not None:
@@ -2990,7 +2990,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				if "'" in object[1:-1]:
 					object = "\"" + object[1:-1].replace("'","\\'") + "\""
 				if "\n" in object:
-					object = object.replace("\n","\\")
+					object = object.replace("\n","\\n")
 				if predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.language is not None:
@@ -3655,7 +3655,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				if "'" in object[1:-1]:
 					object = "\"" + object[1:-1].replace("'","\\'") + "\""
 				if "\n" in object:
-					object = object.replace("\n","\\")
+					object = object.replace("\n","\\n")
 				if predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.language is not None:
