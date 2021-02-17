@@ -905,7 +905,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = None
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object")
-					if object is not None: 
+					if object is not None:
+						if "'" in object[1:-1]:
+							object = "\"" + object[1:-1].replace("'","\\'") + "\""
+						if "\n" in object:
+							object = object.replace("\n","\\") 
 						if predicate_object_map.object_map.datatype is not None:
 							object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 						elif predicate_object_map.object_map.language is not None:
@@ -1202,6 +1206,10 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, triples_map.iterator)
 				if object is not None and predicate_object_map.object_map.datatype is not None:
+					if "'" in object[1:-1]:
+						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+					if "\n" in object:
+						object = object.replace("\n","\\")
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
@@ -1677,6 +1685,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object", ignore, iterator)
 				if object is not None:
+					if "'" in object[1:-1]:
+						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+					if "\n" in object:
+						object = object.replace("\n","\\")
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 					elif predicate_object_map.object_map.language is not None:
@@ -2332,6 +2344,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, triples_map.iterator)
 				if object is not None:
+					if "'" in object[1:-1]:
+						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+					if "\n" in object:
+						object = object.replace("\n","\\")
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 					elif predicate_object_map.object_map.language is not None:
@@ -2971,6 +2987,10 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object",ignore)
 			if object is not None:
+				if "'" in object[1:-1]:
+					object = "\"" + object[1:-1].replace("'","\\'") + "\""
+				if "\n" in object:
+					object = object.replace("\n","\\")
 				if predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.language is not None:
@@ -3632,6 +3652,10 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 		elif predicate_object_map.object_map.mapping_type == "reference":
 			object = string_substitution_postgres(predicate_object_map.object_map.value, ".+", row, row_headers, "object",ignore)
 			if object is not None:
+				if "'" in object[1:-1]:
+					object = "\"" + object[1:-1].replace("'","\\'") + "\""
+				if "\n" in object:
+					object = object.replace("\n","\\")
 				if predicate_object_map.object_map.datatype is not None:
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.language is not None:
