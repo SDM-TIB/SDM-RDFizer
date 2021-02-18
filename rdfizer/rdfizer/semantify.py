@@ -3883,11 +3883,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 def translate_sql(triples_map):
 
     query_list = []
-    
-    
     proyections = []
-
-        
+  
     if "{" in triples_map.subject_map.value:
         subject = triples_map.subject_map.value
         count = count_characters(subject)
@@ -3906,8 +3903,8 @@ def translate_sql(triples_map):
                     if subject not in proyections:
                         proyections.append(subject)
     else:
-    	if triples_map.subject_map.value not in proyections:
-    		proyections.append(triples_map.subject_map.value)
+        if triples_map.subject_map.value not in proyections:
+            proyections.append(triples_map.subject_map.value)
 
     for po in triples_map.predicate_object_maps_list:
         if "{" in po.object_map.value:
@@ -3958,7 +3955,7 @@ def translate_sql(triples_map):
         temp_query = temp_query + " FROM " + triples_map.data_source + ";"
     query_list.append(temp_query)
 
-    return iterator, query_list
+    return triples_map.iterator, query_list
 
 
 def translate_postgressql(triples_map):
@@ -4035,7 +4032,7 @@ def translate_postgressql(triples_map):
 		temp_query = temp_query + " FROM " + triples_map.data_source + ";"
 	query_list.append(temp_query)
 
-	return iterator, query_list
+	return triples_map.iterator, query_list
 
 def semantify(config_path):
 
