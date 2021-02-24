@@ -375,7 +375,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					if (type(value) is int) or ((type(value).__name__) == "float"):
+					if type(value).__name__ != "str" :
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						value = urllib.parse.quote(value)
@@ -411,12 +411,12 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					if type(value) is int or ((type(value).__name__) == "float"):
-						value = str(value)
-					elif type(value).__name__ == "date":
+					if type(value).__name__ == "date":
 						value = value.strftime("%Y-%m-%d")
 					elif type(value).__name__ == "datetime":
 						value = value.strftime("%Y-%m-%d T%H:%M:%S")
+					elif type(value).__name__ != "str":
+						value = str(value)
 
 					if re.search("^[\s|\t]*$", str(value)) is None:
 						new_string = new_string[:start] + str(value).strip().replace("\"", "'") + new_string[end:]
