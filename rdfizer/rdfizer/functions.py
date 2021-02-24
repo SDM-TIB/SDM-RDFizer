@@ -256,7 +256,54 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
-			match = reference_match.group(1).split("[")[0]
+			no_match = True
+			if "]." in reference_match.group(1):
+				temp = reference_match.group(1).split("].")
+				match = temp[1]
+				condition = temp[0].split("[")
+				temp_value = row[condition[0]]
+				if "==" in condition[1]:
+					temp_condition = condition[1][2:-1].split("==")
+					iterators = temp_condition[0].split(".")
+					if isinstance(temp_value,list):
+						for tv in temp_value:
+							t_v = tv
+							for cond in iterators[:-1]:
+								if cond != "@":
+									t_v = t_v[cond]
+							if temp_condition[1][1:-1] == t_v[iterators[-1]]:
+								row = t_v
+								no_match = False
+					else:
+						for cond in iterators[-1]:
+							if cond != "@":
+								temp_value = temp_value[cond]
+						if temp_condition[1][1:-1] == temp_value[iterators[-1]]:
+							row = temp_value
+							no_match = False
+				elif "!=" in condition[1]:
+					temp_condition = condition[1][2:-1].split("!=")
+					iterators = temp_condition[0].split(".")
+					match = iterators[-1]
+					if isinstance(temp_value,list):
+						for tv in temp_value:
+							for cond in iterators[-1]:
+								if cond != "@":
+									temp_value = temp_value[cond]
+							if temp_condition[1][1:-1] != temp_value[iterators[-1]]:
+								row = t_v
+								no_match = False
+					else:
+						for cond in iterators[-1]:
+							if cond != "@":
+								temp_value = temp_value[cond]
+						if temp_condition[1][1:-1] != temp_value[iterators[-1]]:
+							row = temp_value
+							no_match = False
+			else:
+				match = reference_match.group(1).split("[")[0]
+			if no_match:
+				return None
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
@@ -274,7 +321,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						print("The key " + match + " has a Json structure as a value.\n")
 						print("The index needs to be indicated.\n")
 						return None
-					else: 
+					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row[match])) - (end - start)
