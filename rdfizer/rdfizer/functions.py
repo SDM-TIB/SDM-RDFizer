@@ -23,7 +23,8 @@ def child_list_value(childs,row):
 	v = []
 	for child in childs:
 		if child not in v:
-			value += row[child] + "_"
+			if row[child] != None:
+				value += row[child] + "_"
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):
@@ -31,8 +32,9 @@ def child_list_value_array(childs,row,row_headers):
 	v = []
 	for child in childs:
 		if child not in v:
-			value += row[row_headers.index(child)] + "_"
-			v.append(child)
+			if row[row_headers.index(child)] != None:
+				value += row[row_headers.index(child)] + "_"
+				v.append(child)
 	return value[:-1]
 
 def string_substitution_json(string, pattern, row, term, ignore, iterator):
