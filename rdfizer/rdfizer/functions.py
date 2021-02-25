@@ -300,10 +300,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						if temp_condition[1][1:-1] != temp_value[iterators[-1]]:
 							row = temp_value
 							no_match = False
+				if no_match:
+					return None
 			else:
 				match = reference_match.group(1).split("[")[0]
-			if no_match:
-				return None
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
