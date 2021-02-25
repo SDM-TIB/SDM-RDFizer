@@ -314,7 +314,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					for tp in temp_keys[:-1]:
 						row = row[tp]
 			if match in row.keys():
-				if row[match] is not None:
+				if row[match] != None:
 					if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match])
 					if isinstance(row[match],dict):
@@ -336,13 +336,8 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 
 						else:
 							return None
-					# To-do:
-					# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
-					#if term == "subject":
-					#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
-					#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-					#else:
-					#	return None
+				else:
+					return None
 			else:
 				print('The attribute ' + match + ' is missing.')
 				if ignore == "yes":
@@ -365,13 +360,14 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					print("The index needs to be indicated.\n")
 					return None
 				else:
-					if row[match] is not None:
+					if row[match] != None:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
 							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
 						else:
 							return None
-					#	return None
+					else:
+						return None
 			else:
 				print('The attribute ' + match + ' is missing.')
 				if ignore == "yes":
