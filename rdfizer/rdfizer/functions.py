@@ -312,7 +312,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					temp_keys = match.split(".")
 					match = temp_keys[len(temp_keys) - 1]
 					for tp in temp_keys[:-1]:
-						row = row[tp]
+						if tp in row:
+							row = row[tp]
+						else:
+							return None
 			if match in row.keys():
 				if row[match] != None:
 					if (type(row[match]).__name__) == "int":
