@@ -240,7 +240,6 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 	(i.e.: empty string, string with just spaces, just tabs or a combination of both), otherwise
 	returns None
 	"""
-
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
@@ -354,7 +353,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					temp_keys = match.split(".")
 					match = temp_keys[len(temp_keys) - 1]
 					for tp in temp_keys[:-1]:
-						row = row[tp]
+						if tp in row:
+							row = row[tp]
+						else:
+							return None
 			if match in row.keys():
 				if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match])
