@@ -327,8 +327,8 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						return None
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
-							new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
-							offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row[match])) - (end - start)
+							new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
+							offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 							if "\\" in new_string:
 								new_string = new_string.replace("\\", "")
 								count = new_string.count("}")
