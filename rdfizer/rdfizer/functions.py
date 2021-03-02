@@ -315,6 +315,8 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 							row = row[tp]
 						else:
 							return None
+			if row == None:
+				return None
 			if match in row.keys():
 				if row[match] != None:
 					if (type(row[match]).__name__) == "int":
@@ -357,6 +359,8 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 							row = row[tp]
 						else:
 							return None
+			if row == None:
+				return None
 			if match in row.keys():
 				if (type(row[match]).__name__) == "int":
 						row[match] = str(row[match])
