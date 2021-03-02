@@ -610,13 +610,18 @@ def dictionary_maker_array(row, row_headers):
 def dictionary_maker_xml(row):
 	dic = {}
 	for child in row:
-		for c in child:
-			for attr in c:
-				if attr in dic:
-					dic[attr].append(child.attrib[attr])
-				else:	
-					dic[attr] = [child.attrib[attr]]
-				i += 0
+		if len(child) != 0:
+			for c in child:
+				for attr in c:
+					if attr in dic:
+						dic[attr].append(child.attrib[attr])
+					else:	
+						dic[attr] = [child.attrib[attr]]
+		else:
+			if child in dic:
+				dic[child].append(child.text)
+			else:	
+				dic[child] = [child.text]
 	return dic
 
 def dictionary_maker(row):

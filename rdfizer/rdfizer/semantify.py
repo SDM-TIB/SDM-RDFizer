@@ -567,9 +567,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 
 		for child in root:
 			subject_value = string_substitution_xml(triples_map.subject_map.value, "{(.+?)}", child, "subject")
-
 			if duplicate == "yes":
-				triple_entry = {subject_value: [dictionary_maker_xml(child)]}	
+				triple_entry = {subject_value: [dictionary_maker_xml(child)]}
 				if subject_value in triples_map_triples:
 					if dictionary_maker_xml(child) in triples_map_triples[subject_value]:
 						subject = None
@@ -989,7 +988,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = None
 				else:
 					object = None
-
 				if predicate is not None and object is not None and subject is not None:
 					for graph in triples_map.subject_map.graph:
 						triple = subject + " " + predicate + " " + object + ".\n"
