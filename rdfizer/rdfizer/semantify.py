@@ -556,6 +556,7 @@ def mapping_parser(mapping_file):
 
 def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
 	print("\n\nTM:",triples_map.triples_map_name)
+	print(time.time()-start_time)
 	i = 0
 	triples_map_triples = {}
 	generated_triples = {}
@@ -1112,7 +1113,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					continue
 
 				 	 	
-
+	print(time.time()-start_time)
 	return i
 
 def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
@@ -1970,6 +1971,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
 	
 	print("\n\nTM:",triples_map.triples_map_name)
+	print(time.time()-start_time)
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -2632,6 +2634,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				object_list = []
 			else:
 				continue
+	print(time.time()-start_time)
 	return i
 
 def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name, host, port, user, password,dbase):
