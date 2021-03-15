@@ -164,7 +164,10 @@ def string_substitution_xml(string, pattern, row, term):
 					match = match.split("@")[1]
 				if row.attrib[match] is not None:
 					if re.search("^[\s|\t]*$", row[match]) is None:
-						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
+						if "http" not in row[match] and "http" in new_string[:start + offset_current_substitution]:
+							new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
+						else:
+							new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 
 					else:
@@ -327,6 +330,8 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						return None
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
+							if "http" not in row[match] and "http" in new_string[:start + offset_current_substitution]:
+								row[match] = urllib.parse.quote(row[match])
 							new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
 							if "\\" in new_string:
@@ -432,7 +437,8 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 					if type(value).__name__ != "str" :
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
-						value = urllib.parse.quote(value)
+						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+							value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 						if "\\" in new_string:
@@ -534,7 +540,8 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
-						value = urllib.parse.quote(value)
+						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+							value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					else:
