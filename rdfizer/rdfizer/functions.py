@@ -25,6 +25,7 @@ def child_list_value(childs,row):
 		if child not in v:
 			if row[child] != None:
 				value += row[child] + "_"
+				v.append(child)
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):
@@ -330,10 +331,11 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						return None
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
-							if "http" not in row[match] and "http" in new_string[:start + offset_current_substitution]:
-								row[match] = urllib.parse.quote(row[match])
-							new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
-							offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
+							value = row[match]
+							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+								value = urllib.parse.quote(value)
+							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 							if "\\" in new_string:
 								new_string = new_string.replace("\\", "")
 								count = new_string.count("}")
