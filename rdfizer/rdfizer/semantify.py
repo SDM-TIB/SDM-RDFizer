@@ -2542,17 +2542,17 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									object = None
 							else:
 								if predicate_object_map.object_map.parent is not None:
-									if str(triples_map_element.triples_map_id) + "_" + str(predicate_object_map.object_map.child) not in join_table:
+									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker(data, triples_map_element, predicate_object_map.object_map)
+												parent_data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+												hash_maker_list(parent_data, triples_map_element, predicate_object_map.object_map)
 											else:
-												data = json.load(input_file_descriptor)
-												if isinstance(data, list):
-													hash_maker(data, triples_map_element, predicate_object_map.object_map)
+												parent_data = json.load(input_file_descriptor)
+												if isinstance(parent_data, list):
+													hash_maker_list(parent_data, triples_map_element, predicate_object_map.object_map)
 												else:
-													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+													hash_maker_list(parent_data[list(parent_data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 									if sublist(predicate_object_map.object_map.child,row.keys()):
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
