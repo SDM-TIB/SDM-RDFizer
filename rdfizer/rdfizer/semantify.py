@@ -2434,10 +2434,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
 								if "http" in object:
-									object = urllib.parse.quote(object[1:-1].replace("http:",""))
-									object = "<" + "http:" + object + ">"
+									if "~" in object:
+										object = "<" + object[1:-1] + ">"
+									else:
+										object = urllib.parse.quote(object[1:-1].replace("http:",""))
+										object = "<" + "http:" + object + ">"
 								else:
-									object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+									if "~" in object:
+										object = "<" + object[1:-1] + ">"
+									else:
+										object = "<" + urllib.parse.quote(object[1:-1]) + ">"
 							else:
 								object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":

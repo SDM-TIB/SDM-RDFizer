@@ -332,7 +332,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
-							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+							if "http" not in value and "http" in new_string[:start + offset_current_substitution] and "~" not in object:
 								value = urllib.parse.quote(value)
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
