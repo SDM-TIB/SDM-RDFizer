@@ -3202,7 +3202,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										# join from clauses back (in case the table is a View on rml:query)
+										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
 										cursor.execute(new_query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 
@@ -4076,8 +4077,11 @@ def translate_sql(triples_map):
     temp_query = temp_query[:-2] 
     if triples_map.tablename != "None":
         temp_query = temp_query + " FROM " + triples_map.tablename + ";"
-    else:
+    elif triples_map.query == "None":
         temp_query = temp_query + " FROM " + triples_map.data_source + ";"
+    else:
+	# if source is a view on rml:query, use the query as a sub-query 
+	temp_query = temp_query + " FROM ( " + triples_map.query + ") as rmlquery;"
     query_list.append(temp_query)
 
     return triples_map.iterator, query_list
