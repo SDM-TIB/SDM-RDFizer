@@ -3015,10 +3015,10 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		for rdf_class in triples_map.subject_map.rdf_class:
 			if rdf_class is not None:
 				obj = "<{}>".format(rdf_class)
-				for graph in graph:
+				for graph in triples_map.subject_map.graph:
 					rdf_type = subject + " " + predicate + " " + obj +" .\n"
 					if graph is not None and "defaultGraph" not in graph:
-						if "{" in triples_map.subject_map.graph:	
+						if "{" in graph:	
 							rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject",ignore, triples_map.iterator) + "> .\n"
 						else:
 							rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
