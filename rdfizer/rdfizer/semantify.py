@@ -3176,7 +3176,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
 										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 							if sublist(predicate_object_map.object_map.child,row_headers):
@@ -3222,7 +3222,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
 										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 
@@ -3247,7 +3247,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									for q in query_list_origin:
 										query_1 = q.split("FROM")
 										query_2 = query.split("SELECT")[1].split("FROM")[0]
-										query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
+										query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + ( " FROM ".join(query_1[1:]))
 										cursor.execute(query_new)
 										r_h=[x[0] for x in cursor.description]
 										for r in cursor:
