@@ -3015,7 +3015,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		for rdf_class in triples_map.subject_map.rdf_class:
 			if rdf_class is not None:
 				obj = "<{}>".format(rdf_class)
-				for graph in  triples_map.subject_map.graph:
+				for graph in graph:
 					rdf_type = subject + " " + predicate + " " + obj +" .\n"
 					if graph is not None and "defaultGraph" not in graph:
 						if "{" in triples_map.subject_map.graph:	
@@ -3176,7 +3176,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 							if sublist(predicate_object_map.object_map.child,row_headers):
@@ -3202,8 +3202,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										# join from clauses back (in case the table is a View on rml:query)
-										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 
@@ -3222,7 +3221,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + ( " FROM ".join(temp_query[1:]))
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 
@@ -3247,7 +3246,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									for q in query_list_origin:
 										query_1 = q.split("FROM")
 										query_2 = query.split("SELECT")[1].split("FROM")[0]
-										query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + ( " FROM ".join(query_1[1:]))
+										query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
 										cursor.execute(query_new)
 										r_h=[x[0] for x in cursor.description]
 										for r in cursor:
@@ -4077,11 +4076,8 @@ def translate_sql(triples_map):
     temp_query = temp_query[:-2] 
     if triples_map.tablename != "None":
         temp_query = temp_query + " FROM " + triples_map.tablename + ";"
-    elif triples_map.query == "None":
-        temp_query = temp_query + " FROM " + triples_map.data_source + ";"
     else:
-	# if source is a view on rml:query, use the query as a sub-query 
-	temp_query = temp_query + " FROM ( " + triples_map.query + ") as rmlquery;"
+        temp_query = temp_query + " FROM " + triples_map.data_source + ";"
     query_list.append(temp_query)
 
     return triples_map.iterator, query_list
