@@ -332,7 +332,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
-							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+							if "http" not in value and "http" in new_string[:start + offset_current_substitution] and ("(" not in value or ")" not in value) and "," not in value:
 								value = urllib.parse.quote(value)
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -439,7 +439,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 					if type(value).__name__ != "str" :
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
-						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+						if "http" not in value and "http" in new_string[:start + offset_current_substitution] and ("(" not in value or ")" not in value) and "," not in value:
 							value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -542,7 +542,7 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 					if (type(value) is int) or ((type(value).__name__) == "float"):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
-						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+						if "http" not in value and "http" in new_string[:start + offset_current_substitution] and ("(" not in value or ")" not in value) and "," not in value:
 							value = urllib.parse.quote(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
