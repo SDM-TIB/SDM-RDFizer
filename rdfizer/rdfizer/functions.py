@@ -336,7 +336,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 								value = urllib.parse.quote(value)
 							elif "http" in value:
 								temp = urllib.parse.quote(value.replace("http:",""))
-								value = "<" + "http:" + value + ">"
+								value = "http:" + temp 
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 							if "\\" in new_string:
@@ -446,7 +446,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 							value = urllib.parse.quote(value)
 						elif "http" in value:
 							temp = urllib.parse.quote(value.replace("http:",""))
-							value = "<" + "http:" + value + ">"
+							value = "http:" + temp 
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 						if "\\" in new_string:
@@ -552,7 +552,8 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 							value = urllib.parse.quote(value)
 						elif "http" in value:
 							temp = urllib.parse.quote(value.replace("http:",""))
-							value = "<" + "http:" + value + ">"
+							value = "http:" + temp
+						print(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					else:

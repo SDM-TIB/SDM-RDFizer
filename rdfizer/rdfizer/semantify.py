@@ -671,7 +671,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									if " " not in subject_value:
 										if "http" in subject_value:
 											temp = urllib.parse.quote(subject_value.replace("http:",""))
-											subject = "<" + "http:" + object + ">"
+											subject = "<" + "http:" + temp + ">"
 										else:
 											subject = "<" + urllib.parse.quote(subject_value) + ">"
 									else:
@@ -810,7 +810,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								if " " not in subject_value:
 									if "http" in subject_value:
 										temp = urllib.parse.quote(subject_value.replace("http:",""))
-										subject = "<" + "http:" + object + ">"
+										subject = "<" + "http:" + temp + ">"
 									else:
 										subject = "<" + urllib.parse.quote(subject_value) + ">"
 								else:
@@ -1511,7 +1511,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							if " " not in subject_value:
 								if "http" in subject_value:
 									temp = urllib.parse.quote(subject_value.replace("http:",""))
-									subject = "<" + "http:" + object + ">"
+									subject = "<" + "http:" + temp + ">"
 								else:
 									subject = "<" + urllib.parse.quote(subject_value) + ">"
 							else:
@@ -1637,7 +1637,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							if " " not in subject_value:
 								if "http" in subject_value:
 									temp = urllib.parse.quote(subject_value.replace("http:",""))
-									subject = "<" + "http:" + object + ">"
+									subject = "<" + "http:" + temp + ">"
 								else:
 									subject = "<" + urllib.parse.quote(subject_value) + ">"
 							else:
@@ -2189,7 +2189,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								if " " not in subject_value:
 									if "http" in subject_value:
 										temp = urllib.parse.quote(subject_value.replace("http:",""))
-										subject = "<" + "http:" + object + ">"
+										subject = "<" + "http:" + temp + ">"
 									else:
 										subject = "<" + urllib.parse.quote(subject_value) + ">"
 								else:
@@ -2330,7 +2330,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								if " " not in subject_value:
 									if "http" in subject_value:
 										temp = urllib.parse.quote(subject_value[1:-1].replace("http:",""))
-										subject = "<" + "http:" + object + ">"
+										subject = "<" + "http:" + temp + ">"
 									else:
 										subject = "<" + urllib.parse.quote(subject_value) + ">"
 								else:
@@ -2896,7 +2896,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						if " " not in subject_value:
 							if "http" in subject_value:
 								temp = urllib.parse.quote(subject_value.replace("http:",""))
-								subject = "<" + "http:" + object + ">"
+								subject = "<" + "http:" + temp + ">"
 							else:
 								subject = "<" + urllib.parse.quote(subject_value) + ">"
 						else:
@@ -3023,7 +3023,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						if " " not in subject_value:
 							if "http" in subject_value:
 								temp = urllib.parse.quote(subject_value.replace("http:",""))
-								subject = "<" + "http:" + object + ">"
+								subject = "<" + "http:" + temp + ">"
 							else:
 								subject = "<" + urllib.parse.quote(subject_value) + ">"
 						else:
@@ -3602,7 +3602,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						if " " not in subject_value:
 							if "http" in subject_value:
 								temp = urllib.parse.quote(subject_value.replace("http:",""))
-								subject = "<" + "http:" + object + ">"
+								subject = "<" + "http:" + temp + ">"
 							else:
 								subject = "<" + urllib.parse.quote(subject_value) + ">"
 						else:
@@ -3729,7 +3729,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						if " " not in subject_value:
 							if "http" in subject_value:
 								temp = urllib.parse.quote(subject_value.replace("http:",""))
-								subject = "<" + "http:" + object + ">"
+								subject = "<" + "http:" + temp + ">"
 							else:
 								subject = "<" + urllib.parse.quote(subject_value) + ">"
 						else:
