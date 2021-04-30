@@ -667,6 +667,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										subject = None 
 								except:
 									subject = None
+								if triples_map.subject_map.term_type == "IRI":
+									if " " not in subject_value:
+										if "http" in subject_value:
+											temp = urllib.parse.quote(subject_value.replace("http:",""))
+											subject = "<" + "http:" + object + ">"
+										else:
+											subject = "<" + urllib.parse.quote(subject_value) + ">"
+									else:
+										subject = None
 
 							else:
 							#	field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -797,6 +806,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									subject = None 
 							except:
 								subject = None
+							if triples_map.subject_map.term_type == "IRI":
+								if " " not in subject_value:
+									if "http" in subject_value:
+										temp = urllib.parse.quote(subject_value.replace("http:",""))
+										subject = "<" + "http:" + object + ">"
+									else:
+										subject = "<" + urllib.parse.quote(subject_value) + ">"
+								else:
+									subject = None
 
 						else:
 						#	field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -1489,6 +1507,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								subject = None 
 						except:
 							subject = None
+						if triples_map.subject_map.term_type == "IRI":
+							if " " not in subject_value:
+								if "http" in subject_value:
+									temp = urllib.parse.quote(subject_value.replace("http:",""))
+									subject = "<" + "http:" + object + ">"
+								else:
+									subject = "<" + urllib.parse.quote(subject_value) + ">"
+							else:
+								subject = None
 
 					elif "constant" in triples_map.subject_map.subject_mapping_type:
 							subject = "<" + subject_value + ">"
@@ -1606,6 +1633,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								subject = None 
 						except:
 							subject = None
+						if triples_map.subject_map.term_type == "IRI":
+							if " " not in subject_value:
+								if "http" in subject_value:
+									temp = urllib.parse.quote(subject_value.replace("http:",""))
+									subject = "<" + "http:" + object + ">"
+								else:
+									subject = "<" + urllib.parse.quote(subject_value) + ">"
+							else:
+								subject = None
 
 					else:
 					#	field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -2138,7 +2174,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if subject_value is not None:
 							subject_value = subject_value[1:-1]
 							if triples_map.subject_map.condition == "":
-
 								try:
 									if " " not in subject_value:
 										if "http" not in subject_value:
@@ -2150,6 +2185,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										print("<http://example.com/base/" + subject_value + "> is an invalid URL")
 										subject = None 
 								except:
+									subject = None
+								if " " not in subject_value:
+									if "http" in subject_value:
+										temp = urllib.parse.quote(subject_value.replace("http:",""))
+										subject = "<" + "http:" + object + ">"
+									else:
+										subject = "<" + urllib.parse.quote(subject_value) + ">"
+								else:
 									subject = None
 
 						else:
@@ -2283,6 +2326,15 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									subject = None 
 							except:
 								subject = None
+							if triples_map.subject_map.term_type == "IRI":
+								if " " not in subject_value:
+									if "http" in subject_value:
+										temp = urllib.parse.quote(subject_value[1:-1].replace("http:",""))
+										subject = "<" + "http:" + object + ">"
+									else:
+										subject = "<" + urllib.parse.quote(subject_value) + ">"
+								else:
+									subject = None
 						else:
 							subject = None
 
@@ -2433,14 +2485,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
-								if ("(" not in object or ")" not in object) and  "," not in object:
-									if "http" in object:
-										object = urllib.parse.quote(object[1:-1].replace("http:",""))
-										object = "<" + "http:" + object + ">"
-									else:
-										object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+								if "http" in object:
+									object = urllib.parse.quote(object[1:-1].replace("http:",""))
+									object = "<" + "http:" + object + ">"
 								else:
-									object = "<" + object[1:-1] + ">"
+									object = "<" + urllib.parse.quote(object[1:-1]) + ">"
 							else:
 								object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -2843,6 +2892,15 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							subject = None 
 					except:
 						subject = None
+					if triples_map.subject_map.term_type == "IRI":
+						if " " not in subject_value:
+							if "http" in subject_value:
+								temp = urllib.parse.quote(subject_value.replace("http:",""))
+								subject = "<" + "http:" + object + ">"
+							else:
+								subject = "<" + urllib.parse.quote(subject_value) + ">"
+						else:
+							subject = None
 
 				elif "constant" in triples_map.subject_map.subject_mapping_type:
 					subject = "<" + subject_value + ">"
@@ -2961,6 +3019,15 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							subject = None 
 					except:
 						subject = None
+					if triples_map.subject_map.term_type == "IRI":
+						if " " not in subject_value:
+							if "http" in subject_value:
+								temp = urllib.parse.quote(subject_value.replace("http:",""))
+								subject = "<" + "http:" + object + ">"
+							else:
+								subject = "<" + urllib.parse.quote(subject_value) + ">"
+						else:
+							subject = None
 
 				else:
 				#	field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -3531,6 +3598,15 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							subject = None 
 					except:
 						subject = None
+					if triples_map.subject_map.term_type == "IRI":
+						if " " not in subject_value:
+							if "http" in subject_value:
+								temp = urllib.parse.quote(subject_value.replace("http:",""))
+								subject = "<" + "http:" + object + ">"
+							else:
+								subject = "<" + urllib.parse.quote(subject_value) + ">"
+						else:
+							subject = None
 				
 				elif "constant" in triples_map.subject_map.subject_mapping_type:
 					subject = "<" + subject_value + ">"
@@ -3649,6 +3725,15 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							subject = None 
 					except:
 						subject = None
+					if triples_map.subject_map.term_type == "IRI":
+						if " " not in subject_value:
+							if "http" in subject_value:
+								temp = urllib.parse.quote(subject_value.replace("http:",""))
+								subject = "<" + "http:" + object + ">"
+							else:
+								subject = "<" + urllib.parse.quote(subject_value) + ">"
+						else:
+							subject = None
 
 				else:
 				#	field, condition = condition_separetor(triples_map.subject_map.condition)
