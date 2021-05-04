@@ -399,7 +399,6 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 				return None
 			print("Aborting...")
 			sys.exit(1)
-
 	return new_string
 
 def string_substitution_array(string, pattern, row, row_headers, term, ignore):
