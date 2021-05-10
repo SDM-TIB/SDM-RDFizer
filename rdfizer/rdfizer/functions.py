@@ -333,10 +333,20 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
 							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-								value = urllib.parse.quote(value)
+								if "~" in value:
+									temp_list = value.split("~")
+									if "" != temp_list[0]:
+										value = urllib.parse.quote(temp_list[0])
+									else:
+										value = ""
+									for temp in temp_list[1:]:
+										value += "~"
+										value += urllib.parse.quote(temp)
+								else:
+									value = urllib.parse.quote(value)
 							elif "http" in value:
 								temp = urllib.parse.quote(value.replace("http:",""))
-								value = "http:" + temp 
+								value = "http:" + temp
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 							if "\\" in new_string:
@@ -442,7 +452,17 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-							value = urllib.parse.quote(value)
+							if "~" in value:
+								temp_list = value.split("~")
+								if "" != temp_list[0]:
+									value = urllib.parse.quote(temp_list[0])
+								else:
+									value = ""
+								for temp in temp_list[1:]:
+									value += "~"
+									value += urllib.parse.quote(temp)
+							else:
+								value = urllib.parse.quote(value)
 						elif "http" in value:
 							temp = urllib.parse.quote(value.replace("http:",""))
 							value = "http:" + temp 
@@ -548,7 +568,17 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-							value = urllib.parse.quote(value)
+							if "~" in value:
+								temp_list = value.split("~")
+								if "" != temp_list[0]:
+									value = urllib.parse.quote(temp_list[0])
+								else:
+									value = ""
+								for temp in temp_list[1:]:
+									value += "~"
+									value += urllib.parse.quote(temp)
+							else:
+								value = urllib.parse.quote(value)
 						elif "http" in value:
 							temp = urllib.parse.quote(value.replace("http:",""))
 							value = "http:" + temp
