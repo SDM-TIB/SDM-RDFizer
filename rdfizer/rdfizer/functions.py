@@ -5,6 +5,16 @@ import sys
 import xml.etree.ElementTree as ET
 import urllib
 
+def encode_char(string):
+	encoded = ""
+	valid_char = ["~",":","#"]
+	for s in string:
+		if s in valid_char:
+			encoded += s
+		else:
+			encoded += urllib.parse.quote(s)
+	return encoded
+
 def sublist(part_list, full_list):
 	for part in part_list:
 		if part not in full_list:
@@ -91,7 +101,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				if (type(value).__name__) == "int":
 					value = str(value) 
 				if re.search("^[\s|\t]*$", value) is None:
-					value = urllib.parse.quote(value)
+					value = encode_char(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 					offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					if "\\" in new_string:
@@ -166,7 +176,7 @@ def string_substitution_xml(string, pattern, row, term):
 				if row.attrib[match] is not None:
 					if re.search("^[\s|\t]*$", row[match]) is None:
 						if "http" not in row[match] and "http" in new_string[:start + offset_current_substitution]:
-							new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row[match].strip()) + new_string[ end + offset_current_substitution:]
+							new_string = new_string[:start + offset_current_substitution] + encode_char(row[match].strip()) + new_string[ end + offset_current_substitution:]
 						else:
 							new_string = new_string[:start + offset_current_substitution] + row[match].strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
@@ -176,8 +186,8 @@ def string_substitution_xml(string, pattern, row, term):
 			else:
 				if row.find(match) is not None:
 					if re.search("^[\s|\t]*$", row.find(match).text) is None:
-						new_string = new_string[:start + offset_current_substitution] + urllib.parse.quote(row.find(match).text.strip()) + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(urllib.parse.quote(row.find(match).text.strip())) - (end - start)
+						new_string = new_string[:start + offset_current_substitution] + encode_char(row.find(match).text.strip()) + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(encode_char(row.find(match).text.strip())) - (end - start)
 
 					else:
 						return None
@@ -333,20 +343,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
 							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-								if "~" in value:
-									temp_list = value.split("~")
-									if "" != temp_list[0]:
-										value = urllib.parse.quote(temp_list[0])
-									else:
-										value = ""
-									for temp in temp_list[1:]:
-										value += "~"
-										value += urllib.parse.quote(temp)
-								else:
-									value = urllib.parse.quote(value)
-							elif "http" in value:
-								temp = urllib.parse.quote(value.replace("http:",""))
-								value = "http:" + temp
+								value = encode_char(value)
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 							if "\\" in new_string:
@@ -452,20 +449,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-							if "~" in value:
-								temp_list = value.split("~")
-								if "" != temp_list[0]:
-									value = urllib.parse.quote(temp_list[0])
-								else:
-									value = ""
-								for temp in temp_list[1:]:
-									value += "~"
-									value += urllib.parse.quote(temp)
-							else:
-								value = urllib.parse.quote(value)
-						elif "http" in value:
-							temp = urllib.parse.quote(value.replace("http:",""))
-							value = "http:" + temp 
+							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 						if "\\" in new_string:
@@ -568,21 +552,7 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 						value = str(value)
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
-							if "~" in value:
-								temp_list = value.split("~")
-								if "" != temp_list[0]:
-									value = urllib.parse.quote(temp_list[0])
-								else:
-									value = ""
-								for temp in temp_list[1:]:
-									value += "~"
-									value += urllib.parse.quote(temp)
-							else:
-								value = urllib.parse.quote(value)
-						elif "http" in value:
-							temp = urllib.parse.quote(value.replace("http:",""))
-							value = "http:" + temp
-						print(value)
+							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					else:

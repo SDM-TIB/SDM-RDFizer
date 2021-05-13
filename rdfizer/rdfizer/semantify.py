@@ -983,32 +983,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							if "IRI" in predicate_object_map.object_map.term:
 								if " " not in object:
 									object = "\"" + object[1:-1].replace("\\'","'") + "\""
-									if "http" in object:
-										if "~" not in object:
-											temp_value = urllib.parse.quote(object[1:-1].replace("http:",""))
-										else:
-											temp_list = object[1:-1].replace("http:","").split("~")
-											if "" != temp_list[0]:
-												temp_value = urllib.parse.quote(temp_list[0])
-											else:
-												temp_value = ""
-											for temp in temp_list[1:]:
-												temp_value += "~"
-												temp_value += urllib.parse.quote(temp)
-										object = "<" + "http:" + temp_value + ">"
-									elif "~" in subject_value:
-										temp_list = object[1:-1].split("~")
-										if "" != temp_list[0]:
-											object = urllib.parse.quote(temp_list[0])
-										else:
-
-											object = ""
-										for temp in temp_list[1:]:
-											object += "~"
-											object += urllib.parse.quote(temp)
-										object = "<" + object + ">"
-									else:
-										object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+									object = "<" + encode_char(object[1:-1]) + ">"
 								else:
 									object = None
 				elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -1868,32 +1843,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
 								object = "\"" + object[1:-1].replace("\\'","'") + "\""
-								if "http" in object:
-									if "~" not in object:
-										temp_value = urllib.parse.quote(object[1:-1].replace("http:",""))
-									else:
-										temp_list = object[1:-1].replace("http:","").split("~")
-										if "" != temp_list[0]:
-											temp_value = urllib.parse.quote(temp_list[0])
-										else:
-											temp_value = ""
-										for temp in temp_list[1:]:
-											temp_value += "~"
-											temp_value += urllib.parse.quote(temp)
-									object = "<" + "http:" + temp_value + ">"
-								elif "~" in subject_value:
-									temp_list = object[1:-1].split("~")
-									if "" != temp_list[0]:
-										object = urllib.parse.quote(temp_list[0])
-									else:
-
-										object = ""
-									for temp in temp_list[1:]:
-										object += "~"
-										object += urllib.parse.quote(temp)
-									object = "<" + object + ">"
-								else:
-									object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+								object = "<" + encode_char(object[1:-1]) + ">"
 							else:
 								object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -2637,32 +2587,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
 								object = "\"" + object[1:-1].replace("\\'","'") + "\""
-								if "http" in object:
-									if "~" not in object:
-										temp_value = urllib.parse.quote(object[1:-1].replace("http:",""))
-									else:
-										temp_list = object[1:-1].replace("http:","").split("~")
-										if "" != temp_list[0]:
-											temp_value = urllib.parse.quote(temp_list[0])
-										else:
-											temp_value = ""
-										for temp in temp_list[1:]:
-											temp_value += "~"
-											temp_value += urllib.parse.quote(temp)
-									object = "<" + "http:" + temp_value + ">"
-								elif "~" in subject_value:
-									temp_list = object[1:-1].split("~")
-									if "" != temp_list[0]:
-										object = urllib.parse.quote(temp_list[0])
-									else:
-
-										object = ""
-									for temp in temp_list[1:]:
-										object += "~"
-										object += urllib.parse.quote(temp)
-									object = "<" + object + ">"
-								else:
-									object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+								object = "<" + encode_char(object[1:-1]) + ">"
 							else:
 								object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -3347,32 +3272,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
 							object = "\"" + object[1:-1].replace("\\'","'") + "\""
-							if "http" in object:
-								if "~" not in object:
-									temp_value = urllib.parse.quote(object[1:-1].replace("http:",""))
-								else:
-									temp_list = object[1:-1].replace("http:","").split("~")
-									if "" != temp_list[0]:
-										temp_value = urllib.parse.quote(temp_list[0])
-									else:
-										temp_value = ""
-									for temp in temp_list[1:]:
-										temp_value += "~"
-										temp_value += urllib.parse.quote(temp)
-								object = "<" + "http:" + temp_value + ">"
-							elif "~" in subject_value:
-								temp_list = object[1:-1].split("~")
-								if "" != temp_list[0]:
-									object = urllib.parse.quote(temp_list[0])
-								else:
-
-									object = ""
-								for temp in temp_list[1:]:
-									object += "~"
-									object += urllib.parse.quote(temp)
-								object = "<" + object + ">"
-							else:
-								object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+							object = "<" + encode_char(object[1:-1]) + ">"
 						else:
 							object = None
 
@@ -4079,32 +3979,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
 							object = "\"" + object[1:-1].replace("\\'","'") + "\""
-							if "http" in object:
-								if "~" not in object:
-									temp_value = urllib.parse.quote(object[1:-1].replace("http:",""))
-								else:
-									temp_list = object[1:-1].replace("http:","").split("~")
-									if "" != temp_list[0]:
-										temp_value = urllib.parse.quote(temp_list[0])
-									else:
-										temp_value = ""
-									for temp in temp_list[1:]:
-										temp_value += "~"
-										temp_value += urllib.parse.quote(temp)
-								object = "<" + "http:" + temp_value + ">"
-							elif "~" in subject_value:
-								temp_list = object[1:-1].split("~")
-								if "" != temp_list[0]:
-									object = urllib.parse.quote(temp_list[0])
-								else:
-
-									object = ""
-								for temp in temp_list[1:]:
-									object += "~"
-									object += urllib.parse.quote(temp)
-								object = "<" + object + ">"
-							else:
-								object = "<" + urllib.parse.quote(object[1:-1]) + ">"
+							object = "<" + encode_char(object[1:-1]) + ">"
 						else:
 							object = None
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
