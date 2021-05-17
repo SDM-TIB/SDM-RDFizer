@@ -4,6 +4,7 @@ import datetime
 import sys
 import xml.etree.ElementTree as ET
 import urllib
+import math
 
 def encode_char(string):
 	encoded = ""
@@ -98,8 +99,14 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					return None
 			
 			if value is not None:
-				if (type(value).__name__) == "int":
-					value = str(value) 
+				if (type(value).__name__) != "str":
+					if (type(value).__name__) != "float":
+						value = str(value)
+					else:
+						value = str(math.ceil(value))
+				else:
+					if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+						value = str(math.ceil(float(value))) 
 				if re.search("^[\s|\t]*$", value) is None:
 					value = encode_char(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
@@ -333,8 +340,14 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 				return None
 			if match in row.keys():
 				if row[match] != None:
-					if (type(row[match]).__name__) == "int":
-						row[match] = str(row[match])
+					if (type(row[match]).__name__) != "str":
+						if (type(row[match]).__name__) != "float":
+							row[match] = str(row[match])
+						else:
+							row[match] = str(math.ceil(row[match]))
+					else:
+						if re.match(r'^-?\d+(?:\.\d+)$', row[match]) is not None:
+							row[match] = str(math.ceil(float(row[match])))
 					if isinstance(row[match],dict):
 						print("The key " + match + " has a Json structure as a value.\n")
 						print("The index needs to be indicated.\n")
@@ -445,8 +458,14 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
-					if type(value).__name__ != "str" :
-						value = str(value)
+					if (type(value).__name__) != "str":
+						if (type(value).__name__) != "float":
+							value = str(value)
+						else:
+							value = str(math.ceil(value))
+					else:
+						if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+							value = str(math.ceil(float(value)))
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
 							value = encode_char(value)
@@ -548,8 +567,14 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 			if match in row_headers:
 				if row[row_headers.index(match)] != None:
 					value = row[row_headers.index(match)]
-					if (type(value) is int) or ((type(value).__name__) == "float"):
-						value = str(value)
+					if (type(value).__name__) != "str":
+						if (type(value).__name__) != "float":
+							value = str(value)
+						else:
+							value = str(math.ceil(value))
+					else:
+						if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+							value = str(math.ceil(float(value)))
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
 							value = encode_char(value)
