@@ -16,6 +16,223 @@ def encode_char(string):
 			encoded += urllib.parse.quote(s)
 	return encoded
 
+def combine_sublist(sublists, full_list):
+	if sublists:
+		i = 100000
+		sl = []
+		aux = []
+		for sublist in sublists:
+			if len(sublist) < i:
+				i = len(sublist)
+				sl = sublist
+			else:
+				aux.append(sublist)
+		for sublist in sublists:
+			if sublist not in aux and sublist != sl:
+				aux.append(sublist)
+		for source in sl:
+			full_list[source] = ""
+		return combine_sublist(aux, full_list)
+	else:
+		return full_list
+
+def fully_sorted(source_list, sorted_list):
+	for source in source_list:
+		if source not in sorted_list:
+			return True
+	return False
+
+def extract_min_tm(source_list,sorted_list):
+	i = 1000
+	min_key = ""
+	for source in source_list:
+		if len(source_list[source]) < i and source not in sorted_list:
+			i = len(source_list[source])
+			min_key = source
+	return min_key, source_list[min_key]
+
+def tm_interception(source1, source2):
+	interception = 0
+	for predicate in source1:
+		if predicate in source2:
+			interception += 1
+	return interception
+
+def source_sort(source_list, sorted_list, sublists):
+	sublist = []
+	if fully_sorted(source_list, sorted_list):
+		min_key, min_value = extract_min_tm(source_list,sorted_list)
+		sorted_list[min_key] = ""
+		sublist.append(min_key)
+		for source in source_list:
+			interception = tm_interception(min_value, source_list[source])
+			if 0 < interception:
+				sorted_list[source] = ""
+				sublist.append(source)
+		sublists.append(sublist)	
+		return source_sort(source_list, sorted_list, sublists)
+	else:
+		return combine_sublist(sublists, {})
+
+def files_sort(triples_map_list, ordered):
+	predicate_list = {}
+	sorted_list = {}
+	order_list = {}
+	source_predicate = {}
+	general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
+						"http://www.w3.org/2002/07/owl#sameAs":"",
+						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
+						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
+	for tp in triples_map_list:
+		if str(tp.file_format).lower() == "csv":
+			if "csv" not in sorted_list:
+				sorted_list["csv"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
+			else:
+				if str(tp.data_source) in sorted_list["csv"]:
+					sorted_list["csv"][str(tp.data_source)][tp.triples_map_id] = tp
+				else:
+					sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
+			for po in tp.predicate_object_maps_list:
+				if po.predicate_map.value in general_predicates:
+					predicate = po.predicate_map.value + "_" + po.object_map.value
+					if predicate in predicate_list:
+						predicate_list[predicate] += 1
+					else:
+						predicate_list[predicate] = 1
+				else:
+					if po.predicate_map.value in predicate_list:
+						predicate_list[po.predicate_map.value] += 1
+					else:
+						predicate_list[po.predicate_map.value] = 1
+				if "csv" not in source_predicate:
+					if po.predicate_map.value in general_predicates:
+						predicate = po.predicate_map.value + "_" + po.object_map.value
+						source_predicate["csv"] = {str(tp.data_source) : {predicate : ""}}
+					else:
+						source_predicate["csv"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
+				else:
+					if str(tp.data_source) in source_predicate["csv"]:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["csv"][str(tp.data_source)][predicate] = ""
+						else:
+							source_predicate["csv"][str(tp.data_source)][po.predicate_map.value] = ""
+					else:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["csv"][str(tp.data_source)] = {predicate : ""}
+						else:
+							source_predicate["csv"][str(tp.data_source)] = {po.predicate_map.value : ""} 
+		elif tp.file_format == "JSONPath":
+			if "JSONPath" not in sorted_list:
+				sorted_list["JSONPath"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
+			else:
+				if str(tp.data_source) in sorted_list["JSONPath"]:
+					sorted_list["JSONPath"][str(tp.data_source)][tp.triples_map_id] = tp
+				else:
+					sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
+			for po in tp.predicate_object_maps_list:
+				if po.predicate_map.value in general_predicates:
+					predicate = po.predicate_map.value + "_" + po.object_map.value
+					if predicate in predicate_list:
+						predicate_list[predicate] += 1
+					else:
+						predicate_list[predicate] = 1
+				else:
+					if po.predicate_map.value in predicate_list:
+						predicate_list[po.predicate_map.value] += 1
+					else:
+						predicate_list[po.predicate_map.value] = 1
+				if "JSONPath" not in source_predicate:
+					if po.predicate_map.value in general_predicates:
+						predicate = po.predicate_map.value + "_" + po.object_map.value
+						source_predicate["JSONPath"] = {str(tp.data_source) : {predicate : ""}}
+					else:
+						source_predicate["JSONPath"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
+				else:
+					if str(tp.data_source) in source_predicate["JSONPath"]:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["JSONPath"][str(tp.data_source)][predicate] = ""
+						else:
+							source_predicate["JSONPath"][str(tp.data_source)][po.predicate_map.value] = ""
+					else:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["JSONPath"][str(tp.data_source)] = {predicate : ""}
+						else:
+							source_predicate["JSONPath"][str(tp.data_source)] = {po.predicate_map.value : ""}  
+		elif tp.file_format == "XPath":
+			if "XPath" not in sorted_list:
+				sorted_list["XPath"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
+			else:
+				if str(tp.data_source) in sorted_list["XPath"]:
+					sorted_list["XPath"][str(tp.data_source)][tp.triples_map_id] = tp
+				else:
+					sorted_list["XPath"][str(tp.data_source)] = {tp.triples_map_id : tp} 
+			for po in tp.predicate_object_maps_list:
+				if po.predicate_map.value in general_predicates:
+					predicate = po.predicate_map.value + "_" + po.object_map.value
+					if predicate in predicate_list:
+						predicate_list[predicate] += 1
+					else:
+						predicate_list[predicate] = 1
+				else:
+					if po.predicate_map.value in predicate_list:
+						predicate_list[po.predicate_map.value] += 1
+					else:
+						predicate_list[po.predicate_map.value] = 1
+				if "XPath" not in source_predicate:
+					if po.predicate_map.value in general_predicates:
+						predicate = po.predicate_map.value + "_" + po.object_map.value
+						source_predicate["XPath"] = {str(tp.data_source) : {predicate : ""}}
+					else:
+						source_predicate["XPath"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
+				else:
+					if str(tp.data_source) in source_predicate["XPath"]:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["XPath"][str(tp.data_source)][predicate] = ""
+						else:
+							source_predicate["XPath"][str(tp.data_source)][po.predicate_map.value] = ""
+					else:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate["XPath"][str(tp.data_source)] = {predicate : ""}
+						else:
+							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""} 
+		if tp.subject_map.rdf_class is not None:
+			for rdf_type in tp.subject_map.rdf_class:
+				predicate = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" + "_" + "<{}>".format(rdf_type)
+				if predicate in predicate_list:
+					predicate_list[predicate] += 1
+				else:
+					predicate_list[predicate] = 1
+	if ordered.lower() == "yes":
+		for source in sorted_list:
+			order_list[source] = source_sort(source_predicate[source], {}, [])
+	return sorted_list, predicate_list, order_list
+
+def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
+    """Converts an integer to a base36 string."""
+    
+
+    base36 = ''
+    sign = ''
+
+    if number < 0:
+        sign = '-'
+        number = -number
+
+    if 0 <= number < len(alphabet):
+        return sign + alphabet[number]
+
+    while number != 0:
+        number, i = divmod(number, len(alphabet))
+        base36 = alphabet[i] + base36
+
+    return sign + base36
+
 def sublist(part_list, full_list):
 	for part in part_list:
 		if part not in full_list:
