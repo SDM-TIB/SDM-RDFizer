@@ -29,6 +29,8 @@ except:
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
 
+global id_number
+id_number = 0
 global g_triples 
 g_triples = {}
 global number_triple
@@ -56,6 +58,39 @@ general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
 						"http://www.w3.org/2002/07/owl#sameAs":"",
 						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
 						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
+
+def release_PTT(triples_map,predicate_list):
+	for po in triples_map.predicate_object_maps_list:
+		if po.predicate_map.value in general_predicates:
+			if po.predicate_map.value in predicate_list:
+				predicate_list[po.predicate_map.value + "_" + po.object_map.value] -= 1
+				if predicate_list[po.predicate_map.value + "_" + po.object_map.value] == 0:
+					predicate_list.pop(po.predicate_map.value + "_" + po.object_map.value)
+					resource = "<" + po.predicate_map.value + ">" + "_" + po.object_map.value
+					if resource in dic_table:
+						if dic_table[resource] in g_triples:
+							g_triples.pop(dic_table[resource])
+		else:
+			if po.predicate_map.value in predicate_list:
+				predicate_list[po.predicate_map.value] -= 1
+				if predicate_list[po.predicate_map.value] == 0:
+					predicate_list.pop(po.predicate_map.value)
+					resource = "<" + po.predicate_map.value + ">"
+					if resource in dic_table:
+						if dic_table[resource] in g_triples:
+							g_triples.pop(dic_table[resource])
+	if triples_map.subject_map.rdf_class is not None:
+		for rdf_type in triples_map.subject_map.rdf_class:
+			resource = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" + "_" + "<{}>".format(rdf_type)
+			if resource in predicate_list:
+				predicate_list[resource] -= 1
+				if predicate_list[resource] == 0:
+					predicate_list.pop(resource)
+					rdf_class = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" + "_" + "<{}>".format(rdf_type)
+					if rdf_class in dic_table:
+						if dic_table[rdf_class] in g_triples:
+							g_triples.pop(dic_table[rdf_class])
+	return predicate_list
 
 def dictionary_table_update(resource):
 	if resource not in dic_table:
@@ -2529,27 +2564,27 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							dictionary_table_update("<" + graph + ">")
 
 					if duplicate == "yes":
-						if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-							if predicate not in g_triples:					
+						if predicate in general_predicates:
+							if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:					
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
-							elif subject + "_" + object not in g_triples[predicate]:
+							elif dic_tabl[subject] + "_" + dic_tabl[object] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 						else:
-							if predicate not in g_triples:					
+							if dic_table[predicate] not in g_triples:					
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
-							elif subject + "_" + object not in g_triples[predicate]:
+							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 								output_file_descriptor.write(triple)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
@@ -2578,7 +2613,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 									i += 1
-								elif subject + "_" + object not in g_triples[predicate + "_" + predicate_object_map.object_map.value]:
+								elif dic_table[subject] + "_" + dic_table[object] not in g_triples[predicate + "_" + predicate_object_map.object_map.value]:
 									output_file_descriptor.write(triple)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
@@ -2591,7 +2626,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 									i += 1
-								elif subject + "_" + object not in g_triples[predicate]:
+								elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 									output_file_descriptor.write(triple)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
@@ -4197,30 +4232,8 @@ def translate_postgressql(triples_map):
 
 	return triples_map.iterator, query_list
 
+
 def semantify(config_path):
-
-	"""
-	Takes the configuration file path and sets the necessary variables to perform the
-	semantification of each dataset presented in said file.
-
-	Given a TTL/N3 mapping file expressing the correspondance rules between the raw
-	data and the desired semantified data, the main function performs all the
-	necessary operations to do this transformation
-
-	Parameters
-	----------
-	config_path : string
-		Path to the configuration file
-
-	Returns
-	-------
-	An .nt file per each dataset mentioned in the configuration file semantified.
-	If the duplicates are asked to be removed in main memory, also returns a -min.nt
-	file with the triples sorted and with the duplicates removed.
-
-	(No variable returned)
-	
-	"""
 
 	if os.path.isfile(config_path) == False:
 		print("The configuration file " + config_path + " does not exist.")
@@ -4236,13 +4249,12 @@ def semantify(config_path):
 	enrichment = config["datasets"]["enrichment"]
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
-			os.mkdir(config["datasets"]["output_folder"])
+		os.mkdir(config["datasets"]["output_folder"])
 
-	global start_time
+	global number_triple
+
 	if config["datasets"]["all_in_one_file"] == "no":
-		
 		start_time = time.time()
-
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
 			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 			wr.writerow(["Dataset", "Number of the triple", "Time"])
@@ -4256,217 +4268,284 @@ def semantify(config_path):
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
 					
 					with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
-						for triples_map in triples_map_list:
-							global number_triple
-							if enrichment == "yes":
-								if str(triples_map.file_format).lower() == "csv" and triples_map.query == "None":
-									with open(str(triples_map.data_source), "r") as input_file_descriptor:
-										data = csv.DictReader(input_file_descriptor, delimiter=',')
-										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
-									with open(str(triples_map.data_source), "r") as input_file_descriptor:
-										data = json.load(input_file_descriptor)
-										if isinstance(data, list):
-											number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-										else:
-											number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
-								elif triples_map.file_format == "XPath":
-									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-								elif config["datasets"]["dbType"] == "mysql":
-									database, query_list = translate_sql(triples_map)
-									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
-									else:
-										if config[dataset_i]["db"].lower() != "none":
-											cursor.execute("use " + config[dataset_i]["db"])
-									if triples_map.query == "None":	
-										for query in query_list:
-											cursor.execute(query)
-											row_headers=[x[0] for x in cursor.description]
-											for row in cursor:
-												if config[dataset_i]["db"].lower() != "none":
-													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
-												else:
-													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-									else:
-										cursor.execute(triples_map.query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											if config[dataset_i]["db"].lower() != "none":
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+						sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"])
+						if sorted_sources:
+
+							if order_list:
+								for source_type in order_list:
+									if source_type == "csv":
+										for source in order_list[source_type]:
+											if config["datasets"]["large_file"].lower() == "false":
+												reader = pd.read_csv(source)
+												reader = reader.where(pd.notnull(reader), None)
+												if duplicate == "yes":
+													reader = reader.drop_duplicates(keep ='first')
+												data = reader.to_dict(orient='records')
+												for triples_map in sorted_sources[source_type][source]:
+													if enrichment == "yes":
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+													else:
+														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-								elif config["datasets"]["dbType"] == "postgres":	
-									database, query_list = translate_sql(triples_map)
-									db = psycopg2.connect(host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
-									cursor = db.cursor(buffered=True)
-									if triples_map.query == "None":	
-										for query in query_list:
-											cursor.execute(query)
-											row_headers=[x[0] for x in cursor.description]
-											for row in cursor:
-												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-									else:
-										cursor.execute(triples_map.query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
-								else:
-									print("Invalid reference formulation or format")
-									print("Aborting...")
-									sys.exit(1)
+												with open(source, "r") as input_file_descriptor:
+													data = csv.DictReader(input_file_descriptor, delimiter=',') 
+													for triples_map in sorted_sources[source_type][source]:
+														if enrichment == "yes":
+															number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														else:
+															number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+									elif source_type == "JSONPath":
+										for source in order_list[source_type]:
+											with open(str(triples_map.data_source), "r") as input_file_descriptor:
+												data = json.load(input_file_descriptor)
+												for triples_map in order_list[source_type][source]:
+													if isinstance(data, list):
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													else:
+														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "XPath":
+										for source in order_list[source_type]:
+											for triples_map in order_list[source_type][source]:
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
 							else:
-								if str(triples_map.file_format).lower() == "csv" and triples_map.query == "None":
-									with open(str(triples_map.data_source), "r") as input_file_descriptor:
-										data = csv.DictReader(input_file_descriptor, delimiter=',')
-										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-								elif triples_map.file_format == "JSONPath" and triples_map.query == "None":
-									with open(str(triples_map.data_source), "r") as input_file_descriptor:
-										data = json.load(input_file_descriptor)
-										number_triple += executor.submit(semantify_file_array, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-								elif triples_map.file_format == "XPath":
-									number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-								elif config["datasets"]["dbType"] == "mysql":
-									database, query_list = translate_sql(triples_map)
-									db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
-									else:
-										if config[dataset_i]["db"].lower() != "none":
-											cursor.execute("use " + config[dataset_i]["db"])
-									if triples_map.query == "None":	
-										for query in query_list:
-											cursor.execute(query)
+								for source_type in sorted_sources:
+									if source_type == "csv":
+										for source in sorted_sources[source_type]:
+											if config["datasets"]["large_file"].lower() == "false":
+												reader = pd.read_csv(source)
+												reader = reader.where(pd.notnull(reader), None)
+												if duplicate == "yes":
+													reader = reader.drop_duplicates(keep ='first')
+												data = reader.to_dict(orient='records')
+												for triples_map in sorted_sources[source_type][source]:
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
+											else:
+												with open(source, "r") as input_file_descriptor:
+													data = csv.DictReader(input_file_descriptor, delimiter=',') 
+													for triples_map in sorted_sources[source_type][source]:
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "JSONPath":
+										for source in sorted_sources[source_type]:
+											with open(str(triples_map.data_source), "r") as input_file_descriptor:
+												data = json.load(input_file_descriptor)
+												for triples_map in sorted_sources[source_type][source]:
+													if isinstance(data, list):
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													else:
+														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "XPath":
+										for source in order_list[source_type]:
+											for triples_map in sorted_sources[source_type][source]:
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
+						if predicate_list:
+							for triples_map in triples_map_list:
+								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format == "JSONPath" and triples_map.file_format == "XPath":
+									if config["datasets"]["dbType"] == "mysql":
+										database, query_list = translate_sql(triples_map)
+										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
+										cursor = db.cursor(buffered=True)
+										if database != "None":
+											cursor.execute("use " + database)
+										else:
+											if config[dataset_i]["db"].lower() != "none":
+												cursor.execute("use " + config[dataset_i]["db"])
+										if triples_map.query == "None":	
+											for query in query_list:
+												cursor.execute(query)
+												row_headers=[x[0] for x in cursor.description]
+												for row in cursor:
+													if config[dataset_i]["db"].lower() != "none":
+														number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+													else:
+														number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
+										else:
+											cursor.execute(triples_map.query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
 												if config[dataset_i]["db"].lower() != "none":
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 												else:
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-									else:
-										cursor.execute(triples_map.query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											if config[dataset_i]["db"].lower() != "none":
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
-											else:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-								elif config["datasets"]["dbType"] == "postgres":	
-									database, query_list = translate_sql(triples_map)
-									db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
-									cursor = db.cursor()
-									if triples_map.query == "None":	
-										for query in query_list:
-											cursor.execute(query)
+										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif config["datasets"]["dbType"] == "postgres":	
+										database, query_list = translate_sql(triples_map)
+										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+										cursor = db.cursor()
+										if triples_map.query == "None":	
+											for query in query_list:
+												cursor.execute(query)
+												row_headers=[x[0] for x in cursor.description]
+												for row in cursor:
+													number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+										else:
+											cursor.execute(triples_map.query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
 												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)					
 									else:
-										cursor.execute(triples_map.query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
-								else:
-									print("Invalid reference formulation or format")
-									print("Aborting...")
-									sys.exit(1)
-
-					print("Successfully semantified {}\n".format(config[dataset_i]["name"]))
-
-
-		with open(config["datasets"]["output_folder"] + "/stats.csv", 'w') as myfile:
-			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-			wr.writerow(["Number of triples", "Time"])
-			wr.writerow([number_triple, time.time()-start_time])
-
+										print("Invalid reference formulation or format")
+										print("Aborting...")
+										sys.exit(1)
 	else:
 		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt" 
-		print("Semantifying {}...".format(config["datasets"]["name"]))
-
 		start_time = time.time()
-		with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
-			with open(config["datasets"]["output_folder"] + "/" + "datasets_stats.csv", 'w') as myfile:
-				wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-				wr.writerow(["Dataset", "Number of the triple", "Time"])
-				with ThreadPoolExecutor(max_workers=10) as executor:
+
+		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
+			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+			wr.writerow(["Dataset", "Number of the triple", "Time"])
+
+			with ThreadPoolExecutor(max_workers=10) as executor:
+				with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 					for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 						dataset_i = "dataset" + str(int(dataset_number) + 1)
 						triples_map_list = mapping_parser(config[dataset_i]["mapping"])
+						output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
 
-						for triples_map in triples_map_list:
-							#global number_triple
-							if str(triples_map.file_format).lower() == "csv":
-								with open(str(triples_map.data_source), "r") as input_file_descriptor:
-									data = csv.DictReader(input_file_descriptor, delimiter=",")
-									number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-							elif triples_map.file_format == "JSONPath":
-								with open(str(triples_map.data_source), "r") as input_file_descriptor:
-									data = json.load(input_file_descriptor)
-									if isinstance(data, list):
-										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-									elif len(data) < 2:
-										number_triple += executor.submit(semantify_file, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data[list(data.keys())[0]]).result()
-									else:
-										number_triple += executor.submit(semantify_json, triples_map, triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
-							elif triples_map.file_format == "XPath":
-								number_triple += executor.submit(semantify_xml, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
-							elif config["datasets"]["dbType"] == "mysql":
-								database, query_list = translate_sql(triples_map)
-								db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
-								cursor = db.cursor(buffered=True)
-								if database != "None":
-									cursor.execute("use " + database)
-								else:
-									if config[dataset_i]["db"].lower() != "none":
-										cursor.execute("use " + config[dataset_i]["db"])
-								if triples_map.query == "None":	
-									for query in query_list:
-										cursor.execute(query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											if config[dataset_i]["db"].lower() != "none":
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+						print("Semantifying {}...".format(config[dataset_i]["name"]))
+					
+						sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"])
+						if sorted_sources:
+							if order_list:
+								for source_type in order_list:
+									if source_type == "csv":
+										for source in order_list[source_type]:
+											if config["datasets"]["large_file"].lower() == "false":
+												reader = pd.read_csv(source)
+												reader = reader.where(pd.notnull(reader), None)
+												if duplicate == "yes":
+													reader = reader.drop_duplicates(keep ='first')
+												data = reader.to_dict(orient='records')
+												for triples_map in sorted_sources[source_type][source]:
+													if enrichment == "yes":
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+													else:
+														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-								else:
-									cursor.execute(triples_map.query)
-									row_headers=[x[0] for x in cursor.description]
-									for row in cursor:
-										if config[dataset_i]["db"].lower() != "none":
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
-										else:
-											number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-							elif config["datasets"]["dbType"] == "postgres":	
-								database, query_list = translate_sql(triples_map)
-								db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
-								cursor = db.cursor()
-								if triples_map.query == "None":	
-									for query in query_list:
-										cursor.execute(query)
-										row_headers=[x[0] for x in cursor.description]
-										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-								else:
-									cursor.execute(triples_map.query)
-									row_headers=[x[0] for x in cursor.description]
-									for row in cursor:
-										number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()					
+												with open(source, "r") as input_file_descriptor:
+													data = csv.DictReader(input_file_descriptor, delimiter=',') 
+													for triples_map in sorted_sources[source_type][source]:
+														if enrichment == "yes":
+															number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														else:
+															number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+									elif source_type == "JSONPath":
+										for source in order_list[source_type]:
+											with open(str(triples_map.data_source), "r") as input_file_descriptor:
+												data = json.load(input_file_descriptor)
+												for triples_map in order_list[source_type][source]:
+													if isinstance(data, list):
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													else:
+														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "XPath":
+										for source in order_list[source_type]:
+											for triples_map in order_list[source_type][source]:
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
 							else:
-								print("Invalid reference formulation or format")
-								print("Aborting...")
-								sys.exit(1)
+								for source_type in sorted_sources:
+									if source_type == "csv":
+										for source in sorted_sources[source_type]:
+											if config["datasets"]["large_file"].lower() == "false":
+												reader = pd.read_csv(source)
+												reader = reader.where(pd.notnull(reader), None)
+												if duplicate == "yes":
+													reader = reader.drop_duplicates(keep ='first')
+												data = reader.to_dict(orient='records')
+												for triples_map in sorted_sources[source_type][source]:
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
+											else:
+												with open(source, "r") as input_file_descriptor:
+													data = csv.DictReader(input_file_descriptor, delimiter=',') 
+													for triples_map in sorted_sources[source_type][source]:
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "JSONPath":
+										for source in sorted_sources[source_type]:
+											with open(str(triples_map.data_source), "r") as input_file_descriptor:
+												data = json.load(input_file_descriptor)
+												for triples_map in sorted_sources[source_type][source]:
+													if isinstance(data, list):
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
+													else:
+														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif source_type == "XPath":
+										for source in order_list[source_type]:
+											for triples_map in sorted_sources[source_type][source]:
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
+						if predicate_list:
+							for triples_map in triples_map_list:
+								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format == "JSONPath" and triples_map.file_format == "XPath":
+									if config["datasets"]["dbType"] == "mysql":
+										database, query_list = translate_sql(triples_map)
+										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
+										cursor = db.cursor(buffered=True)
+										if database != "None":
+											cursor.execute("use " + database)
+										else:
+											if config[dataset_i]["db"].lower() != "none":
+												cursor.execute("use " + config[dataset_i]["db"])
+										if triples_map.query == "None":	
+											for query in query_list:
+												cursor.execute(query)
+												row_headers=[x[0] for x in cursor.description]
+												for row in cursor:
+													if config[dataset_i]["db"].lower() != "none":
+														number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+													else:
+														number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
+										else:
+											cursor.execute(triples_map.query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												if config[dataset_i]["db"].lower() != "none":
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+												else:
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
+										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+									elif config["datasets"]["dbType"] == "postgres":	
+										database, query_list = translate_sql(triples_map)
+										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+										cursor = db.cursor()
+										if triples_map.query == "None":	
+											for query in query_list:
+												cursor.execute(query)
+												row_headers=[x[0] for x in cursor.description]
+												for row in cursor:
+													number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+										else:
+											cursor.execute(triples_map.query)
+											row_headers=[x[0] for x in cursor.description]
+											for row in cursor:
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)					
+									else:
+										print("Invalid reference formulation or format")
+										print("Aborting...")
+										sys.exit(1)
+
+	with open(config["datasets"]["output_folder"] + "stats.csv", 'w') as myfile:
+		wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+		wr.writerow(["Number of triples", "Time"])
+		wr.writerow([number_triple, time.time()-start_time])
 
 
-		with open(config["datasets"]["output_folder"] + "stats.csv", 'w') as myfile:
-			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-			wr.writerow(["Number of triples", "Time"])
-			wr.writerow([number_triple, time.time()-start_time])
-
-
-		print("Successfully semantified {}.\n".format(config[dataset_i]["name"]))
+	print("Successfully semantified {}.\n".format(config[dataset_i]["name"]))
 
 		
 

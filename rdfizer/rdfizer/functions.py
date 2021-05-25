@@ -609,7 +609,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if row == None:
 				return None
 			if match in row.keys():
-				if (type(row[match]).__name__) == "int":
+				if (type(row[match]).__name__) != "str":
 						row[match] = str(row[match])
 				if isinstance(row[match],dict):
 					print("The key " + match + " has a Json structure as a value.\n")
