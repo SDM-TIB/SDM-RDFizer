@@ -178,6 +178,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
+
 def hash_maker_list(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
@@ -236,8 +237,8 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 					if value [0]not in hash_table[row.find(child_object.parent[0]).text]:
 						hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
+					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" not in hash_table[row.find(child_object.parent[0]).text]:
+						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
@@ -246,7 +247,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 							value[0] = "<" + value[0][1:-1] + ">"
 					hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"})
+					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"})
 
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -256,7 +257,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 						value[0] = "<" + value[0][1:-1] + ">"
 				hash_table.update({row.find(child_object.parent[0]).text : {value[0] : "object"}}) 
 			else:	
-				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "object") + ">" : "object"}}) 
+				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 
