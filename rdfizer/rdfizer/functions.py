@@ -558,7 +558,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if match in row.keys():
 				if row[match] != None:
 					if (type(row[match]).__name__) != "str":
-						if (type(row[match]).__name__) != "float":
+						if "float" not in (type(row[match]).__name__):
 							row[match] = str(row[match])
 						else:
 							row[match] = str(math.ceil(row[match]))
