@@ -169,11 +169,11 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 	return new_string
 
-def string_substitution_xml(string, pattern, row, term):
+def string_substitution_xml(string, pattern, row, term, iterator):
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
-	temp_list = {}
+	temp_list = []
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
@@ -208,62 +208,140 @@ def string_substitution_xml(string, pattern, row, term):
 					else:
 						return None
 			else:
-				match = reference_match.group(1).split("[")[0]
-				string_list = []
-				if "@" in match:
-					match,level = match.split("@")[1],match.split("@")[0]
-					if "" == level:
-						if row.attrib[match] is not None:
-							if re.search("^[\s|\t]*$", row.attrib[match]) is None:
-								new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
-								offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
-					else:
-						for child in row.findall(level[:-1]):
-							offset_current_substitution = 0
-							new_string = string
-							if child.attrib[match] is not None:
-								if re.search("^[\s|\t]*$", child.attrib[match]) is None:
-									new_string = new_string[:start + offset_current_substitution] + encode_char(child.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
-									offset_current_substitution = offset_current_substitution + len(child.attrib[match]) - (end - start)
-									string_list.append(new_string)
+				if temp_list:
+					match = reference_match.group(1).split("[")[0]
+					if "@" in match:
+						match,level = match.split("@")[1],match.split("@")[0]
+						if "" == level:
+							pass
+							"""if row.attrib[match] is not None:
+								if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+									new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
+									temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})"""
+						else:
+							i = 0
+							if match in iterator:
+								if row.attrib[match] is not None:
+									if re.search("^[\s|\t]*$", child.attrib[match]) is None:
+										new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(row.attrib[match].strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+										offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(row.attrib[match]) - (end - start)
+										temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+										i += 1
+							else:
+								for child in row.findall(level[:-1]):
+									if child.attrib[match] is not None:
+										if re.search("^[\s|\t]*$", child.attrib[match]) is None:
+											new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.attrib[match].strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+											offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(child.attrib[match]) - (end - start)
+											temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+											i += 1
 
+					else:
+						i = 0
+						if match in iterator:
+							if re.search("^[\s|\t]*$", row.text) is None:
+								new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(row.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+								offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(row.text.strip())) - (end - start)
+								temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+								i += 1
+						else:
+							for child in row.findall(match):
+								if re.search("^[\s|\t]*$", child.text) is None:
+									new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+									offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(child.text.strip())) - (end - start)
+									temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+									i += 1
 				else:
-					for child in row.findall(match):
-						offset_current_substitution = 0
-						new_string = string
-						if re.search("^[\s|\t]*$", child.text) is None:
-							new_string = new_string[:start + offset_current_substitution] + encode_char(child.text.strip()) + new_string[ end + offset_current_substitution:]
-							offset_current_substitution = offset_current_substitution + len(encode_char(child.text.strip())) - (end - start)
-							string_list.append(new_string)
-				return string_list
+					match = reference_match.group(1).split("[")[0]
+					if "@" in match:
+						match,level = match.split("@")[1],match.split("@")[0]
+						if "" == level:
+							pass
+							"""if row.attrib[match] is not None:
+								if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+									new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
+									temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})"""
+						else:
+							if match in iterator:
+								if child.attrib[match] is not None:
+									if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+										new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
+										offset_current_substitution = offset_current_substitution + len(encode_char(row.attrib[match])) - (end - start)
+										temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
+							else:
+								for child in row.findall(level[:-1]):
+									offset_current_substitution = 0
+									new_string = string
+									if child.attrib[match] is not None:
+										if re.search("^[\s|\t]*$", child.attrib[match]) is None:
+											new_string = new_string[:start + offset_current_substitution] + encode_char(child.attrib[match].strip()) + new_string[ end + offset_current_substitution:]
+											offset_current_substitution = offset_current_substitution + len(encode_char(child.attrib[match])) - (end - start)
+											temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
+
+					else:
+						if match in iterator:
+							if re.search("^[\s|\t]*$", row.text) is None:
+								new_string = new_string[:start + offset_current_substitution] + encode_char(row.text.strip()) + new_string[ end + offset_current_substitution:]
+								offset_current_substitution = offset_current_substitution + len(encode_char(row.text.strip())) - (end - start)
+								temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
+						else:
+							for child in row.findall(match):
+								offset_current_substitution = 0
+								new_string = string
+								if re.search("^[\s|\t]*$", child.text) is None:
+									new_string = new_string[:start + offset_current_substitution] + encode_char(child.text.strip()) + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(encode_char(child.text.strip())) - (end - start)
+									temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			string_list = []
 			if "@" in match:
 				match,level = match.split("@")[1],match.split("@")[0]
-				for child in row.findall(level[:-1]):
-					offset_current_substitution = 0
-					new_string = string
-					if child.attrib:
-						if child.attrib[match] is not None:
-							if re.search("^[\s|\t]*$", child.attrib[match]) is None:
-								new_string = new_string[:start + offset_current_substitution] + "\"" + child.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
-								offset_current_substitution = offset_current_substitution + len(child.attrib[match]) - (end - start)
+				if match in iterator:
+					if row.attrib:
+						if row.attrib[match] is not None:
+							if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+								new_string = new_string[:start + offset_current_substitution] + "\"" + row.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
+								offset_current_substitution = offset_current_substitution + len(row.attrib[match]) - (end - start)
 								string_list.append(new_string)
+				else:
+					for child in row.findall(level[:-1]):
+						offset_current_substitution = 0
+						new_string = string
+						if child.attrib:
+							if child.attrib[match] is not None:
+								if re.search("^[\s|\t]*$", child.attrib[match]) is None:
+									new_string = new_string[:start + offset_current_substitution] + "\"" + child.attrib[match].strip() + "\"" + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(child.attrib[match]) - (end - start)
+									string_list.append(new_string)
 			else:
-				for child in row.findall(match):
-					offset_current_substitution = 0
-					new_string = string
-					if re.search("^[\s|\t]*$", child.text) is None:
-						new_string = new_string[:start + offset_current_substitution] + "\"" + child.text.strip() + "\"" + new_string[ end + offset_current_substitution:]
-						offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
-
+				if match in iterator:
+					if re.search("^[\s|\t]*$", row.text) is None:
+						new_string = new_string[:start + offset_current_substitution] + "\"" + row.text.strip() + "\"" + new_string[ end + offset_current_substitution:]
+						offset_current_substitution = offset_current_substitution + len(row.text.strip()) - (end - start)
 						string_list.append(new_string)
+				else:
+					for child in row.findall(match):
+						offset_current_substitution = 0
+						new_string = string
+						if re.search("^[\s|\t]*$", child.text) is None:
+							new_string = new_string[:start + offset_current_substitution] + "\"" + child.text.strip() + "\"" + new_string[ end + offset_current_substitution:]
+							offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+							string_list.append(new_string)
 			return string_list
 		else:
 			print("Invalid pattern")
 			print("Aborting...")
 			sys.exit(1)
+
+	string_list = []
+	if temp_list:
+		for row in temp_list:
+			string_list.append(row["string"])
+	if string_list:
+		return string_list
 
 	return new_string
 

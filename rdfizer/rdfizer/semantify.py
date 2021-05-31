@@ -230,34 +230,34 @@ def hash_maker_xml(parent_data, parent_subject, child_object):
 		if row.find(child_object.parent[0]).text in hash_table:
 			if duplicate == "yes":
 				if parent_subject.subject_map.subject_mapping_type == "reference":
-					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
+					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object", triples_map.iterator)
 					if value[0] is not None:
 						if "http" in value[0]:
 							value[0] = "<" + value[0][1:-1] + ">"
 					if value [0]not in hash_table[row.find(child_object.parent[0]).text]:
 						hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"})
+					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", triples_map.iterator) + ">" not in hash_table[row.find(child_object.parent[0]).text]:
+						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", triples_map.iterator) + ">" : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
-					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
+					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object", triples_map.iterator)
 					if value[0] is not None:
 						if "http" in value:
 							value[0] = "<" + value[0][1:-1] + ">"
 					hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"})
+					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", triples_map.iterator) + ">" : "object"})
 
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
-				value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object")
+				value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object", triples_map.iterator)
 				if value[0] is not None:
 					if "http" in value[0]:
 						value[0] = "<" + value[0][1:-1] + ">"
 				hash_table.update({row.find(child_object.parent[0]).text : {value[0] : "object"}}) 
 			else:	
-				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject") + ">" : "object"}}) 
+				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", triples_map.iterator) + ">" : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 
@@ -565,8 +565,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 		tree = ET.parse(input_file_descriptor)
 		root = tree.getroot()
 
-		for child in root:
-			subject_value = string_substitution_xml(triples_map.subject_map.value, "{(.+?)}", child, "subject")
+		level = triples_map.iterator.split("/")[len(triples_map.iterator.split("/"))-1]
+		for child in root.iter(level):
+			subject_value = string_substitution_xml(triples_map.subject_map.value, "{(.+?)}", child, "subject", triples_map.iterator)
 			if duplicate == "yes":
 				triple_entry = {subject_value: [dictionary_maker_xml(child)]}
 				if subject_value in triples_map_triples:
@@ -652,7 +653,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										except:
 											subject = None 
 						elif "reference" in triples_map.subject_map.subject_mapping_type:
-							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject")
+							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject", triples_map.iterator)
 							if subject_value is not None:
 								subject_value = subject_value[1:-1]
 								try:
@@ -792,7 +793,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 
 					elif "reference" in triples_map.subject_map.subject_mapping_type:
 						if triples_map.subject_map.condition == "":
-							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject")
+							subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject", triples_map.iterator)
 							subject_value = subject_value[1:-1]
 							try:
 								if " " not in subject_value:
@@ -896,7 +897,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							rdf_type = subject + " " + predicate + " " + obj + " .\n"
 							if graph is not None and "defaultGraph" not in graph:
 								if "{" in graph:	
-									rdf_type = rdf_type[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + "> .\n"
+									rdf_type = rdf_type[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject", triples_map.iterator) + "> .\n"
 								else:
 									rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
 							if duplicate == "yes":
@@ -927,25 +928,25 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
 							#if row[field] == condition:
 							try:
-								predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate") + ">"
+								predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate", triples_map.iterator) + ">"
 							except:
 								predicate = None
 							#else:
 							#	predicate = None
 					else:
 						try:
-							predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate") + ">"
+							predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate", triples_map.iterator) + ">"
 						except:
 							predicate = None
 				elif predicate_object_map.predicate_map.mapping_type == "reference":
 						if predicate_object_map.predicate_map.condition != "":
 							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
 							#if row[field] == condition:
-							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate")
+							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator)
 							#else:
 							#	predicate = None
 						else:
-							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate")
+							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator)
 				else:
 					predicate = None
 
@@ -955,7 +956,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 					else:
 						object = "\"" + predicate_object_map.object_map.value + "\""
 				elif predicate_object_map.object_map.mapping_type == "template":
-					object = string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object")
+					object = string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object", triples_map.iterator)
 					if isinstance(object,list):
 						for i in range(len(object)):
 							if predicate_object_map.object_map.term is None:
@@ -972,7 +973,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						else:
 							object = "\"" + object + "\""
 				elif predicate_object_map.object_map.mapping_type == "reference":
-					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object")
+					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object", triples_map.iterator)
 					if object is not None:
 						if isinstance(object,list):
 							for i in range(len(object)):
@@ -1071,7 +1072,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										object = None
 									else:
 										try:
-											object = "<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", child, "object") + ">"
+											object = "<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", child, "object", triples_map.iterator) + ">"
 										except TypeError:
 											object = None
 								break
@@ -1088,7 +1089,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								triple = subject + " " + predicate + " " + obj + ".\n"
 								if graph is not None and "defaultGraph" not in graph:
 									if "{" in graph:
-										triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + ">.\n"
+										triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 									else:
 										triple = triple[:-2] + " <" + graph + ">.\n"
 								if duplicate == "yes":
@@ -1113,7 +1114,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							triple = subject + " " + predicate + " " + object + ".\n"
 							if graph is not None and "defaultGraph" not in graph:
 								if "{" in graph:
-									triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + ">.\n"
+									triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 								else:
 									triple = triple[:-2] + " <" + graph + ">.\n"
 							if duplicate == "yes":
@@ -1140,7 +1141,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								triple = subject + " " + predicate + " " + obj + ".\n"
 								if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
 									if "{" in triples_map.subject_map.graph:
-										triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject") + ">.\n"
+										triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 									else:
 										triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
 									if duplicate == "yes":
@@ -1166,7 +1167,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							triple = subject + " " + predicate + " " + object + ".\n"
 							if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
 								if "{" in triples_map.subject_map.graph:
-									triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject") + ">.\n"
+									triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 								else:
 									triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
 								if duplicate == "yes":
@@ -1201,7 +1202,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 
 							if graph is not None and "defaultGraph" not in graph:
 								if "{" in graph:
-									triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject") + ">.\n"
+									triple = triple[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 								else:
 									triple = triple[:-2] + " <" + graph + ">.\n"
 
@@ -1227,7 +1228,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							triple = subject + " " + predicate + " " + obj + ".\n"
 							if predicate_object_map.graph[predicate[1:-1]] is not None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
 								if "{" in triples_map.subject_map.graph:
-									triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject") + ">.\n"
+									triple = triple[:-2] + " <" + string_substitution_xml(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject", triples_map.iterator) + ">.\n"
 								else:
 									triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
 								if duplicate == "yes":
