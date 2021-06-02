@@ -252,7 +252,7 @@ def child_list_value(childs,row):
 	for child in childs:
 		if child not in v:
 			if row[child] != None:
-				value += row[child] + "_"
+				value += str(row[child]) + "_"
 				v.append(child)
 	return value[:-1]
 
