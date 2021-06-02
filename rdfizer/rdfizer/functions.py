@@ -664,7 +664,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 				return None
 			if match in row.keys():
 				if row[match] != None:
-					if (type(row[match]).__name__) != "str":
+					if (type(row[match]).__name__) != "str" and row[match] != None:
 						if "float" not in (type(row[match]).__name__):
 							row[match] = str(row[match])
 						else:
@@ -716,7 +716,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if row == None:
 				return None
 			if match in row.keys():
-				if (type(row[match]).__name__) != "str":
+				if (type(row[match]).__name__) != "str" and row[match] != None:
 						row[match] = str(row[match])
 				if isinstance(row[match],dict):
 					print("The key " + match + " has a Json structure as a value.\n")
