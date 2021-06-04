@@ -3022,9 +3022,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object = None
 
 		if predicate in general_predicates:
-				dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
-			else:
-				dictionary_table_update(predicate)
+			dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
+		else:
+			dictionary_table_update(predicate)
 		if predicate is not None and object is not None and subject is not None:
 			dictionary_table_update(subject)
 			dictionary_table_update(object)
@@ -3600,9 +3600,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			object = None
 
 		if predicate in general_predicates:
-				dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
-			else:
-				dictionary_table_update(predicate)
+			dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
+		else:
+			dictionary_table_update(predicate)
 		if predicate is not None and object is not None and subject is not None:
 			dictionary_table_update(subject)
 			dictionary_table_update(object)
