@@ -40,7 +40,7 @@ triples = []
 global duplicate
 duplicate = ""
 global start_time
-start_time = 0
+start_time = time.time()
 global user, password, port, host
 user, password, port, host = "", "", "", ""
 global join_table 
@@ -4017,7 +4017,6 @@ def semantify(config_path):
 	global number_triple
 
 	if config["datasets"]["all_in_one_file"] == "no":
-		start_time = time.time()
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
 			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 			wr.writerow(["Dataset", "Number of the triple", "Time"])
@@ -4159,8 +4158,7 @@ def semantify(config_path):
 										print("Aborting...")
 										sys.exit(1)
 	else:
-		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt" 
-		start_time = time.time()
+		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
 
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
 			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
@@ -4302,7 +4300,7 @@ def semantify(config_path):
 										print("Aborting...")
 										sys.exit(1)
 
-	with open(config["datasets"]["output_folder"] + "stats.csv", 'w') as myfile:
+	with open(config["datasets"]["output_folder"] + "/stats.csv", 'w') as myfile:
 		wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 		wr.writerow(["Number of triples", "Time"])
 		wr.writerow([number_triple, time.time()-start_time])
