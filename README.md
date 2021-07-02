@@ -1,5 +1,5 @@
 # SDM-RDFizer
-This project presents the SDM-RDFizer, an interpreter of mapping rules that allows the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the [RDF Mapping Language (RML) by Dimou et al](https://rml.io/specs/rml/). The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from Heterogeneous data sources (CSV, JSON, RDB, XML). 
+This project presents the SDM-RDFizer, an interpreter of mapping rules that allows the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the [RDF Mapping Language (RML) by Dimou et al](https://rml.io/specs/rml/). The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from heterogeneous data sources (CSV, JSON, RDB, XML) processing each set of RML rules (TriplesMap) in a multi-thread safe procedure.
 
 ![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/architecture.jpg "SDM-RDFizer workflow")
 
