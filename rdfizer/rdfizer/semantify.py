@@ -2890,14 +2890,16 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host = host, port = int(port), user = user, password = password)
 									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
+									if dbase.lower() != "none":
+										cursor.execute("use " + dbase)
 									else:
-										if dbase.lower() != "none":
-											cursor.execute("use " + dbase)
-									for query in query_list:
-										cursor.execute(query)
-										data = cursor
+										if database != "None":
+											cursor.execute("use " + database)
+									if triples_map_element.query != "None":
+										cursor.execute(triples_map_element.query)
+									else:
+										for query in query_list:
+											cursor.execute(query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 							jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
 							if row[row_headers.index(predicate_object_map.object_map.child[0])] is not None:
@@ -2926,18 +2928,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host=host, port=int(port), user=user, password=password)
 									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
+									if dbase.lower() != "none":
+										cursor.execute("use " + dbase)
 									else:
-										if dbase.lower() != "none":
-											cursor.execute("use " + dbase)
-									for query in query_list:
-										temp_query = query.split("FROM")
-										parent_list = ""
-										for parent in predicate_object_map.object_map.parent:
-											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
-										cursor.execute(new_query)
+										if database != "None":
+											cursor.execute("use " + database)
+									if triples_map_element.query != "None":
+										cursor.execute(triples_map_element.query)
+									else:
+										for query in query_list:
+											temp_query = query.split("FROM")
+											parent_list = ""
+											for parent in predicate_object_map.object_map.parent:
+												parent_list += ", `" + parent + "`"
+											new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+											cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 							if sublist(predicate_object_map.object_map.child,row_headers):
 								if child_list_value_array(predicate_object_map.object_map.child,row,row_headers) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
@@ -2952,18 +2957,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host = host, port = int(port), user = user, password = password)
 									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
+									if dbase.lower() != "none":
+										cursor.execute("use " + dbase)
 									else:
-										if dbase.lower() != "none":
-											cursor.execute("use " + dbase)
-									for query in query_list:
-										temp_query = query.split("FROM")
-										parent_list = ""
-										for parent in predicate_object_map.object_map.parent:
-											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
-										cursor.execute(new_query)
+										if database != "None":
+											cursor.execute("use " + database)
+									if triples_map_element.query != "None":
+										cursor.execute(triples_map_element.query)
+									else:
+										for query in query_list:
+											temp_query = query.split("FROM")
+											parent_list = ""
+											for parent in predicate_object_map.object_map.parent:
+												parent_list += ", `" + parent + "`"
+											new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+											cursor.execute(new_query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 
 							else:
@@ -2971,18 +2979,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host=host, port=int(port), user=user, password=password)
 									cursor = db.cursor(buffered=True)
-									if database != "None":
-										cursor.execute("use " + database)
+									if dbase.lower() != "none":
+										cursor.execute("use " + dbase)
 									else:
-										if dbase.lower() != "none":
-											cursor.execute("use " + dbase)
-									for query in query_list:
-										temp_query = query.split("FROM")
-										parent_list = ""
-										for parent in predicate_object_map.object_map.parent:
-											parent_list += ", `" + parent + "`"
-										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
-										cursor.execute(new_query)
+										if database != "None":
+											cursor.execute("use " + database)
+									if triples_map_element.query != "None":
+										cursor.execute(triples_map_element.query)
+									else:
+										for query in query_list:
+											temp_query = query.split("FROM")
+											parent_list = ""
+											for parent in predicate_object_map.object_map.parent:
+												parent_list += ", `" + parent + "`"
+											new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+											cursor.execute(new_query)
 									hash_maker_array_list(cursor, triples_map_element, predicate_object_map.object_map,row_headers)
 
 							if sublist(predicate_object_map.object_map.child,row_headers):
@@ -2997,22 +3008,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								database2, query_list_origin = translate_sql(triples_map_element)
 								db = connector.connect(host = host, port = int(port), user = user, password = password)
 								cursor = db.cursor(buffered=True)
-								if database != "None":
-									cursor.execute("use " + database)
+								if dbase.lower() != "none":
+									cursor.execute("use " + dbase)
 								else:
-									if dbase.lower() != "none":
-										cursor.execute("use " + dbase)
-								for query in query_list:
-									for q in query_list_origin:
-										query_1 = q.split("FROM")
-										query_2 = query.split("SELECT")[1].split("FROM")[0]
-										query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
-										cursor.execute(query_new)
-										r_h=[x[0] for x in cursor.description]
-										for r in cursor:
-											s = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", r, r_h, "subject",ignore)
-											if subject_value == s:
-												object = "<" + string_substitution_array(triples_map_element.subject_map.value, "{(.+?)}", r, r_h, "object",ignore) + ">"
+									if database != "None":
+										cursor.execute("use " + database)
+								if triples_map_element.query != "None":
+									cursor.execute(triples_map_element.query)
+								else:
+									for query in query_list:
+										for q in query_list_origin:
+											query_1 = q.split("FROM")
+											query_2 = query.split("SELECT")[1].split("FROM")[0]
+											query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
+											cursor.execute(query_new)
+											r_h=[x[0] for x in cursor.description]
+											for r in cursor:
+												s = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", r, r_h, "subject",ignore)
+												if subject_value == s:
+													object = "<" + string_substitution_array(triples_map_element.subject_map.value, "{(.+?)}", r, r_h, "object",ignore) + ">"
 							except TypeError:
 								object = None
 					break
@@ -4109,16 +4123,17 @@ def semantify(config_path):
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 						if predicate_list:
 							for triples_map in triples_map_list:
-								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format == "JSONPath" and triples_map.file_format == "XPath":
+								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
+										print("\n\nTM:",triples_map.triples_map_name)
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 										cursor = db.cursor(buffered=True)
-										if database != "None":
-											cursor.execute("use " + database)
+										if config[dataset_i]["db"].lower() != "none":
+											cursor.execute("use " + config[dataset_i]["db"])
 										else:
-											if config[dataset_i]["db"].lower() != "none":
-												cursor.execute("use " + config[dataset_i]["db"])
+											if database != "None":
+												cursor.execute("use " + database)
 										if triples_map.query == "None":	
 											for query in query_list:
 												cursor.execute(query)
@@ -4136,7 +4151,7 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 												else:
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+										predicate_list = release_PTT(triples_map,predicate_list)
 									elif config["datasets"]["dbType"] == "postgres":	
 										database, query_list = translate_sql(triples_map)
 										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
@@ -4152,7 +4167,7 @@ def semantify(config_path):
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
 												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)					
+										predicate_list = release_PTT(triples_map,predicate_list)					
 									else:
 										print("Invalid reference formulation or format")
 										print("Aborting...")
@@ -4249,18 +4264,20 @@ def semantify(config_path):
 											for triples_map in sorted_sources[source_type][source]:
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
+						
 						if predicate_list:
 							for triples_map in triples_map_list:
-								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format == "JSONPath" and triples_map.file_format == "XPath":
+								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
+										print("\n\nTM:",triples_map.triples_map_name)
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 										cursor = db.cursor(buffered=True)
-										if database != "None":
-											cursor.execute("use " + database)
+										if config[dataset_i]["db"].lower() != "none":
+											cursor.execute("use " + config[dataset_i]["db"])
 										else:
-											if config[dataset_i]["db"].lower() != "none":
-												cursor.execute("use " + config[dataset_i]["db"])
+											if database != "None":
+												cursor.execute("use " + database)
 										if triples_map.query == "None":	
 											for query in query_list:
 												cursor.execute(query)
@@ -4278,7 +4295,7 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 												else:
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+										predicate_list = release_PTT(triples_map,predicate_list)
 									elif config["datasets"]["dbType"] == "postgres":	
 										database, query_list = translate_sql(triples_map)
 										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
@@ -4294,7 +4311,7 @@ def semantify(config_path):
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
 												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-										predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)					
+										predicate_list = release_PTT(triples_map,predicate_list)					
 									else:
 										print("Invalid reference formulation or format")
 										print("Aborting...")
