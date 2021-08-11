@@ -833,7 +833,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if isinstance(object,list):
 							for i in range(len(object)):
 								if "'" in object[i][1:-1]:
-									object = "\"" + object[1:-1].replace("'","\\'") + "\""
+									object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 								if "\n" in object[i]:
 									object[i] = object[i].replace("\n","\\n") 
 								if predicate_object_map.object_map.datatype is not None:
@@ -848,13 +848,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								elif predicate_object_map.object_map.term is not None:
 									if "IRI" in predicate_object_map.object_map.term:
 										if " " not in object:
-											object[i] = "\"" + object[i][1:-1].replace("\\'","'") + "\""
+											object[i] = "\"" + object[i][1:-1].replace("\\\\'","'") + "\""
 											object[i] = "<" + encode_char(object[i][1:-1]) + ">"
 										else:
 											object[i] = None
 						else:
 							if "'" in object[1:-1]:
-								object = "\"" + object[1:-1].replace("'","\\'") + "\""
+								object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 							if "\n" in object:
 								object = object.replace("\n","\\n") 
 							if predicate_object_map.object_map.datatype is not None:
@@ -869,7 +869,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
 									if " " not in object:
-										object = "\"" + object[1:-1].replace("\\'","'") + "\""
+										object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
 										object = "<" + encode_char(object[1:-1]) + ">"
 									else:
 										object = None
@@ -1301,7 +1301,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, triples_map.iterator)
 				if object is not None and predicate_object_map.object_map.datatype is not None:
 					if "'" in object[1:-1]:
-						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+						object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 					if "\n" in object:
 						object = object.replace("\n","\\n")
 					object += "^^<{}>".format(predicate_object_map.object_map.datatype)
@@ -1675,7 +1675,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object", ignore, iterator)
 				if object is not None:
 					if "'" in object[1:-1]:
-						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+						object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 					if "\n" in object:
 						object = object.replace("\n","\\n")
 					if predicate_object_map.object_map.datatype is not None:
@@ -1690,7 +1690,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
-								object = "\"" + object[1:-1].replace("\\'","'") + "\""
+								object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
 								object = "<" + encode_char(object[1:-1]) + ">"
 							else:
 								object = None
@@ -2265,7 +2265,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				object = string_substitution(predicate_object_map.object_map.value, ".+", row, "object",ignore, triples_map.iterator)
 				if object is not None:
 					if "'" in object[1:-1]:
-						object = "\"" + object[1:-1].replace("'","\\'") + "\""
+						object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 					if "\n" in object:
 						object = object.replace("\n","\\n")
 					if predicate_object_map.object_map.datatype is not None:
@@ -2280,7 +2280,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
-								object = "\"" + object[1:-1].replace("\\'","'") + "\""
+								object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
 								object = "<" + encode_char(object[1:-1]) + ">"
 							else:
 								object = None
@@ -2847,7 +2847,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object = string_substitution_array(predicate_object_map.object_map.value, ".+", row, row_headers, "object",ignore)
 			if object is not None:
 				if "'" in object[1:-1]:
-					object = "\"" + object[1:-1].replace("'","\\'") + "\""
+					object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 				if "\n" in object:
 					object = object.replace("\n","\\n")
 				if predicate_object_map.object_map.datatype is not None:
@@ -2862,7 +2862,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
-							object = "\"" + object[1:-1].replace("\\'","'") + "\""
+							object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
 							object = "<" + encode_char(object[1:-1]) + ">"
 						else:
 							object = None
@@ -3520,7 +3520,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			object = string_substitution_postgres(predicate_object_map.object_map.value, ".+", row, row_headers, "object",ignore)
 			if object is not None:
 				if "'" in object[1:-1]:
-					object = "\"" + object[1:-1].replace("'","\\'") + "\""
+					object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
 				if "\n" in object:
 					object = object.replace("\n","\\n")
 				if predicate_object_map.object_map.datatype is not None:
@@ -3535,7 +3535,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
-							object = "\"" + object[1:-1].replace("\\'","'") + "\""
+							object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
 							object = "<" + encode_char(object[1:-1]) + ">"
 						else:
 							object = None
