@@ -4073,14 +4073,14 @@ def semantify(config_path):
 														else:
 															number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 									elif source_type == "JSONPath":
-										for source in sorted_sources[source_type][source]:
-											with open(str(triples_map.data_source), "r") as input_file_descriptor:
+										for source in order_list[source_type]:
+											with open(str(source), "r") as input_file_descriptor:
 												data = json.load(input_file_descriptor)
-												for triples_map in order_list[source_type][source]:
+												for triples_map in sorted_sources[source_type][source]:
 													if isinstance(data, list):
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													else:
-														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, triples_map.iterator).result()
+														number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data, sorted_sources[source_type][source][triples_map].iterator).result()
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 									elif source_type == "XPath":
 										for source in order_list[source_type]:
