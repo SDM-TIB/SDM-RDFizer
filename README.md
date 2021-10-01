@@ -41,6 +41,9 @@ The SDM-RDFizer is also used in EU H2020, EIT-Digital and Spanish national proje
 - Open Cities (https://ciudades-abiertas.es/): national project on creating common and shared vocabularies for Spanish Cities
 - Drugs4Covid (https://drugs4covid.oeg.fi.upm.es/): NLP annotations and metadata from more than 60,000 scientific papers about COVID viruses are integrated in a KG with almost 44M of facts (triples). SDM-RDFizer was used for creating this KG.
 
+Other projects were the SDM-RDFizer is also used:
+-  Virtual Platform for the H2020 European Joint Programme on Rare Disease (https://www.ejprarediseases.org)
+
 
 # Installing and Running the SDM-RDFizer 
 From PyPI (https://pypi.org/project/rdfizer/):
