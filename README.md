@@ -57,7 +57,7 @@ Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository 
 
 ## Version 
 ```
-3.6
+3.6.3
 ```
 
 ## RML-Test Cases
