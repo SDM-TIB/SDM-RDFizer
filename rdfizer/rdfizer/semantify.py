@@ -180,6 +180,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
+	print(join_table)
 
 def hash_maker_list(parent_data, parent_subject, child_object):
 	hash_table = {}
@@ -599,10 +600,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									if triples_map.subject_map.condition == "":
 
 										try:
-											if "http" not in subject_value:
-												subject = "<" + base + subject_value + ">"
-											else:
-												subject = "<" + subject_value + ">"
+											subject = "<" + base + subject_value + ">"
 											triples_map_triples[subject_value].append(dictionary_maker_xml(child)) 
 										except:
 											subject = None
@@ -739,10 +737,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								if triples_map.subject_map.condition == "":
 
 									try:
-										if "http" not in subject_value:
-											subject = "<" + base + subject_value + ">"
-										else:
-											subject = "<" + subject_value + ">"
+										subject = "<" + base + subject_value + ">"
 										triples_map_triples.update(triple_entry) 
 									except:
 										subject = None
@@ -1053,7 +1048,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-
 									if child.find(predicate_object_map.object_map.child[0]) is not None:
 										if child.find(predicate_object_map.object_map.child[0]).text in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][child.find(predicate_object_map.object_map.child[0]).text]
@@ -1076,7 +1070,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										object = None
 									else:
 										try:
-											object = "<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", child, "object", triples_map.iterator) + ">"
+											object = "<" + string_substitution_xml(triples_map_element.subject_map.value, "{(.+?)}", child, "subject", triples_map.iterator) + ">"
 										except TypeError:
 											object = None
 								break
@@ -1551,7 +1545,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										if "http" not in subject_value:
 											subject = "<" + base + subject_value + ">"
 										else:
-											subject = "<" + subject_value + ">"
+											subject = "<" + base + encode_char(subject_value) + ">"
 										triples_map_triples[subject_value].append(dictionary_maker(data)) 
 									except:
 										subject = None
@@ -1697,7 +1691,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									if "http" not in subject_value:
 										subject = "<" + base + subject_value + ">"
 									else:
-										subject = "<" + subject_value + ">"
+										subject = "<" + base + encode_char(subject_value) + ">"
 									triples_map_triples.update(triple_entry) 
 								except:
 									subject = None
@@ -1949,12 +1943,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
-												data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker(data, triples_map_element, predicate_object_map.object_map)
+												data_element = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+												hash_maker(data_element, triples_map_element, predicate_object_map.object_map)
 											else:
-												data = json.load(input_file_descriptor)
+												data_element = json.load(input_file_descriptor)
 												if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
-													join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+													join_iterator(data_element, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 												else:
 													hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
@@ -1971,7 +1965,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										for query in query_list:
 											cursor.execute(query)
 										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-								
+								print(sublist(predicate_object_map.object_map.child,data.keys()))
 								if sublist(predicate_object_map.object_map.child,data.keys()):
 									if child_list_value(predicate_object_map.object_map.child,data) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 										object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,data)]
@@ -2278,7 +2272,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if "http" not in subject_value:
 											subject = "<" + base + subject_value + ">"
 										else:
-											subject = "<" + subject_value + ">"
+											subject = "<" + base + encode_char(subject_value) + ">"
 										triples_map_triples[subject_value].append(dictionary_maker(row)) 
 									except:
 										subject = None
@@ -2422,7 +2416,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									if "http" not in subject_value:
 										subject = "<" + base + subject_value + ">"
 									else:
-										subject = "<" + subject_value + ">"
+										subject = "<" + base + encode_char(subject_value) + ">"
 									triples_map_triples.update(triple_entry)
 								except:
 									subject = None
@@ -3008,7 +3002,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									if "http" not in subject_value:
 										subject = "<" + base + subject_value + ">"
 									else:
-										subject = "<" + subject_value + ">"
+										subject = "<" + base + encode_char(subject_value) + ">"
 									triples_map_triples[subject_value].append(dictionary_maker(row)) 
 								except:
 									subject = None
@@ -3135,7 +3129,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								if "http" not in subject_value:
 									subject = "<" + base + subject_value + ">"
 								else:
-									subject = "<" + subject_value + ">"
+									subject = "<" + base + encode_char(subject_value) + ">"
 								triples_map_triples.update(triple_entry) 
 							except:
 								subject = None
@@ -3729,7 +3723,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									if "http" not in subject_value:
 										subject = "<" + base + subject_value + ">"
 									else:
-										subject = "<" + subject_value + ">"
+										subject = "<" + base + encode_char(subject_value) + ">"
 									triples_map_triples[subject_value].append(dictionary_maker(row)) 
 								except:
 									subject = None
@@ -3856,7 +3850,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								if "http" not in subject_value:
 									subject = "<" + base + subject_value + ">"
 								else:
-									subject = "<" + subject_value + ">"
+									subject = "<" + base + encode_char(subject_value) + ">"
 								triples_map_triples.update(triple_entry) 
 							except:
 								subject = None

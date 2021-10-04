@@ -17,10 +17,12 @@ def extract_base(file):
 
 def encode_char(string):
 	encoded = ""
-	valid_char = ["~",":","#"]
+	valid_char = ["~","#"]
 	for s in string:
 		if s in valid_char:
 			encoded += s
+		elif s == "/":
+			encoded += "%2F"
 		else:
 			encoded += urllib.parse.quote(s)
 	return encoded
@@ -44,7 +46,7 @@ def child_list_value(childs,row):
 	for child in childs:
 		if child not in v:
 			if row[child] != None:
-				value += row[child] + "_"
+				value += str(row[child]) + "_"
 				v.append(child)
 	return value[:-1]
 
@@ -117,7 +119,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
 						value = str(math.ceil(float(value))) 
 				if re.search("^[\s|\t]*$", value) is None:
-					value = encode_char(value)
+					if "http" not in value:
+						value = encode_char(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 					offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					if "\\" in new_string:
@@ -297,13 +300,26 @@ def string_substitution_xml(string, pattern, row, term, iterator):
 								offset_current_substitution = offset_current_substitution + len(encode_char(row.text.strip())) - (end - start)
 								temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
 						else:
+							if "{" in match:
+								match = match.replace("{","")
+								match = match.replace("\\","")
+								match = match.replace(" ","")
 							for child in row.findall(match):
 								offset_current_substitution = 0
 								new_string = string
 								if re.search("^[\s|\t]*$", child.text) is None:
 									new_string = new_string[:start + offset_current_substitution] + encode_char(child.text.strip()) + new_string[ end + offset_current_substitution:]
 									offset_current_substitution = offset_current_substitution + len(encode_char(child.text.strip())) - (end - start)
+									if "\\" in new_string:
+										new_string = new_string.replace("\\", "")
+										count = new_string.count("}")
+										i = 0
+										new_string = " " + new_string
+										while i < count:
+											new_string = "{" + new_string
+											i += 1
 									temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
+
 				new_string = new_string.replace("\\","")
 		elif pattern == ".+":
 			match = reference_match.group(0)
