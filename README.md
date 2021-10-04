@@ -3,6 +3,17 @@ This project presents the SDM-RDFizer, an interpreter of mapping rules that allo
 
 ![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/architecture.jpg "SDM-RDFizer workflow")
 
+# The new features presented by SDM-RDFizer version4.0
+
+In version 4.0 of SDM-RDFizer, we have addressed the problem of efficiency in KG creation in terms of memory storage. SDM-RDFizer version4.0 includes a new module called "TriplesMap Planning" a.k.a. TMP which defines an optimized evaluation plan for the execution of triples maps. Additionally, version4.0 extends the previously included module (i.e. TriplesMap Execution a.k.a. TME) by introducing a new operator for compressing data stored in the data structures.
+
+We have performed extensive empirical evaluation on SDM-RDFizer version4.0 in terms of execution time and memory usage, reported in the ![master thesis](). The experiments are set up to empirically compare the impact of data duplicate rates, data size, and the complexity and the execution order of the triples maps on two versions of SDM-RDFizer (i.e. version4.0 and version3.4) and other exisiting engines (![icluding RMLMapper v4.7](https://github.com/RMLio/rmlmapper-java) and ![RocketRML](https://github.com/semantifyit/RocketRML) ), in terms of execution time and memory usage. The experiments are performed on two different benchmarks: 
+- From ![SDM-Genomic-datasets](https://figshare.com/articles/dataset/SDM-Genomic-Datasets/14838342/1), datasets including 10k, 100k, and 1M records with 25% and 75% duplicates rates, over six mapping rules with different complexities (1/4 simple object map, 2/5 object reference maps, 2/5 object join maps)
+- From ![GTFS-Madrid](https://github.com/oeg-upm/gtfs-bench), datasets with scale values of 1-csv, 5-csv, 10-csv, and 50-csv, over two different mapping rules (72 simple object maps and 11 object join maps). 
+
+The results of explained experiments are illstrated in figures below as summarized in the following:
+
+
 
 The results of the execution of SDM-RDFizer has been described in the following research reports:
 
@@ -57,19 +68,19 @@ Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository 
 
 ## Version 
 ```
-3.5.2.3
+4.0
 ```
 
 ## RML-Test Cases
 See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). Last test date: 08/06/2020
 
 ## Experimental Evaluations
-See the results of the experimental evaluations of SDM-RDFizer at [SDM-RDFizer-Experiments repository](https://github.com/SDM-TIB/SDM-RDFizer-Experiments)
+See the results of the experimental evaluations of SDM-RDFizer version 3.* at [SDM-RDFizer-Experiments repository](https://github.com/SDM-TIB/SDM-RDFizer-Experiments)
 
 
 ## License
 This work is licensed under Apache 2.0
 
 # Authors
-The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of David Chaves-Fraga (dchaves@fi.upm.es), Samaneh Jozashoori (samaneh.jozashoori@tib.eu), and Kemele Endris (kemele.endris@tib.eu)
+The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of Samaneh Jozashoori (samaneh.jozashoori@tib.eu), David Chaves-Fraga (dchaves@fi.upm.es), and Kemele Endris (kemele.endris@tib.eu)
 
