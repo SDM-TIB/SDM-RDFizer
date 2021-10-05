@@ -6,12 +6,23 @@ import xml.etree.ElementTree as ET
 import urllib
 import math
 
+def extract_base(file):
+	base = ""
+	f = open(file,"r")
+	file_lines = f.readlines()
+	for line in file_lines:
+		if "@base" in line:
+			base = line.split(" ")[1][1:-1]
+	return base
+
 def encode_char(string):
 	encoded = ""
-	valid_char = ["~",":","#"]
+	valid_char = ["~","#"]
 	for s in string:
 		if s in valid_char:
 			encoded += s
+		elif s == "/":
+			encoded += "%2F"
 		else:
 			encoded += urllib.parse.quote(s)
 	return encoded
@@ -130,7 +141,7 @@ def files_sort(triples_map_list, ordered):
 				if str(tp.data_source) in sorted_list["JSONPath"]:
 					sorted_list["JSONPath"][str(tp.data_source)][tp.triples_map_id] = tp
 				else:
-					sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
+					sorted_list["JSONPath"][str(tp.data_source)] = {tp.triples_map_id : tp}
 			for po in tp.predicate_object_maps_list:
 				if po.predicate_map.value in general_predicates:
 					predicate = po.predicate_map.value + "_" + po.object_map.value
@@ -266,6 +277,7 @@ def child_list_value_array(childs,row,row_headers):
 				v.append(child)
 	return value[:-1]
 
+
 def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 	template_references = re.finditer(pattern, string)
@@ -325,17 +337,19 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
 						value = str(math.ceil(float(value))) 
 				if re.search("^[\s|\t]*$", value) is None:
-					value = encode_char(value)
+					if "http" not in value:
+						value = encode_char(value)
 					new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 					offset_current_substitution = offset_current_substitution + len(value) - (end - start)
 					if "\\" in new_string:
 						new_string = new_string.replace("\\", "")
 						count = new_string.count("}")
 						i = 0
+						new_string = " " + new_string
 						while i < count:
 							new_string = "{" + new_string
 							i += 1
-						new_string = new_string.replace(" ", "")
+						#new_string = new_string.replace(" ", "")
 
 				else:
 					return None
@@ -504,13 +518,27 @@ def string_substitution_xml(string, pattern, row, term, iterator):
 								offset_current_substitution = offset_current_substitution + len(encode_char(row.text.strip())) - (end - start)
 								temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
 						else:
+							if "{" in match:
+								match = match.replace("{","")
+								match = match.replace("\\","")
+								match = match.replace(" ","")
 							for child in row.findall(match):
 								offset_current_substitution = 0
 								new_string = string
 								if re.search("^[\s|\t]*$", child.text) is None:
 									new_string = new_string[:start + offset_current_substitution] + encode_char(child.text.strip()) + new_string[ end + offset_current_substitution:]
 									offset_current_substitution = offset_current_substitution + len(encode_char(child.text.strip())) - (end - start)
+									if "\\" in new_string:
+										new_string = new_string.replace("\\", "")
+										count = new_string.count("}")
+										i = 0
+										new_string = " " + new_string
+										while i < count:
+											new_string = "{" + new_string
+											i += 1
 									temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
+
+				new_string = new_string.replace("\\","")
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			string_list = []
@@ -545,7 +573,7 @@ def string_substitution_xml(string, pattern, row, term, iterator):
 						new_string = string
 						if re.search("^[\s|\t]*$", child.text) is None:
 							new_string = new_string[:start + offset_current_substitution] + "\"" + child.text.strip() + "\"" + new_string[ end + offset_current_substitution:]
-							offset_current_substitution = offset_current_substitution + len(row.find(match).text.strip()) - (end - start)
+							offset_current_substitution = offset_current_substitution + len(child.text.strip()) - (end - start)
 							string_list.append(new_string)
 			return string_list
 		else:
@@ -679,7 +707,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
-							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+							if "http" not in value:
 								value = encode_char(value)
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -687,10 +715,11 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 								new_string = new_string.replace("\\", "")
 								count = new_string.count("}")
 								i = 0
+								new_string = " " + new_string
 								while i < count:
 									new_string = "{" + new_string
 									i += 1
-								new_string = new_string.replace(" ", "")
+								#new_string = new_string.replace(" ", "")
 
 						else:
 							return None
@@ -791,7 +820,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 						if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
 							value = str(math.ceil(float(value)))
 					if re.search("^[\s|\t]*$", value) is None:
-						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+						if "http" not in value:
 							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -799,10 +828,11 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 							new_string = new_string.replace("\\", "")
 							count = new_string.count("}")
 							i = 0
+							new_string = " " + new_string
 							while i < count:
 								new_string = "{" + new_string
 								i += 1
-							new_string = new_string.replace(" ", "")
+							#new_string = new_string.replace(" ", "")
 
 					else:
 						return None
@@ -900,7 +930,7 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 						if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
 							value = str(math.ceil(float(value)))
 					if re.search("^[\s|\t]*$", value) is None:
-						if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
+						if "http" not in value:
 							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
