@@ -82,7 +82,7 @@ You can easily customize your own configurations from the set of features that S
 ```
 
 ## RML-Test Cases
-See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). Last test date: 08/06/2020
+See the results of the SDM-RDFizer over the RML test-cases at the [RML Implementation Report](http://rml.io/implementation-report/). SDM-RDFizer version4.0 is tested over the latest published [test cases](https://rml.io/test-cases/) before the release.
 
 ## Experimental Evaluations
 See the results of the experimental evaluations of SDM-RDFizer version 3.* at [SDM-RDFizer-Experiments repository](https://github.com/SDM-TIB/SDM-RDFizer-Experiments)
