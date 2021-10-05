@@ -1,7 +1,7 @@
 # SDM-RDFizer
 This project presents the SDM-RDFizer, an interpreter of mapping rules that allows the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the [RDF Mapping Language (RML) by Dimou et al](https://rml.io/specs/rml/). The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from Heterogeneous data sources (CSV, JSON, RDB, XML). 
 
-![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/architecture.jpg "SDM-RDFizer workflow")
+![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/architecture.jpg "SDM-RDFizer workflow")
 
 # The new features presented by SDM-RDFizer version4.0
 
@@ -12,11 +12,11 @@ We have performed extensive empirical evaluation on SDM-RDFizer version4.0 in te
 - From [GTFS-Madrid](https://github.com/oeg-upm/gtfs-bench), datasets with scale values of 1-csv, 5-csv, 10-csv, and 50-csv, over two different mapping rules (72 simple object maps and 11 object join maps). 
 
 The results of explained experiments can be summarized as the following:
-![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/time_4engines.jpg "Execution Time Comparison")
-![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/time.jpg "Execution Time Comparison")
-As observed in the figure above, both versions of SDM-RDFizer completed all the testbeds successfully while the other two engines have cases of timeout. SDM-RDFizer version3.6 and RocketRML version 1.7.0 are competitve in simple testbeds, however, SDM-RDFizer version4.0 shows the best performance in all the testbeds. 
-![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/size.jpg "Memory Consumption Comparison")
-![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/master/images/5-csv.jpg "Continuous Memory Consumption Comparison")
+![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/time_4engines.jpg "Execution Time Comparison")
+![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/time.jpg "Execution Time Comparison")
+As observed in the figures above, both versions of SDM-RDFizer completed all the testbeds successfully while the other two engines have cases of timeout. SDM-RDFizer version3.6 and RocketRML version 1.7.0 are competitve in simple testbeds, however, SDM-RDFizer version4.0 shows the best performance in all the testbeds. 
+![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/size.jpg "Memory Consumption Comparison")
+![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/5-csv.jpg "Continuous Memory Consumption Comparison")
 As illustrated in the figures above, SDM-RDFizer version4.0 has the smallest peak in memory usage compared to the previous version of SDM-RDFizer.  
 
 
