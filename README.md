@@ -12,11 +12,9 @@ We have performed extensive empirical evaluation on SDM-RDFizer version4.0 in te
 - From [GTFS-Madrid](https://github.com/oeg-upm/gtfs-bench), datasets with scale values of 1-csv, 5-csv, 10-csv, and 50-csv, over two different mapping rules (72 simple object maps and 11 object join maps). 
 
 The results of explained experiments can be summarized as the following:
-![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/time_4engines.png "Execution Time Comparison")
 ![Overview of Results (Execution Time Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/time.png "Execution Time Comparison")
 As observed in the figures above, both versions of SDM-RDFizer completed all the testbeds successfully while the other two engines have cases of timeout. SDM-RDFizer version3.6 and RocketRML version 1.7.0 are competitve in simple testbeds, however, SDM-RDFizer version4.0 shows the best performance in all the testbeds. 
-![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/size.png "Memory Consumption Comparison")
-![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/5-csv.png "Continuous Memory Consumption Comparison")
+![Overview of Results (Memory Consumption Comparison)](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/memory.png "Memory Consumption Comparison")
 As illustrated in the figures above, SDM-RDFizer version4.0 has the smallest peak in memory usage compared to the previous version of SDM-RDFizer.  
 
 
