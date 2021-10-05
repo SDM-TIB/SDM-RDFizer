@@ -72,7 +72,7 @@ Visit the [wiki](https://github.com/SDM-TIB/SDM-RDFizer/wiki) of the repository 
 - FAQ: https://github.com/SDM-TIB/SDM-RDFizer/wiki/FAQ
 
 ## Configurations
-Users can easily customize their own configurations from the set of features that SDM-RDFzier offers by changing the values of the parameters in the config file. The descriptions of each parameter and the possible values are provided [here](https://github.com/SDM-TIB/SDM-RDFizer/wiki/The-Parameters-of-the-Configuration-file); "ordered" and "large_file" are the new features provided by SDM-RDFizer version4.0.  
+You can easily customize your own configurations from the set of features that SDM-RDFzier offers by changing the values of the parameters in the config file. The descriptions of each parameter and the possible values are provided [here](https://github.com/SDM-TIB/SDM-RDFizer/wiki/The-Parameters-of-the-Configuration-file); "ordered" and "large_file" are the new features provided by SDM-RDFizer version4.0.  
 
 
 ## Version 
