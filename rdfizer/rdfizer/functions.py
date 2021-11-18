@@ -17,7 +17,7 @@ def extract_base(file):
 
 def encode_char(string):
 	encoded = ""
-	valid_char = ["~","#","/",":"]
+	valid_char = ["~","#","/",":","_"]
 	for s in string:
 		if s in valid_char:
 			encoded += s
