@@ -51,4 +51,9 @@ setuptools.setup(
     ],
     install_requires=requirements,
     python_requires='>=3.6',
+    entry_points={
+        'console_scripts': [
+            'rdfizer=rdfizer.__main__:main',
+        ],
+    },
 )
