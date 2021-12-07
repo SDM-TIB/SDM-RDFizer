@@ -813,6 +813,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						object = "<" + predicate_object_map.object_map.value + ">"
 					else:
 						object = "\"" + predicate_object_map.object_map.value + "\""
+					if predicate_object_map.object_map.datatype is not None:
+						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.mapping_type == "template":
 					object = string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object", triples_map.iterator)
 					if isinstance(object,list):
@@ -1290,6 +1292,8 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 
 			if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 				object = "<" + predicate_object_map.object_map.value + ">"
+				if predicate_object_map.object_map.datatype is not None:
+					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
 					if predicate_object_map.object_map.term is None:
@@ -1658,6 +1662,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "<" + predicate_object_map.object_map.value + ">"
 				else:
 					object = "\"" + predicate_object_map.object_map.value + "\""
+				if predicate_object_map.object_map.datatype is not None:
+					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
 					if predicate_object_map.object_map.term is None:
@@ -2252,6 +2258,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "<" + predicate_object_map.object_map.value + ">"
 				else:
 					object = "\"" + predicate_object_map.object_map.value + "\""
+				if predicate_object_map.object_map.datatype is not None:
+					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
 					if predicate_object_map.object_map.term is None:
@@ -2842,6 +2850,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				object = "<" + predicate_object_map.object_map.value + ">"
 			else:
 				object = "\"" + predicate_object_map.object_map.value + "\""
+			if predicate_object_map.object_map.datatype is not None:
+				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
@@ -3518,6 +3528,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				object = "<" + predicate_object_map.object_map.value + ">"
 			else:
 				object = "\"" + predicate_object_map.object_map.value + "\""
+			if predicate_object_map.object_map.datatype is not None:
+				object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 		elif predicate_object_map.object_map.mapping_type == "template":
 			try:
 				if predicate_object_map.object_map.term is None:
