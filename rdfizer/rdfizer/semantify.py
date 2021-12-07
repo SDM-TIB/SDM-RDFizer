@@ -2391,23 +2391,29 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									object = None
 							else:
 								if predicate_object_map.object_map.parent is not None:
-									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												parent_data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker_list(parent_data, triples_map_element, predicate_object_map.object_map)
-											else:
-												parent_data = json.load(input_file_descriptor)
-												if isinstance(parent_data, list):
+									if predicate_object_map.object_map.parent[0] != predicate_object_map.object_map.child[0]:
+										if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												if str(triples_map_element.file_format).lower() == "csv":
+													parent_data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
 													hash_maker_list(parent_data, triples_map_element, predicate_object_map.object_map)
 												else:
-													hash_maker_list(parent_data[list(parent_data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-									if sublist(predicate_object_map.object_map.child,row.keys()):
-										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
-											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
-										else:
-											object_list = []
-									object = None
+													parent_data = json.load(input_file_descriptor)
+													if isinstance(parent_data, list):
+														hash_maker_list(parent_data, triples_map_element, predicate_object_map.object_map)
+													else:
+														hash_maker_list(parent_data[list(parent_data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+										if sublist(predicate_object_map.object_map.child,row.keys()):
+											if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
+												object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
+											else:
+												object_list = []
+										object = None
+									else:
+										try:
+											object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
+										except TypeError:
+											object = None
 								else:
 									try:
 										object = "<" + string_substitution(triples_map_element.subject_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
@@ -3888,38 +3894,39 @@ def translate_sql(triples_map):
             proyections.append(triples_map.subject_map.value)
 
     for po in triples_map.predicate_object_maps_list:
-        if "{" in po.object_map.value:
-            count = count_characters(po.object_map.value)
-            if 0 < count <= 1 :
-                predicate = po.object_map.value.split("{")[1].split("}")[0]
+        if po.object_map.mapping_type != "constant":
+            if "{" in po.object_map.value:
+                count = count_characters(po.object_map.value)
+                if 0 < count <= 1 :
+                    predicate = po.object_map.value.split("{")[1].split("}")[0]
+                    if "[" in predicate:
+                        predicate = predicate.split("[")[0]
+                    if predicate not in proyections:
+                        proyections.append(predicate)
+
+                elif 1 < count:
+                    predicate = po.object_map.value.split("{")
+                    for po_e in predicate:
+                        if "}" in po_e:
+                            pre = po_e.split("}")[0]
+                            if "[" in pre:
+                                pre = pre.split("[")
+                            if pre not in proyections:
+                                proyections.append(pre)
+            elif "#" in po.object_map.value:
+                pass
+            elif "/" in po.object_map.value:
+                pass
+            else:
+                predicate = po.object_map.value 
                 if "[" in predicate:
                     predicate = predicate.split("[")[0]
                 if predicate not in proyections:
                     proyections.append(predicate)
-
-            elif 1 < count:
-                predicate = po.object_map.value.split("{")
-                for po_e in predicate:
-                    if "}" in po_e:
-                        pre = po_e.split("}")[0]
-                        if "[" in pre:
-                            pre = pre.split("[")
-                        if pre not in proyections:
-                            proyections.append(pre)
-        elif "#" in po.object_map.value:
-            pass
-        elif "/" in po.object_map.value:
-            pass
-        else:
-            predicate = po.object_map.value 
-            if "[" in predicate:
-                predicate = predicate.split("[")[0]
-            if predicate not in proyections:
-                proyections.append(predicate)
-        if po.object_map.child != None:
-            for c in po.object_map.child:
-                if c not in proyections:
-                    proyections.append(c)
+            if po.object_map.child != None:
+                for c in po.object_map.child:
+                    if c not in proyections:
+                        proyections.append(c)
 
     temp_query = "SELECT DISTINCT "
     for p in proyections:
@@ -4035,7 +4042,7 @@ def semantify(config_path):
 		os.mkdir(config["datasets"]["output_folder"])
 
 	global number_triple
-
+	start = time.time()
 	if config["datasets"]["all_in_one_file"] == "no":
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
 			wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
@@ -4331,7 +4338,7 @@ def semantify(config_path):
 		wr.writerow(["Number of triples", "Time"])
 		wr.writerow([number_triple, time.time()-start_time])
 
-
+	print(time.time()-start)
 	print("Successfully semantified {}.\n".format(config[dataset_i]["name"]))
 
 		
