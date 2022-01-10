@@ -1300,6 +1300,8 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
+					elif "BlankNode" in predicate_object_map.object_map.term:
+						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 				except TypeError:
@@ -1670,6 +1672,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
 					elif "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
+					elif "BlankNode" in predicate_object_map.object_map.term:
+						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) 
 					else:
 						object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
 				except TypeError:
@@ -2266,6 +2270,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
+					elif "BlankNode" in predicate_object_map.object_map.term:
+						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 				except TypeError:
@@ -2858,6 +2864,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
+				elif "BlankNode" in predicate_object_map.object_map.term:
+					object = "_:" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 			except TypeError:
@@ -3536,6 +3544,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "IRI" in predicate_object_map.object_map.term:
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
+				elif "BlankNode" in predicate_object_map.object_map.term:
+					object = "_:" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 				else:
 					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 			except TypeError:
