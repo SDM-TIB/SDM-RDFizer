@@ -832,7 +832,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 				temp = match.split("{")
 				match = temp[len(temp)-1]
 			if match in row_headers:
-				if row[row_headers.index(match)] is not None:
+				if row[row_headers.index(match)] != None:# or row[row_headers.index(match)] != "None":
 					value = row[row_headers.index(match)]
 					if (type(value).__name__) != "str":
 						if (type(value).__name__) != "float":
@@ -858,6 +858,8 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 							#new_string = new_string.replace(" ", "")
 
 					else:
+						return None
+				else:
 						return None
 			else:
 				print('The attribute ' + match + ' is missing.')
