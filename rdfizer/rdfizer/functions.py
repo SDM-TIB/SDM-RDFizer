@@ -842,6 +842,9 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 					else:
 						if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
 							value = str(math.ceil(float(value)))
+					if "b\'" == value[0:2] and "\'" == value[len(value)-1]:
+						value = value.replace("b\'","")
+						value = value.replace("\'","")
 					if re.search("^[\s|\t]*$", value) is None:
 						if "http" not in value:
 							value = encode_char(value)
@@ -886,7 +889,9 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 						value = value.strftime("%Y-%m-%d T%H:%M:%S")
 					elif type(value).__name__ != "str":
 						value = str(value)
-
+					if "b\'" == value[0:2] and "\'" == value[len(value)-1]:
+						value = value.replace("b\'","")
+						value = value.replace("\'","")
 					if re.search("^[\s|\t]*$", str(value)) is None:
 						new_string = new_string[:start] + str(value).strip().replace("\"", "'") + new_string[end:]
 						new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
