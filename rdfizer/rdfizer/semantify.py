@@ -2348,7 +2348,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 
 									if sublist(predicate_object_map.object_map.child,row.keys()):
-										print(child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)])
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
 										else:
