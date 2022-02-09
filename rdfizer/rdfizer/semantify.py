@@ -1498,7 +1498,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							if "http" not in subject_value:
 								subject = "<" + base + subject_value + ">"
 							else:
-								subject = "<" + base + encode_char(subject_value) + ">"
+								subject = "<" + encode_char(subject_value) + ">"
 						except:
 							subject = None
 
@@ -2105,7 +2105,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							if "http" not in subject_value:
 								subject = "<" + base + subject_value + ">"
 							else:
-								subject = "<" + base + encode_char(subject_value) + ">"
+								subject = "<" + encode_char(subject_value) + ">"
 						except:
 							subject = None
 
@@ -2704,7 +2704,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						if "http" not in subject_value:
 							subject = "<" + base + subject_value + ">"
 						else:
-							subject = "<" + base + encode_char(subject_value) + ">"
+							subject = "<" + encode_char(subject_value) + ">"
 					except:
 						subject = None
 
@@ -3368,7 +3368,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						if "http" not in subject_value:
 							subject = "<" + base + subject_value + ">"
 						else:
-							subject = "<" + base + encode_char(subject_value) + ">"					 
+							subject = "<" + encode_char(subject_value) + ">"					 
 					except:
 						subject = None
 
