@@ -1498,7 +1498,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							if "http" not in subject_value:
 								subject = "<" + base + subject_value + ">"
 							else:
-								subject = "<" + base + encode_char(subject_value) + ">"
+								subject = "<" + encode_char(subject_value) + ">"
 						except:
 							subject = None
 
@@ -2077,6 +2077,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	object_list = []
 	
 	i = 0
+	no_update = True
 	for row in data:
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject", ignore, triples_map.iterator)	
 		if triples_map.subject_map.subject_mapping_type == "template":
@@ -2104,7 +2105,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							if "http" not in subject_value:
 								subject = "<" + base + subject_value + ">"
 							else:
-								subject = "<" + base + encode_char(subject_value) + ">"
+								subject = "<" + encode_char(subject_value) + ">"
 						except:
 							subject = None
 
@@ -2350,30 +2351,32 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
 										else:
-											if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-													if str(triples_map_element.file_format).lower() == "csv":
-														data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-														hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
-													else:
-														data = json.load(input_file_descriptor)
-														if triples_map_element.iterator:
-															if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
-																join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+											if no_update:
+												if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
+													with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+														if str(triples_map_element.file_format).lower() == "csv":
+															data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+															hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+														else:
+															data = json.load(input_file_descriptor)
+															if triples_map_element.iterator:
+																if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+																	join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+																else:
+																	if isinstance(data, list):
+																		hash_maker(data, triples_map_element, predicate_object_map.object_map)
+																	elif len(data) < 2:
+																		hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 															else:
 																if isinstance(data, list):
 																	hash_maker(data, triples_map_element, predicate_object_map.object_map)
 																elif len(data) < 2:
 																	hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-														else:
-															if isinstance(data, list):
-																hash_maker(data, triples_map_element, predicate_object_map.object_map)
-															elif len(data) < 2:
-																hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-											if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
-											else:
-												object_list = []
+												if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+													object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
+												else:
+													object_list = []
+												no_update = False
 									object = None
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
@@ -2701,7 +2704,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						if "http" not in subject_value:
 							subject = "<" + base + subject_value + ">"
 						else:
-							subject = "<" + base + encode_char(subject_value) + ">"
+							subject = "<" + encode_char(subject_value) + ">"
 					except:
 						subject = None
 
@@ -3365,7 +3368,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						if "http" not in subject_value:
 							subject = "<" + base + subject_value + ">"
 						else:
-							subject = "<" + base + encode_char(subject_value) + ">"					 
+							subject = "<" + encode_char(subject_value) + ">"					 
 					except:
 						subject = None
 
