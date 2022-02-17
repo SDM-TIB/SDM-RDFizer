@@ -4136,7 +4136,7 @@ def semantify(config_path):
 									if source_type == "csv":
 										for source in sorted_sources[source_type]:
 											if config["datasets"]["large_file"].lower() == "false":
-												reader = pd.read_csv(source)
+												reader = pd.read_csv(source, dtype = str)
 												reader = reader.where(pd.notnull(reader), None)
 												if duplicate == "yes":
 													reader = reader.drop_duplicates(keep ='first')
@@ -4145,9 +4145,9 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 											else:
-												with open(source, "r") as input_file_descriptor:
-													data = csv.DictReader(input_file_descriptor, delimiter=',') 
-													for triples_map in sorted_sources[source_type][source]:
+												for triples_map in sorted_sources[source_type][source]:
+													with open(source, "r") as input_file_descriptor:
+														data = csv.DictReader(input_file_descriptor, delimiter=',')
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 									elif source_type == "JSONPath":
