@@ -4091,13 +4091,15 @@ def semantify(config_path):
 					with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
 						sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"])
 						if sorted_sources:
-
 							if order_list:
 								for source_type in order_list:
 									if source_type == "csv":
 										for source in order_list[source_type]:
 											if config["datasets"]["large_file"].lower() == "false":
-												reader = pd.read_csv(source, dtype = str)
+												if ".csv" in source:
+													reader = pd.read_csv(source, dtype = str)
+												else:
+													reader = pd.read_csv(source, dtype = str, sep='\t')
 												reader = reader.where(pd.notnull(reader), None)
 												if duplicate == "yes":
 													reader = reader.drop_duplicates(keep ='first')
@@ -4109,9 +4111,12 @@ def semantify(config_path):
 													else:
 														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
-												with open(source, "r") as input_file_descriptor:
-													data = csv.DictReader(input_file_descriptor, delimiter=',') 
-													for triples_map in sorted_sources[source_type][source]:
+												for triples_map in sorted_sources[source_type][source]:
+													with open(source, "r") as input_file_descriptor:
+														if ".csv" in source:
+															data = csv.DictReader(input_file_descriptor, delimiter=',')
+														else:
+															data = csv.DictReader(input_file_descriptor, delimiter='\t')
 														if enrichment == "yes":
 															number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
@@ -4137,7 +4142,10 @@ def semantify(config_path):
 									if source_type == "csv":
 										for source in sorted_sources[source_type]:
 											if config["datasets"]["large_file"].lower() == "false":
-												reader = pd.read_csv(source)
+												if ".csv" in source:
+													reader = pd.read_csv(source, dtype = str)
+												else:
+													reader = pd.read_csv(source, dtype = str,sep="\t",header=0)
 												reader = reader.where(pd.notnull(reader), None)
 												if duplicate == "yes":
 													reader = reader.drop_duplicates(keep ='first')
@@ -4146,9 +4154,12 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 											else:
-												with open(source, "r") as input_file_descriptor:
-													data = csv.DictReader(input_file_descriptor, delimiter=',') 
-													for triples_map in sorted_sources[source_type][source]:
+												for triples_map in sorted_sources[source_type][source]:
+													with open(source, "r") as input_file_descriptor:
+														if ".csv" in source:
+															data = csv.DictReader(input_file_descriptor, delimiter=',')
+														else:
+															data = csv.DictReader(input_file_descriptor, delimiter='\t')
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 									elif source_type == "JSONPath":
@@ -4253,9 +4264,9 @@ def semantify(config_path):
 													else:
 														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
-												with open(source, "r") as input_file_descriptor:
-													data = csv.DictReader(input_file_descriptor, delimiter=',') 
-													for triples_map in sorted_sources[source_type][source]:
+												for triples_map in sorted_sources[source_type][source]:
+													with open(source, "r") as input_file_descriptor:
+														data = csv.DictReader(input_file_descriptor, delimiter=',') 
 														if enrichment == "yes":
 															number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
