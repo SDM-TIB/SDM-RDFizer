@@ -1,4 +1,10 @@
 # SDM-RDFizer
+[![License](https://img.shields.io/pypi/l/rdfizer.svg)](https://github.com/SDM-TIB/SDM-RDFizer/blob/master/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6225573.svg)](https://doi.org/10.5281/zenodo.6225573)
+[![Latest PyPI version](https://img.shields.io/pypi/v/rdfizer?style=flat)](https://pypi.org/project/rdfizer/)
+[![Python Version](https://img.shields.io/pypi/pyversions/rdfizer.svg)](https://pypi.org/project/rdfizer/)
+[![PyPI status](https://img.shields.io:/pypi/status/rdfizer?)](https://pypi.org/project/rdfizer/)
+
 This project presents the SDM-RDFizer, an interpreter of mapping rules that allows the transformation of (un)structured data into RDF knowledge graphs. The current version of the SDM-RDFizer assumes mapping rules are defined in the [RDF Mapping Language (RML) by Dimou et al](https://rml.io/specs/rml/). The SDM-RDFizer implements optimized data structures and relational algebra operators that enable an efficient execution of RML triple maps even in the presence of Big data. SDM-RDFizer is able to process data from heterogeneous data sources (CSV, JSON, RDB, XML) processing each set of RML rules (TriplesMap) in a multi-thread safe procedure.
 
 ![SDM-RDFizer workflow](https://raw.githubusercontent.com/SDM-TIB/SDM-RDFizer/beta/images/architecture.png "SDM-RDFizer workflow")
