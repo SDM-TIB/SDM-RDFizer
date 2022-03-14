@@ -2350,7 +2350,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									if sublist(predicate_object_map.object_map.child,row.keys()):
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
-										"""else:
+										else:
 											if no_update:
 												if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 													with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -2376,7 +2376,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 												else:
 													object_list = []
-												no_update = False"""
+												no_update = False
 									object = None
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
