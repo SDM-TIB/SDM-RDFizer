@@ -179,7 +179,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 							value = "<" + value[1:-1] + ">"
 						elif "http" in value and "<" in value:
 							value = value[1:-1] 
-					hash_table.update({row[child_object.parent[0]] : [value]}) 
+					hash_table.update({row[child_object.parent[0]] : {value : "object"}}) 
 				else:
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:	
 						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
@@ -2350,7 +2350,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									if sublist(predicate_object_map.object_map.child,row.keys()):
 										if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 											object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,row)]
-										else:
+										"""else:
 											if no_update:
 												if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
 													with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -2376,7 +2376,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 												else:
 													object_list = []
-												no_update = False
+												no_update = False"""
 									object = None
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
