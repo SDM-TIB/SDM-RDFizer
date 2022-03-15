@@ -802,14 +802,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						except:
 							predicate = None
 				elif predicate_object_map.predicate_map.mapping_type == "reference":
-						if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
-							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map)
-							#else:
-							#	predicate = None
-						else:
-							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map)
+					if predicate_object_map.predicate_map.condition != "":
+						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+						#if row[field] == condition:
+						predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map)
+						#else:
+						#	predicate = None
+					else:
+						predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map)
+					predicate = "<" + predicate[1:-1] + ">"
 				else:
 					predicate = None
 
@@ -1284,14 +1285,15 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 					except:
 						predicate = None
 			elif predicate_object_map.predicate_map.mapping_type == "reference":
-					if predicate_object_map.predicate_map.condition != "":
-						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-						#if row[field] == condition:
-						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
-						#else:
-						#	predicate = None
-					else:
-						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+				if predicate_object_map.predicate_map.condition != "":
+					#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+					#if row[field] == condition:
+					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+					#else:
+					#	predicate = None
+				else:
+					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+				predicate = "<" + predicate[1:-1] + ">"
 			else:
 				predicate = None
 
@@ -1653,14 +1655,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					except:
 						predicate = None
 			elif predicate_object_map.predicate_map.mapping_type == "reference":
-					if predicate_object_map.predicate_map.condition != "":
-						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-						#if row[field] == condition:
-						predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data, "predicate",ignore, iterator)
-						#else:
-						#	predicate = None
-					else:
-						predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data, "predicate",ignore, iterator)
+				if predicate_object_map.predicate_map.condition != "":
+					#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+					#if row[field] == condition:
+					predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data, "predicate",ignore, iterator)
+					#else:
+					#	predicate = None
+				else:
+					predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data, "predicate",ignore, iterator)
+				predicate = "<" + predicate[1:-1] + ">"
 			else:
 				predicate = None
 
@@ -2252,14 +2255,15 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					except:
 						predicate = None
 			elif predicate_object_map.predicate_map.mapping_type == "reference":
-					if predicate_object_map.predicate_map.condition != "":
-						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-						#if row[field] == condition:
-						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
-						#else:
-						#	predicate = None
-					else:
-						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+				if predicate_object_map.predicate_map.condition != "":
+					#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+					#if row[field] == condition:
+					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+					#else:
+					#	predicate = None
+				else:
+					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+				predicate = "<" + predicate[1:-1] + ">"
 			else:
 				predicate = None
 
@@ -2854,8 +2858,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				except:
 					predicate = None
 		elif predicate_object_map.predicate_map.mapping_type == "reference":
-			if predicate_object_map.predicate_map.condition != "":
-				predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+			predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+			predicate = "<" + predicate[1:-1] + ">"
 		else:
 			predicate = None
 
@@ -3534,8 +3538,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				except:
 					predicate = None
 		elif predicate_object_map.predicate_map.mapping_type == "reference":
-				if predicate_object_map.predicate_map.condition != "":
-					predicate = string_substitution_postgres(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+			predicate = string_substitution_postgres(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+			predicate = "<" + predicate[1:-1] + ">"
 		else:
 			predicate = None
 
