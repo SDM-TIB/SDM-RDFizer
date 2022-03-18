@@ -295,7 +295,10 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":
-			match = reference_match.group(1).split("[")[0]
+			if "[*]" in reference_match.group(1):
+				match = reference_match.group(1)
+			else:
+				match = reference_match.group(1).split("[")[0]
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
@@ -309,18 +312,36 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					sys.exit(1)
 
 			elif "." in match:
-				if match in row:
-					value = row[match]
+				if "[*]" in match:
+					child_list = row[match.split("[*]")[0]]
+					match = match.split(".")[1:]
+					if len(match) > 1:
+						for child in child_list:
+							found = False
+							value = child[match[0]]
+							for elem in match[1:]:
+								if elem in value:
+									value = valuep[elem]
+									found = True
+								else:
+									found = False
+									value = None
+									break
+							if found:
+								break
+						value = None
+					else:
+						for child in child_list:
+							if match[0] in child:
+								value = child[match[0]]
+								break
+
 				else:
 					temp = match.split(".")
-					if "[*]" in temp[0]:
-						value = row[temp[0].split("[*]")[0]]
-					else:
-						value = row[temp[0]]
+					value = row[temp[0]]
 					for t in temp:
 						if t != temp[0]:
-							value = value[t]
-									
+							value = value[t]						
 			else:
 				if match in row:
 					value = row[match]
@@ -358,39 +379,76 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 		elif pattern == ".+":
 			match = reference_match.group(0)
-			if "." in match:
-				if match in row:
-					value = row[match]
-				else:
-					temp = match.split(".")
-					value = row[temp[0]]
-					for element in temp:
-						if element in value:
-							value = value[element]
-			else:
-				if match in row:
-					value = row[match]
-				else:
-					return None
+			if "[*]" in match:
+				child_list = row[match.split("[*]")[0]]
+				match = match.split(".")[1:]
+				object_list = []
+				for child in child_list:
+					if len(match) > 1:
+						value = child[match[0]]
+						for element in match:
+							if element in value:
+								value = value[element]
+					else:
+						if match[0] in child:
+							value = child[match[0]]
+						else:
+							value = None
 
-			if match is not None:
-				if (type(value).__name__) == "int":
-						value = str(value)
-				if isinstance(value, dict):
-					if value:
-						print("Index needed")
-						return None
+					if match is not None:
+						if (type(value).__name__) == "int":
+								value = str(value)
+						if isinstance(value, dict):
+							if value:
+								print("Index needed")
+								return None
+							else:
+								return None
+						elif isinstance(value, list):
+							print("This level is a list.")
+							return None
+						else:		
+							if value is not None:
+								if re.search("^[\s|\t]*$", value) is None:
+									new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+									new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+									object_list.append(new_string)
+									new_string = string
+				return object_list
+			else:
+				if "." in match:
+					if match in row:
+						value = row[match]
+					else:
+						temp = match.split(".")
+						value = row[temp[0]]
+						for element in temp:
+							if element in value:
+								value = value[element]
+				else:
+					if match in row:
+						value = row[match]
 					else:
 						return None
-				else:		
-					if value is not None:
-						if re.search("^[\s|\t]*$", value) is None:
-							new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
-							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+
+				if match is not None:
+					if (type(value).__name__) == "int":
+							value = str(value)
+					if isinstance(value, dict):
+						if value:
+							print("Index needed")
+							return None
 						else:
 							return None
-			else:
-				return None
+					else:		
+						if value is not None:
+							if re.search("^[\s|\t]*$", value) is None:
+								new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+								new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+							else:
+								return None
+				else:
+					return None
 		else:
 			print("Invalid pattern")
 			if ignore == "yes":

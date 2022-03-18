@@ -1688,27 +1688,61 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
 				object = string_substitution_json(predicate_object_map.object_map.value, ".+", data, "object", ignore, iterator)
-				if object is not None:
-					if "'" in object[1:-1]:
-						object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
-					if "\n" in object:
-						object = object.replace("\n","\\n")
-					if predicate_object_map.object_map.datatype is not None:
-						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
-					elif predicate_object_map.object_map.language is not None:
-						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-							object += "@es"
-						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-							object += "@en"
-						elif len(predicate_object_map.object_map.language) == 2:
-							object += "@"+predicate_object_map.object_map.language
-					elif predicate_object_map.object_map.term is not None:
-						if "IRI" in predicate_object_map.object_map.term:
-							if " " not in object:
-								object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
-								object = "<" + encode_char(object[1:-1]) + ">"
-							else:
-								object = None
+				if isinstance(object,list):
+					object_list = object
+					object = None
+					if object_list:
+						i = 0
+						while i < len(object_list):
+							if "'" in object_list[i][1:-1]:
+								object_list[i] = "\"" + object_list[i][1:-1].replace("'","\\\\'") + "\""
+							if "\n" in object_list[i]:
+								object_list[i] = object_list[i].replace("\n","\\n")
+							if predicate_object_map.object_map.datatype is not None:
+								object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+							elif predicate_object_map.object_map.language is not None:
+								if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+									object_list[i] += "@es"
+								elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+									object_list[i] += "@en"
+								elif len(predicate_object_map.object_map.language) == 2:
+									object_list[i] += "@"+predicate_object_map.object_map.language
+							elif predicate_object_map.object_map.term is not None:
+								if "IRI" in predicate_object_map.object_map.term:
+									if " " not in object:
+										object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'","'") + "\""
+										object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
+									else:
+										object_list[i] = None
+							i += 1
+						if None in object_list:
+							temp = []
+							for obj in object_list:
+								temp.append(obj)
+							object_list = temp
+
+				else:
+					if object is not None:
+						if "'" in object[1:-1]:
+							object = "\"" + object[1:-1].replace("'","\\\\'") + "\""
+						if "\n" in object:
+							object = object.replace("\n","\\n")
+						if predicate_object_map.object_map.datatype is not None:
+							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						elif predicate_object_map.object_map.language is not None:
+							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+								object += "@es"
+							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+								object += "@en"
+							elif len(predicate_object_map.object_map.language) == 2:
+								object += "@"+predicate_object_map.object_map.language
+						elif predicate_object_map.object_map.term is not None:
+							if "IRI" in predicate_object_map.object_map.term:
+								if " " not in object:
+									object = "\"" + object[1:-1].replace("\\\\'","'") + "\""
+									object = "<" + encode_char(object[1:-1]) + ">"
+								else:
+									object = None
 			elif predicate_object_map.object_map.mapping_type == "parent triples map":
 				if subject is not None:
 					for triples_map_element in triples_map_list:
@@ -1748,7 +1782,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										object_list = []
 								object = None
 							else:
-								if predicate_object_map.object_map.parent is not None:
+								if predicate_object_map.object_map.parent != None:
 									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											if str(triples_map_element.file_format).lower() == "csv":
@@ -1848,8 +1882,18 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 									object = None
 								else:
+									if triples_map_element.iterator != triples_map.iterator:
+										parent_iterator = triples_map_element.iterator
+										child_keys = triples_map.iterator.split(".")
+										for child in child_keys:
+											if child in parent_iterator:
+												parent_iterator = parent_iterator.replace(child,"")[1:]
+											else:
+												break
+									else:
+										parent_iterator = ""
 									try:
-										object = "<" + string_substitution_json(triples_map_element.subject_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
+										object = "<" + string_substitution_json(triples_map_element.subject_map.value, "{(.+?)}", data, "object",ignore, parent_iterator) + ">"
 									except TypeError:
 										object = None
 							break
@@ -1864,7 +1908,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
 			else:
 				dictionary_table_update(predicate)
-
 			if predicate is not None and object is not None and subject is not None:
 				dictionary_table_update(subject)
 				dictionary_table_update(object)

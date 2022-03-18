@@ -84,7 +84,7 @@ You can easily customize your own configurations from the set of features that S
 
 ## Version 
 ```
-4.1.2
+4.2
 ```
 
 ## RML-Test Cases
@@ -98,5 +98,5 @@ See the results of the experimental evaluations of SDM-RDFizer version 3.* at [S
 This work is licensed under Apache 2.0
 
 # Authors
-The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, s6enigle@uni-bonn.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of Samaneh Jozashoori (samaneh.jozashoori@tib.eu), David Chaves-Fraga (dchaves@fi.upm.es), and Kemele Endris (kemele.endris@tib.eu)
+The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, iglesias@l3s.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of Samaneh Jozashoori (samaneh.jozashoori@tib.eu), David Chaves-Fraga (dchaves@fi.upm.es), and Kemele Endris (kemele.endris@tib.eu)
 
