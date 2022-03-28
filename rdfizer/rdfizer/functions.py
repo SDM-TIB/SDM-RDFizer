@@ -331,6 +331,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 								break
 						value = None
 					else:
+						value = None
 						for child in child_list:
 							if match[0] in child:
 								value = child[match[0]]
