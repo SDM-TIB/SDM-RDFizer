@@ -1709,7 +1709,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									object_list[i] += "@"+predicate_object_map.object_map.language
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
-									if " " not in object:
+									if " " not in object_list[i]:
 										object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'","'") + "\""
 										object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
 									else:
