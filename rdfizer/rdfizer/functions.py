@@ -12,7 +12,7 @@ def extract_base(file):
 	file_lines = f.readlines()
 	for line in file_lines:
 		if "@base" in line:
-			base = line.split(" ")[1][1:-1]
+			base = line.split(" ")[1][1:-3]
 	return base
 
 def encode_char(string):
@@ -459,7 +459,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 	return new_string
 
-def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
+def string_substitution_xml(string, pattern, row, term, iterator, parent_map, namespace):
 	template_references = re.finditer(pattern, string)
 	new_string = string
 	offset_current_substitution = 0
@@ -526,7 +526,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 								if ".." == level[:-1]:
 									new_level = parent_map[row]
 								else:
-									new_level = row.findall(level[:-1])
+									new_level = row.findall(level[:-1], namespace)
 								for child in new_level:
 									if child.attrib[match] is not None:
 										if re.search("^[\s|\t]*$", child.attrib[match]) is None:
@@ -544,7 +544,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 								temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
 								i += 1
 						else:
-							for child in row.findall(match):
+							for child in row.findall(match, namespace):
 								if re.search("^[\s|\t]*$", child.text) is None:
 									new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
 									offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(child.text.strip())) - (end - start)
@@ -579,7 +579,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 											offset_current_substitution = offset_current_substitution + len(encode_char(new_level.attrib[match])) - (end - start)
 											temp_list.append({"string":new_string,"offset_current_substitution":offset_current_substitution})
 								else:
-									for child in row.findall(level[:-1]):
+									for child in row.findall(level[:-1], namespace):
 										offset_current_substitution = 0
 										new_string = string
 										if child.attrib[match] is not None:
@@ -599,7 +599,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 								match = match.replace("{","")
 								match = match.replace("\\","")
 								match = match.replace(" ","")
-							for child in row.findall(match):
+							for child in row.findall(match, namespace):
 								offset_current_substitution = 0
 								new_string = string
 								if re.search("^[\s|\t]*$", child.text) is None:
@@ -640,7 +640,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 									offset_current_substitution = offset_current_substitution + len(new_level.attrib[match]) - (end - start)
 									string_list.append(new_string)
 					else:
-						for child in row.findall(level[:-1]):
+						for child in row.findall(level[:-1], namespace):
 							offset_current_substitution = 0
 							new_string = string
 							if child.attrib:
@@ -656,7 +656,7 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map):
 						offset_current_substitution = offset_current_substitution + len(row.text.strip()) - (end - start)
 						string_list.append(new_string)
 				else:
-					for child in row.findall(match):
+					for child in row.findall(match, namespace):
 						offset_current_substitution = 0
 						new_string = string
 						if re.search("^[\s|\t]*$", child.text) is None:
