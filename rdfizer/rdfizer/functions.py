@@ -682,8 +682,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 
 	"""
 	(Private function, not accessible from outside this package)
+
 	Takes a string and a pattern, matches the pattern against the string and perform the substitution
 	in the string from the respective value in the row.
+
 	Parameters
 	----------
 	string : string
@@ -692,6 +694,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 		Pattern containing a regular expression to match
 	row : dictionary
 		Dictionary with CSV headers as keys and fields of the row as values
+
 	Returns
 	-------
 	A string with the respective substitution if the element to be subtitued is not invalid
@@ -778,10 +781,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if match in row.keys():
 				if row[match] != None:
 					if (type(row[match]).__name__) != "str" and row[match] != None:
-						if "float" not in (type(row[match]).__name__):
-							row[match] = str(row[match])
+						if (type(row[match]).__name__) == "float":
+							row[match] = repr(row[match])
 						else:
-							row[match] = str(math.ceil(row[match]))
+							row[match] = str(row[match])
 					else:
 						if re.match(r'^-?\d+(?:\.\d+)$', row[match]) is not None:
 							row[match] = str(math.ceil(float(row[match])))
@@ -792,7 +795,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					else:
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							value = row[match]
-							if "http" not in value:
+							if "http" not in value and "http" in new_string[:start + offset_current_substitution]:
 								value = encode_char(value)
 							new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 							offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -800,11 +803,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 								new_string = new_string.replace("\\", "")
 								count = new_string.count("}")
 								i = 0
-								new_string = " " + new_string
 								while i < count:
 									new_string = "{" + new_string
 									i += 1
-								#new_string = new_string.replace(" ", "")
+								new_string = new_string.replace(" ", "")
 
 						else:
 							return None
@@ -831,6 +833,9 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 				return None
 			if match in row.keys():
 				if (type(row[match]).__name__) != "str" and row[match] != None:
+					if (type(row[match]).__name__) == "float":
+						row[match] = repr(row[match])
+					else:
 						row[match] = str(row[match])
 				if isinstance(row[match],dict):
 					print("The key " + match + " has a Json structure as a value.\n")
