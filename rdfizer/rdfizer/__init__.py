@@ -189,7 +189,6 @@ def hash_maker(parent_data, parent_subject, child_object):
 	hash_table = {}
 	for row in parent_data:
 		if child_object.parent[0] in row.keys():
-			print(row[child_object.parent[0]])
 			if row[child_object.parent[0]] in hash_table:
 				if duplicate == "yes":
 					if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -205,7 +204,6 @@ def hash_maker(parent_data, parent_subject, child_object):
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" not in hash_table[row[child_object.parent[0]]]:
 								hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"})
-								print(hash_table[row[child_object.parent[0]]])
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore, parent_subject.iterator)
@@ -230,7 +228,6 @@ def hash_maker(parent_data, parent_subject, child_object):
 				else:
 					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
-						print(hash_table[row[child_object.parent[0]]])
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
