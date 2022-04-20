@@ -787,7 +787,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 							row[match] = str(row[match])
 					else:
 						if re.match(r'^-?\d+(?:\.\d+)$', row[match]) is not None:
-							row[match] = str(math.ceil(float(row[match])))
+							row[match] = repr(float(row[match]))
 					if isinstance(row[match],dict):
 						print("The key " + match + " has a Json structure as a value.\n")
 						print("The index needs to be indicated.\n")
