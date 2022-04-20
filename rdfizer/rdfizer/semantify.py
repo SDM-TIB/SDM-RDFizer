@@ -4148,9 +4148,9 @@ def semantify(config_path):
 										for source in order_list[source_type]:
 											if config["datasets"]["large_file"].lower() == "false":
 												if ".csv" in source:
-													reader = pd.read_csv(source, dtype = str, encoding = "ISO-8859-1")
+													reader = pd.read_csv(source, dtype = str)#, encoding = "ISO-8859-1")
 												else:
-													reader = pd.read_csv(source, dtype = str, sep='\t', encoding = "ISO-8859-1")
+													reader = pd.read_csv(source, dtype = str, sep='\t')#, encoding = "ISO-8859-1")
 												reader = reader.where(pd.notnull(reader), None)
 												if duplicate == "yes":
 													reader = reader.drop_duplicates(keep ='first')
@@ -4163,7 +4163,7 @@ def semantify(config_path):
 														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
 												for triples_map in sorted_sources[source_type][source]:
-													with open(source, "r", encoding = "ISO-8859-1") as input_file_descriptor:
+													with open(source, "r", encoding = "utf-8") as input_file_descriptor:
 														if ".csv" in source:
 															data = csv.DictReader(input_file_descriptor, delimiter=',')
 														else:
@@ -4194,9 +4194,9 @@ def semantify(config_path):
 										for source in sorted_sources[source_type]:
 											if config["datasets"]["large_file"].lower() == "false":
 												if ".csv" in source:
-													reader = pd.read_csv(source, dtype = str, encoding = "ISO-8859-1")
+													reader = pd.read_csv(source, dtype = str)#, encoding = "ISO-8859-1")
 												else:
-													reader = pd.read_csv(source, dtype = str,sep="\t",header=0, encoding = "ISO-8859-1")
+													reader = pd.read_csv(source, dtype = str,sep="\t",header=0)#, encoding = "ISO-8859-1")
 												reader = reader.where(pd.notnull(reader), None)
 												if duplicate == "yes":
 													reader = reader.drop_duplicates(keep ='first')
@@ -4206,7 +4206,7 @@ def semantify(config_path):
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 											else:
 												for triples_map in sorted_sources[source_type][source]:
-													with open(source, "r", encoding = "ISO-8859-1") as input_file_descriptor:
+													with open(source, "r", encoding = "utf-8") as input_file_descriptor:
 														if ".csv" in source:
 															data = csv.DictReader(input_file_descriptor, delimiter=',')
 														else:
