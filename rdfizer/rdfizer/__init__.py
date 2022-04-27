@@ -2349,6 +2349,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
+						if predicate_object_map.object_map.datatype is not None:
+							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
