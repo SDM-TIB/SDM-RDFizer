@@ -202,8 +202,14 @@ def hash_maker(parent_data, parent_subject, child_object):
 							hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
 						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
-							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" not in hash_table[row[child_object.parent[0]]]:
-								hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"})
+							value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+							if value is not None:
+								if parent_subject.subject_map.term_type != None:
+									if "BlankNode" in parent_subject.subject_map.term_type:
+										value = "_:" + value
+								else:
+									value = "<" + value + ">"
+								hash_table[row[child_object.parent[0]]].update({value : "object"})
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore, parent_subject.iterator)
@@ -213,8 +219,14 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 						hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
-						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
-							hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"})
+						value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+						if value is not None:
+							if parent_subject.subject_map.term_type != None:
+								if "BlankNode" in parent_subject.subject_map.term_type:
+									value = "_:" + value
+							else:
+								value = "<" + value + ">"
+							hash_table[row[child_object.parent[0]]].update({value : "object"})
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -226,8 +238,14 @@ def hash_maker(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 					hash_table.update({row[child_object.parent[0]] : {value : "object"}}) 
 				else:
-					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
-						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
+					value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						hash_table.update({row[child_object.parent[0]] : {value : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
