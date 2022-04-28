@@ -507,9 +507,6 @@ def mapping_parser(mapping_file):
 			}
 			OPTIONAL {
 				?_predicate_object_map rr:object ?object_constant_shortcut .
-				OPTIONAL {
-					?_object_map rr:datatype ?object_datatype .
-				}
 			}
 			OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
 			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
@@ -597,7 +594,7 @@ def mapping_parser(mapping_file):
 						join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"].append(str(result_predicate_object_map.parent_value))
 					join = False
 				elif result_predicate_object_map.object_constant_shortcut is not None:
-					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
 				else:
 					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None")
 				if join:
