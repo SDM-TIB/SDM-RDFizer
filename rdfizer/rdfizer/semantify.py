@@ -261,12 +261,18 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 								value = "<" + value[1:-1] + ">"
 							elif "http" in value and "<" in value:
 								value = value[1:-1] 
-						if value not in hash_table[child_list_value(child_object.parent,row)]:
-							hash_table[child_list_value(child_object.parent,row)].update({value : "object"})
+						hash_table[child_list_value(child_object.parent,row)].update({value : "object"})
 					else:
-						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
-							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" not in hash_table[child_list_value(child_object.parent,row)]:
-								hash_table[child_list_value(child_object.parent,row)].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}) 
+						value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+						if value is not None:
+							if parent_subject.subject_map.term_type != None:
+								if "BlankNode" in parent_subject.subject_map.term_type:
+									value = "_:" + value
+							else:
+								value = "<" + value + ">"
+							hash_table[child_list_value(child_object.parent,row)].update({value: "object"})
+
+
 				else:
 					if parent_subject.subject_map.subject_mapping_type == "reference":
 						value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore, parent_subject.iterator)
@@ -276,8 +282,14 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 						hash_table[child_list_value(child_object.parent,row)].update({value : "object"})
 					else:
-						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
-							hash_table[child_list_value(child_object.parent,row)].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"})
+						value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+						if value is not None:
+							if parent_subject.subject_map.term_type != None:
+								if "BlankNode" in parent_subject.subject_map.term_type:
+									value = "_:" + value
+							else:
+								value = "<" + value + ">"
+							hash_table[child_list_value(child_object.parent,row)].update({value: "object"})
 
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -289,8 +301,14 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							value = value[1:-1] 
 					hash_table.update({child_list_value(child_object.parent,row) : {value : "object"}}) 
 				else:
-					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:	
-						hash_table.update({child_list_value(child_object.parent,row) : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
+					value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						hash_table.update({child_list_value(child_object.parent,row) : {value : "object"}})
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child) : hash_table})
 
 def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namespace):
@@ -306,8 +324,15 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 					if value [0]not in hash_table[row.find(child_object.parent[0]).text]:
 						hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					if "<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace) + ">" not in hash_table[row.find(child_object.parent[0]).text]:
-						hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace) + ">" : "object"})
+					value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						if value not in hash_table[row.find(child_object.parent[0]).text]:
+							hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object", parent_subject.iterator, parent_map, namespace)
@@ -316,7 +341,14 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 							value[0] = "<" + value[0][1:-1] + ">"
 					hash_table[row.find(child_object.parent[0]).text].update({value[0] : "object"})
 				else:
-					hash_table[row.find(child_object.parent[0]).text].update({"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace) + ">" : "object"})
+					value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
 
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -325,8 +357,15 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 					if "http" in value[0]:
 						value[0] = "<" + value[0][1:-1] + ">"
 				hash_table.update({row.find(child_object.parent[0]).text : {value[0] : "object"}}) 
-			else:	
-				hash_table.update({row.find(child_object.parent[0]).text : {"<" + string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace) + ">" : "object"}}) 
+			else:
+				value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject", parent_subject.iterator, parent_map, namespace)
+				if value is not None:
+					if parent_subject.subject_map.term_type != None:
+						if "BlankNode" in parent_subject.subject_map.term_type:
+							value = "_:" + value
+					else:
+						value = "<" + value + ">"	
+					hash_table.update({row.find(child_object.parent[0]).text : {value : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
 
 
@@ -365,8 +404,15 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value + ">" : "object"})
 
 				else:
-					if "<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object",ignore) + ">" not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
-						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object",ignore) + ">" : "object"})
+					value = string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object",ignore)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						if value not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
+							hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
 			else:
 				if parent_subject.subject_map.subject_mapping_type == "reference":
 					value = string_substitution_array(parent_subject.subject_map.value, ".+", row, row_headers,"object",ignore)
@@ -377,7 +423,14 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 							value = value[1:-1] 
 					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
 				else:
-					hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">" : "object"})
+					value = string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object",ignore)
+					if value is not None:
+						if parent_subject.subject_map.term_type != None:
+							if "BlankNode" in parent_subject.subject_map.term_type:
+								value = "_:" + value
+						else:
+							value = "<" + value + ">"
+						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
 			
 		else:
 			if parent_subject.subject_map.subject_mapping_type == "reference":
@@ -389,7 +442,14 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 							value = value[1:-1]
 				hash_table.update({child_list_value_array(child_object.parent,row,row_headers):{value : "object"}})
 			else:
-				hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {"<" + string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">" : "object"}}) 
+				value = string_substitution_array(parent_subject.subject_map.value, "{(.+?)}", row, row_headers,"object",ignore)
+				if value is not None:
+					if parent_subject.subject_map.term_type != None:
+						if "BlankNode" in parent_subject.subject_map.term_type:
+							value = "_:" + value
+					else:
+						value = "<" + value + ">"
+					hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {value : "object"}}) 
 	join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child)  : hash_table})
 
 def mapping_parser(mapping_file):
@@ -850,6 +910,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								object[i] = "<" + object[i] + ">"
 							else:
 								object[i] = "\"" + object[i] + "\""
+								if predicate_object_map.object_map.datatype is not None:
+									object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 					else:
 						if predicate_object_map.object_map.term is None:
 							object = "<" + object + ">"
@@ -857,6 +919,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							object = "<" + object + ">"
 						else:
 							object = "\"" + object + "\""
+							if predicate_object_map.object_map.datatype is not None:
+								object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object", triples_map.iterator, parent_map, namespace)
 					if object is not None:
@@ -1330,6 +1394,8 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
+						if predicate_object_map.object_map.datatype is not None:
+							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -1703,6 +1769,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) 
 					else:
 						object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
+						if predicate_object_map.object_map.datatype is not None:
+							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -2948,6 +3016,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "_:" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
+					if predicate_object_map.object_map.datatype is not None:
+						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3628,6 +3698,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "_:" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 				else:
 					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
+					if predicate_object_map.object_map.datatype is not None:
+						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
