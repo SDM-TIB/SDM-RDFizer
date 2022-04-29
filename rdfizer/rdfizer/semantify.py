@@ -676,12 +676,11 @@ def mapping_parser(mapping_file):
 					if result_triples_map.graph not in triples_map.subject_map.graph:
 						triples_map.graph.append(result_triples_map.graph)
 
-
 	return triples_map_list
 
 
 def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_file, dataset_name):
-	print("\n\nTM:",triples_map.triples_map_name)
+	print("TM:", triples_map.triples_map_name)
 	i = 0
 	triples_map_triples = {}
 	generated_triples = {}
@@ -1511,9 +1510,9 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 				continue
 	return i
 
-def semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data, iterator):
 
-	print("\n\nTM:",triples_map.triples_map_name)
+def semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data, iterator):
+	print("TM:", triples_map.triples_map_name)
 
 	triples_map_triples = {}
 	generated_triples = {}
@@ -2178,35 +2177,35 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 				continue
 	return i
 
+
 def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, csv_file, dataset_name, data):
-	
-	print("\n\nTM:",triples_map.triples_map_name)
-
 	"""
-	(Private function, not accessible from outside this package)
+		(Private function, not accessible from outside this package)
 
-	Takes a triples-map rule and applies it to each one of the rows of its CSV data
-	source
+		Takes a triples-map rule and applies it to each one of the rows of its CSV data
+		source
 
-	Parameters
-	----------
-	triples_map : TriplesMap object
-		Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
-		(refer to the TriplesMap.py file in the triplesmap folder)
-	triples_map_list : list of TriplesMap objects
-		List of triples-maps parsed from current mapping being used for the semantification of a
-		dataset (mainly used to perform rr:joinCondition mappings)
-	delimiter : string
-		Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
-	output_file_descriptor : file object 
-		Descriptor to the output file (refer to the Python 3 documentation)
+		Parameters
+		----------
+		triples_map : TriplesMap object
+			Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
+			(refer to the TriplesMap.py file in the triplesmap folder)
+		triples_map_list : list of TriplesMap objects
+			List of triples-maps parsed from current mapping being used for the semantification of a
+			dataset (mainly used to perform rr:joinCondition mappings)
+		delimiter : string
+			Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
+		output_file_descriptor : file object
+			Descriptor to the output file (refer to the Python 3 documentation)
 
-	Returns
-	-------
-	An .nt file per each dataset mentioned in the configuration file semantified.
-	If the duplicates are asked to be removed in main memory, also returns a -min.nt
-	file with the triples sorted and with the duplicates removed.
-	"""
+		Returns
+		-------
+		An .nt file per each dataset mentioned in the configuration file semantified.
+		If the duplicates are asked to be removed in main memory, also returns a -min.nt
+		file with the triples sorted and with the duplicates removed.
+		"""
+	print("TM:", triples_map.triples_map_name)
+
 	object_list = []
 	
 	i = 0
@@ -4325,7 +4324,7 @@ def semantify(config_path):
 							for triples_map in triples_map_list:
 								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
-										print("\n\nTM:",triples_map.triples_map_name)
+										print("TM:", triples_map.triples_map_name)
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 										cursor = db.cursor(buffered=True)
@@ -4373,6 +4372,7 @@ def semantify(config_path):
 										print("Invalid reference formulation or format")
 										print("Aborting...")
 										sys.exit(1)
+					print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 	else:
 		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
 
@@ -4381,7 +4381,7 @@ def semantify(config_path):
 			wr.writerow(["Dataset", "Number of the triple", "Time"])
 
 			with ThreadPoolExecutor(max_workers=10) as executor:
-				with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
+				with open(output_file, "w", encoding="utf-8") as output_file_descriptor:
 					for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 						dataset_i = "dataset" + str(int(dataset_number) + 1)
 						triples_map_list = mapping_parser(config[dataset_i]["mapping"])
@@ -4471,7 +4471,7 @@ def semantify(config_path):
 							for triples_map in triples_map_list:
 								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
-										print("\n\nTM:",triples_map.triples_map_name)
+										print("TM:", triples_map.triples_map_name)
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host = config[dataset_i]["host"], port = int(config[dataset_i]["port"]), user = config[dataset_i]["user"], password = config[dataset_i]["password"])
 										cursor = db.cursor(buffered=True)
@@ -4500,7 +4500,7 @@ def semantify(config_path):
 										predicate_list = release_PTT(triples_map,predicate_list)
 									elif config["datasets"]["dbType"] == "postgres":	
 										database, query_list = translate_sql(triples_map)
-										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
+										db = psycopg2.connect(host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 										cursor = db.cursor()
 										if triples_map.query == "None":	
 											for query in query_list:
@@ -4518,14 +4518,15 @@ def semantify(config_path):
 										print("Invalid reference formulation or format")
 										print("Aborting...")
 										sys.exit(1)
+						print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 
+	duration = time.time() - start_time
 	with open(config["datasets"]["output_folder"] + "/stats.csv", 'w') as myfile:
 		wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
 		wr.writerow(["Number of triples", "Time"])
-		wr.writerow([number_triple, time.time()-start_time])
+		wr.writerow([number_triple, duration])
 
-	#print(time.time()-start)
-	print("Successfully semantified {}.\n".format(config[dataset_i]["name"]))
+	print("Successfully semantified all datasets in {:.3f} seconds.".format(duration))
 
 		
 
