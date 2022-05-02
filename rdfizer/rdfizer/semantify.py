@@ -206,7 +206,11 @@ def hash_maker(parent_data, parent_subject, child_object):
 							if value is not None:
 								if parent_subject.subject_map.term_type != None:
 									if "BlankNode" in parent_subject.subject_map.term_type:
-										value = "_:" + value
+										if "/" in value:
+											value = "_:" + value.replace("/","-")
+											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+										else:
+											value = "_:" + value
 								else:
 									value = "<" + value + ">"
 								hash_table[row[child_object.parent[0]]].update({value : "object"})
@@ -223,7 +227,11 @@ def hash_maker(parent_data, parent_subject, child_object):
 						if value is not None:
 							if parent_subject.subject_map.term_type != None:
 								if "BlankNode" in parent_subject.subject_map.term_type:
-									value = "_:" + value
+									if "/" in value:
+										value = "_:" + value.replace("/","-")
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+									else:
+										value = "_:" + value
 							else:
 								value = "<" + value + ">"
 							hash_table[row[child_object.parent[0]]].update({value : "object"})
@@ -242,7 +250,11 @@ def hash_maker(parent_data, parent_subject, child_object):
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						hash_table.update({row[child_object.parent[0]] : {value : "object"}})
@@ -267,7 +279,11 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 						if value is not None:
 							if parent_subject.subject_map.term_type != None:
 								if "BlankNode" in parent_subject.subject_map.term_type:
-									value = "_:" + value
+									if "/" in value:
+										value = "_:" + value.replace("/","-")
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+									else:
+										value = "_:" + value
 							else:
 								value = "<" + value + ">"
 							hash_table[child_list_value(child_object.parent,row)].update({value: "object"})
@@ -286,7 +302,11 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 						if value is not None:
 							if parent_subject.subject_map.term_type != None:
 								if "BlankNode" in parent_subject.subject_map.term_type:
-									value = "_:" + value
+									if "/" in value:
+										value = "_:" + value.replace("/","-")
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+									else:
+										value = "_:" + value
 							else:
 								value = "<" + value + ">"
 							hash_table[child_list_value(child_object.parent,row)].update({value: "object"})
@@ -305,7 +325,11 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						hash_table.update({child_list_value(child_object.parent,row) : {value : "object"}})
@@ -328,7 +352,11 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						if value not in hash_table[row.find(child_object.parent[0]).text]:
@@ -345,7 +373,11 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						hash_table[row.find(child_object.parent[0]).text].update({value : "object"})
@@ -362,7 +394,11 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 				if value is not None:
 					if parent_subject.subject_map.term_type != None:
 						if "BlankNode" in parent_subject.subject_map.term_type:
-							value = "_:" + value
+							if "/" in value:
+								value = "_:" + value.replace("/","-")
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+							else:
+								value = "_:" + value
 					else:
 						value = "<" + value + ">"	
 					hash_table.update({row.find(child_object.parent[0]).text : {value : "object"}}) 
@@ -408,7 +444,11 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						if value not in hash_table[child_list_value_array(child_object.parent,row,row_headers)]:
@@ -427,7 +467,11 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 					if value is not None:
 						if parent_subject.subject_map.term_type != None:
 							if "BlankNode" in parent_subject.subject_map.term_type:
-								value = "_:" + value
+								if "/" in value:
+									value = "_:" + value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									value = "_:" + value
 						else:
 							value = "<" + value + ">"
 						hash_table[child_list_value_array(child_object.parent,row,row_headers)].update({value : "object"})
@@ -446,7 +490,11 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 				if value is not None:
 					if parent_subject.subject_map.term_type != None:
 						if "BlankNode" in parent_subject.subject_map.term_type:
-							value = "_:" + value
+							if "/" in value:
+								value = "_:" + value.replace("/","-")
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+							else:
+								value = "_:" + value
 					else:
 						value = "<" + value + ">"
 					hash_table.update({child_list_value_array(child_object.parent,row,row_headers) : {value : "object"}}) 
@@ -742,7 +790,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if triples_map.subject_map.condition == "":
 
 							try:
-								subject = "_:" + subject_value 
+								if "/" in value:
+									subject_value  = "_:" + subject_value.replace("/","-")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+								else:
+									subject = "_:" + subject_value 
 							except:
 								subject = None
 
@@ -1391,6 +1443,9 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
+						if "/" in value:
+							object  = object.replace("/","-")
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
@@ -1603,7 +1658,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 
 						try:
-							subject = "_:" + subject_value 
+							if "/" in value:
+								subject_value  = "_:" + subject_value.replace("/","-")
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+							else:
+								subject = "_:" + subject_value
 							 
 						except:
 							subject = None
@@ -1765,7 +1824,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif "IRI" in predicate_object_map.object_map.term:
 						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
-						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) 
+						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator)
+						if "/" in value:
+							object  = object.replace("/","-")
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".") 
 					else:
 						object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
@@ -2256,7 +2318,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 
 						try:
-							subject = "_:" + subject_value
+							if "/" in value:
+								subject_value  = "_:" + subject_value.replace("/","-")
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+							else:
+								subject = "_:" + subject_value
 						except:
 							subject = None
 
@@ -2411,6 +2477,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
+						if "/" in value:
+							object  = object.replace("/","-")
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
@@ -2862,7 +2931,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				if triples_map.subject_map.condition == "":
 
 					try:
-						subject = "_:" + subject_value  
+						if "/" in value:
+							subject_value  = "_:" + subject_value.replace("/","-")
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+						else:
+							subject = "_:" + subject_value  
 					except:
 						subject = None
 
@@ -3013,6 +3086,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "BlankNode" in predicate_object_map.object_map.term:
 					object = "_:" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
+					if "/" in value:
+						object  = object.replace("/","-")
+						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
@@ -3529,7 +3605,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				if triples_map.subject_map.condition == "":
 
 					try:
-						subject = "_:" + subject_value 
+						if "/" in value:
+							subject_value  = "_:" + subject_value.replace("/","-")
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
+						else:
+							subject = "_:" + subject_value 
 					except:
 						subject = None
 
@@ -3695,6 +3775,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "BlankNode" in predicate_object_map.object_map.term:
 					object = "_:" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
+					if "/" in value:
+						object  = object.replace("/","-")
+						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 				else:
 					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
