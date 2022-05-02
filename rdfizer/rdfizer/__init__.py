@@ -790,8 +790,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 						if triples_map.subject_map.condition == "":
 
 							try:
-								if "/" in value:
-									subject_value  = "_:" + subject_value.replace("/","-")
+								if "/" in subject_value:
+									subject  = "_:" + subject_value.replace("/","-")
 									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 								else:
 									subject = "_:" + subject_value 
@@ -1443,7 +1443,7 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
-						if "/" in value:
+						if "/" in object:
 							object  = object.replace("/","-")
 							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 					else:
@@ -1658,8 +1658,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 
 						try:
-							if "/" in value:
-								subject_value  = "_:" + subject_value.replace("/","-")
+							if "/" in subject_value:
+								subject  = "_:" + subject_value.replace("/","-")
 								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 							else:
 								subject = "_:" + subject_value
@@ -1825,7 +1825,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
 						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator)
-						if "/" in value:
+						if "/" in object:
 							object  = object.replace("/","-")
 							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".") 
 					else:
@@ -2318,8 +2318,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if triples_map.subject_map.condition == "":
 
 						try:
-							if "/" in value:
-								subject_value  = "_:" + subject_value.replace("/","-")
+							if "/" in subject_value:
+								subject  = "_:" + subject_value.replace("/","-")
 								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 							else:
 								subject = "_:" + subject_value
@@ -2477,7 +2477,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "<" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + ">"
 					elif "BlankNode" in predicate_object_map.object_map.term:
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
-						if "/" in value:
+						if "/" in object:
 							object  = object.replace("/","-")
 							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 					else:
@@ -2931,8 +2931,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				if triples_map.subject_map.condition == "":
 
 					try:
-						if "/" in value:
-							subject_value  = "_:" + subject_value.replace("/","-")
+						if "/" in subject_value:
+							subject  = "_:" + subject_value.replace("/","-")
 							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 						else:
 							subject = "_:" + subject_value  
@@ -3086,7 +3086,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "<" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "BlankNode" in predicate_object_map.object_map.term:
 					object = "_:" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
-					if "/" in value:
+					if "/" in object:
 						object  = object.replace("/","-")
 						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 				else:
@@ -3605,8 +3605,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				if triples_map.subject_map.condition == "":
 
 					try:
-						if "/" in value:
-							subject_value  = "_:" + subject_value.replace("/","-")
+						if "/" in subject_value:
+							subject  = "_:" + subject_value.replace("/","-")
 							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 						else:
 							subject = "_:" + subject_value 
@@ -3775,7 +3775,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "<" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 				elif "BlankNode" in predicate_object_map.object_map.term:
 					object = "_:" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
-					if "/" in value:
+					if "/" in object:
 						object  = object.replace("/","-")
 						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".\n")
 				else:
