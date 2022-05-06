@@ -55,6 +55,8 @@ global dic_table
 dic_table = {}
 global base
 base = ""
+global blank_message
+blank_message = True
 global general_predicates
 general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
 						"http://www.w3.org/2002/07/owl#sameAs":"",
@@ -186,6 +188,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 	join_table[join_id].update(hash_table)
 
 def hash_maker(parent_data, parent_subject, child_object):
+	global blank_message
 	hash_table = {}
 	for row in parent_data:
 		if child_object.parent[0] in row.keys():
@@ -208,7 +211,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 									if "BlankNode" in parent_subject.subject_map.term_type:
 										if "/" in value:
 											value = "_:" + value.replace("/","%2F")
-											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+											if blank_message:
+												print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+												blank_message = False
 										else:
 											value = "_:" + value
 								else:
@@ -229,7 +234,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 								if "BlankNode" in parent_subject.subject_map.term_type:
 									if "/" in value:
 										value = "_:" + value.replace("/","%2F")
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+										if blank_message:
+											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											blank_message = False
 									else:
 										value = "_:" + value
 							else:
@@ -252,7 +259,9 @@ def hash_maker(parent_data, parent_subject, child_object):
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -262,6 +271,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 
 def hash_maker_list(parent_data, parent_subject, child_object):
 	hash_table = {}
+	global blank_message
 	for row in parent_data:
 		if sublist(child_object.parent,row.keys()):
 			if child_list_value(child_object.parent,row) in hash_table:
@@ -281,7 +291,9 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 								if "BlankNode" in parent_subject.subject_map.term_type:
 									if "/" in value:
 										value = "_:" + value.replace("/","%2F")
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+										if blank_message:
+											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											blank_message = False
 									else:
 										value = "_:" + value
 							else:
@@ -304,7 +316,9 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 								if "BlankNode" in parent_subject.subject_map.term_type:
 									if "/" in value:
 										value = "_:" + value.replace("/","%2F")
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+										if blank_message:
+											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											blank_message = False
 									else:
 										value = "_:" + value
 							else:
@@ -327,7 +341,9 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -337,6 +353,7 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 
 def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namespace):
 	hash_table = {}
+	global blank_message
 	for row in parent_data:
 		if row.find(child_object.parent[0]).text in hash_table:
 			if duplicate == "yes":
@@ -354,7 +371,9 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -375,7 +394,9 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -396,7 +417,9 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 						if "BlankNode" in parent_subject.subject_map.term_type:
 							if "/" in value:
 								value = "_:" + value.replace("/","%2F")
-								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+								if blank_message:
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									blank_message = False
 							else:
 								value = "_:" + value
 					else:
@@ -425,6 +448,7 @@ def hash_maker_array(parent_data, parent_subject, child_object):
 
 def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 	hash_table = {}
+	global blank_message
 	row_headers=[x[0] for x in parent_data.description]
 	for row in parent_data:
 		if child_list_value_array(child_object.parent,row,row_headers) in hash_table:
@@ -446,7 +470,9 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -469,7 +495,9 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 							if "BlankNode" in parent_subject.subject_map.term_type:
 								if "/" in value:
 									value = "_:" + value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									value = "_:" + value
 						else:
@@ -492,7 +520,9 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 						if "BlankNode" in parent_subject.subject_map.term_type:
 							if "/" in value:
 								value = "_:" + value.replace("/","%2F")
-								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+								if blank_message:
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									blank_message = False
 							else:
 								value = "_:" + value
 					else:
@@ -733,7 +763,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
-
+	global blank_message
 	with open(str(triples_map.data_source), "r") as input_file_descriptor:
 		tree = ET.parse(input_file_descriptor)
 		root = tree.getroot()
@@ -792,7 +822,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							try:
 								if "/" in subject_value:
 									subject  = "_:" + subject_value.replace("/","%2F")
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+									if blank_message:
+										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										blank_message = False
 								else:
 									subject = "_:" + subject_value 
 							except:
@@ -1445,7 +1477,9 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 						if "/" in object:
 							object  = object.replace("/","%2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+							if blank_message:
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+								blank_message = False
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
@@ -1572,7 +1606,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
-	
+	global blank_message
 	i = 0
 	if iterator != "None" and iterator != "$.[*]" and iterator != "":
 		new_iterator = ""
@@ -1660,7 +1694,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						try:
 							if "/" in subject_value:
 								subject  = "_:" + subject_value.replace("/","%2F")
-								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+								if blank_message:
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									blank_message = False
 							else:
 								subject = "_:" + subject_value
 							 
@@ -2272,6 +2308,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	
 	i = 0
 	no_update = True
+	global blank_message
 	for row in data:
 		subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject", ignore, triples_map.iterator)	
 		if triples_map.subject_map.subject_mapping_type == "template":
@@ -2320,7 +2357,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						try:
 							if "/" in subject_value:
 								subject  = "_:" + subject_value.replace("/","%2F")
-								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+								if blank_message:
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									blank_message = False
 							else:
 								subject = "_:" + subject_value
 						except:
@@ -2479,7 +2518,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "_:" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator)
 						if "/" in object:
 							object  = object.replace("/","%2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+							if blank_message:
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+								blank_message = False
 					else:
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
@@ -2882,6 +2923,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 	If the duplicates are asked to be removed in main memory, also returns a -min.nt
 	file with the triples sorted and with the duplicates removed.
 	"""
+	global blank_message
 	triples_map_triples = {}
 	generated_triples = {}
 	object_list = []
@@ -2933,7 +2975,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					try:
 						if "/" in subject_value:
 							subject  = "_:" + subject_value.replace("/","%2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+							if blank_message:
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+								blank_message = False
 						else:
 							subject = "_:" + subject_value  
 					except:
@@ -3088,7 +3132,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "_:" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 					if "/" in object:
 						object  = object.replace("/","%2F")
-						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+						if blank_message:
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+							blank_message = False
 				else:
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
@@ -3558,6 +3604,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 	generated_triples = {}
 	object_list = []
 	subject_value = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject",ignore)
+	global blank_message
 	i = 0
 	if triples_map.subject_map.subject_mapping_type == "template":
 		if triples_map.subject_map.term_type is None:
@@ -3607,7 +3654,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					try:
 						if "/" in subject_value:
 							subject  = "_:" + subject_value.replace("/","%2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+							if blank_message:
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+								blank_message = False
 						else:
 							subject = "_:" + subject_value 
 					except:
@@ -3777,7 +3826,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "_:" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore)
 					if "/" in object:
 						object  = object.replace("/","%2F")
-						print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".\n")
+						if blank_message:
+							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+							blank_message = False
 				else:
 					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
@@ -4298,6 +4349,7 @@ def semantify(config_path):
 		os.mkdir(config["datasets"]["output_folder"])
 
 	global number_triple
+	global blank_message
 	start = time.time()
 	if config["datasets"]["all_in_one_file"] == "no":
 		with open(config["datasets"]["output_folder"] + "/" +  config["datasets"]["name"] + "_datasets_stats.csv", 'w') as myfile:
@@ -4331,6 +4383,7 @@ def semantify(config_path):
 													reader = reader.drop_duplicates(keep ='first')
 												data = reader.to_dict(orient='records')
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if enrichment == "yes":
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
@@ -4343,6 +4396,7 @@ def semantify(config_path):
 															data = csv.DictReader(input_file_descriptor, delimiter=',')
 														else:
 															data = csv.DictReader(input_file_descriptor, delimiter='\t')
+														blank_message = True
 														if enrichment == "yes":
 															number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
@@ -4353,6 +4407,7 @@ def semantify(config_path):
 											with open(str(source), "r") as input_file_descriptor:
 												data = json.load(input_file_descriptor)
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if isinstance(data, list):
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													else:
@@ -4361,6 +4416,7 @@ def semantify(config_path):
 									elif source_type == "XPath":
 										for source in order_list[source_type]:
 											for triples_map in sorted_sources[source_type][source]:
+												blank_message = True
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
 							else:
@@ -4377,10 +4433,12 @@ def semantify(config_path):
 													reader = reader.drop_duplicates(keep ='first')
 												data = reader.to_dict(orient='records')
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 											else:
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													with open(source, "r", encoding = "utf-8") as input_file_descriptor:
 														if ".csv" in source:
 															data = csv.DictReader(input_file_descriptor, delimiter=',')
@@ -4393,6 +4451,7 @@ def semantify(config_path):
 											with open(str(triples_map.data_source), "r") as input_file_descriptor:
 												data = json.load(input_file_descriptor)
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if isinstance(data, list):
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													else:
@@ -4401,10 +4460,12 @@ def semantify(config_path):
 									elif source_type == "XPath":
 										for source in order_list[source_type]:
 											for triples_map in sorted_sources[source_type][source]:
+												blank_message = True
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 						if predicate_list:
 							for triples_map in triples_map_list:
+								blank_message = True
 								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
 										print("TM:", triples_map.triples_map_name)
@@ -4486,6 +4547,7 @@ def semantify(config_path):
 													reader = reader.drop_duplicates(keep ='first')
 												data = reader.to_dict(orient='records')
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if enrichment == "yes":
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
@@ -4493,6 +4555,7 @@ def semantify(config_path):
 														number_triple += executor.submit(semantify_file_array, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 											else:
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													with open(source, "r", encoding = "ISO-8859-1") as input_file_descriptor:
 														data = csv.DictReader(input_file_descriptor, delimiter=',') 
 														if enrichment == "yes":
@@ -4505,6 +4568,7 @@ def semantify(config_path):
 											with open(str(triples_map.data_source), "r") as input_file_descriptor:
 												data = json.load(input_file_descriptor)
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if isinstance(data, list):
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													else:
@@ -4513,6 +4577,7 @@ def semantify(config_path):
 									elif source_type == "XPath":
 										for source in order_list[source_type]:
 											for triples_map in sorted_sources[source_type][source]:
+												blank_message = True
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
 							else:
@@ -4526,12 +4591,14 @@ def semantify(config_path):
 													reader = reader.drop_duplicates(keep ='first')
 												data = reader.to_dict(orient='records')
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 											else:
 												with open(source, "r", encoding = "ISO-8859-1") as input_file_descriptor:
 													data = csv.DictReader(input_file_descriptor, delimiter=',') 
 													for triples_map in sorted_sources[source_type][source]:
+														blank_message = True
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 									elif source_type == "JSONPath":
@@ -4539,6 +4606,7 @@ def semantify(config_path):
 											with open(str(triples_map.data_source), "r") as input_file_descriptor:
 												data = json.load(input_file_descriptor)
 												for triples_map in sorted_sources[source_type][source]:
+													blank_message = True
 													if isinstance(data, list):
 														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, wr, config[dataset_i]["name"], data).result()
 													else:
@@ -4547,11 +4615,13 @@ def semantify(config_path):
 									elif source_type == "XPath":
 										for source in order_list[source_type]:
 											for triples_map in sorted_sources[source_type][source]:
+												blank_message = True
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"]).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 						
 						if predicate_list:
 							for triples_map in triples_map_list:
+								blank_message = True
 								if str(triples_map.file_format).lower() != "csv" and triples_map.file_format != "JSONPath" and triples_map.file_format != "XPath":
 									if config["datasets"]["dbType"] == "mysql":
 										print("TM:", triples_map.triples_map_name)
