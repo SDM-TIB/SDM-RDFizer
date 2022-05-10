@@ -620,6 +620,8 @@ def mapping_parser(mapping_file):
 				?_predicate_object_map rr:objectMap ?_object_map .
 				?_object_map rr:template ?object_template .
 				OPTIONAL {?_object_map rr:termType ?term .}
+				OPTIONAL {?_object_map rml:languageMap ?language_map.
+						  ?language_map rml:reference ?language_value.}
 				OPTIONAL {
 					?_object_map rr:datatype ?object_datatype .
 				}
@@ -628,6 +630,8 @@ def mapping_parser(mapping_file):
 				?_predicate_object_map rr:objectMap ?_object_map .
 				?_object_map rml:reference ?object_reference .
 				OPTIONAL { ?_object_map rr:language ?language .}
+				OPTIONAL {?_object_map rml:languageMap ?language_map.
+						  ?language_map rml:reference ?language_value.}
 				OPTIONAL {?_object_map rr:termType ?term .}
 				OPTIONAL {
 					?_object_map rr:datatype ?object_datatype .
@@ -719,11 +723,11 @@ def mapping_parser(mapping_file):
 					predicate_map = tm.PredicateMap("None", "None", "None")
 
 				if result_predicate_object_map.object_constant is not None:
-					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 				elif result_predicate_object_map.object_template is not None:
-					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 				elif result_predicate_object_map.object_reference is not None:
-					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference), str(result_predicate_object_map.object_datatype), "None", "None", result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 				elif result_predicate_object_map.object_parent_triples_map is not None:
 					if predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map) not in join_predicate:
 						join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {"predicate":predicate_map, "childs":[str(result_predicate_object_map.child_value)], "parents":[str(result_predicate_object_map.parent_value)], "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
@@ -732,15 +736,15 @@ def mapping_parser(mapping_file):
 						join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"].append(str(result_predicate_object_map.parent_value))
 					join = False
 				elif result_predicate_object_map.object_constant_shortcut is not None:
-					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("constant shortcut", str(result_predicate_object_map.object_constant_shortcut), "None", "None", "None", result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 				else:
-					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None")
+					object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None")
 				if join:
 					predicate_object_maps_list += [tm.PredicateObjectMap(predicate_map, object_map,predicate_object_graph)]
 				join = True
 			if join_predicate:
 				for jp in join_predicate.keys():
-					object_map = tm.ObjectMap("parent triples map", join_predicate[jp]["triples_map"], str(result_predicate_object_map.object_datatype), join_predicate[jp]["childs"], join_predicate[jp]["parents"],result_predicate_object_map.term, result_predicate_object_map.language)
+					object_map = tm.ObjectMap("parent triples map", join_predicate[jp]["triples_map"], str(result_predicate_object_map.object_datatype), join_predicate[jp]["childs"], join_predicate[jp]["parents"],result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 					predicate_object_maps_list += [tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map,predicate_object_graph)]
 
 			current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.data_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
@@ -995,6 +999,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								object[i] = "\"" + object[i] + "\""
 								if predicate_object_map.object_map.datatype is not None:
 									object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+								elif predicate_object_map.object_map.language is not None:
+									if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+										object[i] += "@es"
+									elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+										object[i] += "@en"
+									elif len(predicate_object_map.object_map.language) == 2:
+										object[i] += "@"+predicate_object_map.object_map.language
+								elif predicate_object_map.object_map.language_map is not None:
+									object[i] += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 					else:
 						if predicate_object_map.object_map.term is None:
 							object = "<" + object + ">"
@@ -1004,6 +1017,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 							object = "\"" + object + "\""
 							if predicate_object_map.object_map.datatype is not None:
 								object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+							elif predicate_object_map.object_map.language is not None:
+								if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+									object += "@es"
+								elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+									object += "@en"
+								elif len(predicate_object_map.object_map.language) == 2:
+									object += "@"+predicate_object_map.object_map.language
+							elif predicate_object_map.object_map.language_map is not None:
+								object += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object", triples_map.iterator, parent_map, namespace)
 					if object is not None:
@@ -1022,6 +1044,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 										object[i] += "@en"
 									elif len(predicate_object_map.object_map.language) == 2:
 										object[i] += "@"+predicate_object_map.object_map.language
+								elif predicate_object_map.object_map.language_map is not None:
+									object[i] += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 								elif predicate_object_map.object_map.term is not None:
 									if "IRI" in predicate_object_map.object_map.term:
 										if " " not in object:
@@ -1043,6 +1067,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									object += "@en"
 								elif len(predicate_object_map.object_map.language) == 2:
 									object += "@"+predicate_object_map.object_map.language
+							elif predicate_object_map.object_map.language_map is not None:
+								object += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
 									if " " not in object:
@@ -1484,6 +1510,15 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
 							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						elif predicate_object_map.object_map.language is not None:
+							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+								object += "@es"
+							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+								object += "@en"
+							elif len(predicate_object_map.object_map.language) == 2:
+								object += "@"+predicate_object_map.object_map.language
+						elif predicate_object_map.object_map.language_map is not None:
+							object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -1868,6 +1903,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
 							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						elif predicate_object_map.object_map.language is not None:
+							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+								object += "@es"
+							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+								object += "@en"
+							elif len(predicate_object_map.object_map.language) == 2:
+								object += "@"+predicate_object_map.object_map.language
+						elif predicate_object_map.object_map.language_map is not None:
+							object += "@" + string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -1891,6 +1935,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 									object_list[i] += "@en"
 								elif len(predicate_object_map.object_map.language) == 2:
 									object_list[i] += "@"+predicate_object_map.object_map.language
+							elif predicate_object_map.object_map.language_map is not None:
+								object_list[i] += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
 									if " " not in object_list[i]:
@@ -1920,6 +1966,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								object += "@en"
 							elif len(predicate_object_map.object_map.language) == 2:
 								object += "@"+predicate_object_map.object_map.language
+						elif predicate_object_map.object_map.language_map is not None:
+							object += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 						elif predicate_object_map.object_map.term is not None:
 							if "IRI" in predicate_object_map.object_map.term:
 								if " " not in object:
@@ -2525,6 +2573,15 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row, "object",ignore, triples_map.iterator) + "\""
 						if predicate_object_map.object_map.datatype is not None:
 							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						elif predicate_object_map.object_map.language is not None:
+							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+								object += "@es"
+							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+								object += "@en"
+							elif len(predicate_object_map.object_map.language) == 2:
+								object += "@"+predicate_object_map.object_map.language
+						elif predicate_object_map.object_map.language_map is not None:
+							object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]  
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -2543,6 +2600,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							object += "@en"
 						elif len(predicate_object_map.object_map.language) == 2:
 							object += "@"+predicate_object_map.object_map.language
+					elif predicate_object_map.object_map.language_map is not None:
+						object += "@"+ string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
 					elif predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
@@ -3139,6 +3198,15 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					object = "\"" + string_substitution_array(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+					elif predicate_object_map.object_map.language is not None:
+						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+							object += "@es"
+						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+							object += "@en"
+						elif len(predicate_object_map.object_map.language) == 2:
+							object += "@"+predicate_object_map.object_map.language
+					elif predicate_object_map.object_map.language_map is not None:
+						object += "@" + string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3157,6 +3225,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						object += "@en"
 					elif len(predicate_object_map.object_map.language) == 2:
 						object += "@"+predicate_object_map.object_map.language
+				elif predicate_object_map.object_map.language_map is not None:
+					object += "@"+ string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
@@ -3833,6 +3903,15 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					object = "\"" + string_substitution_postgres(predicate_object_map.object_map.value, "{(.+?)}", row, row_headers, "object",ignore) + "\""
 					if predicate_object_map.object_map.datatype is not None:
 						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+					elif predicate_object_map.object_map.language is not None:
+						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+							object += "@es"
+						elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+							object += "@en"
+						elif len(predicate_object_map.object_map.language) == 2:
+							object += "@"+predicate_object_map.object_map.language
+					elif predicate_object_map.object_map.language_map is not None:
+						object += "@" + string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3851,6 +3930,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						object += "@en"
 					elif len(predicate_object_map.object_map.language) == 2:
 						object += "@"+predicate_object_map.object_map.language
+				elif predicate_object_map.object_map.language_map is not None:
+					object += "@"+ string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
