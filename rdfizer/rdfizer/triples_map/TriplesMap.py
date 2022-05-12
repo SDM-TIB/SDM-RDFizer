@@ -134,7 +134,7 @@ class PredicateMap:
 
 class ObjectMap:
 
-	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language):
+	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language, language_map):
 
 		"""
 		Constructor of ObjectMap object
@@ -155,3 +155,4 @@ class ObjectMap:
 		self.parent = object_parent if "None" not in object_parent else None
 		self.term = term if term != "None" else None
 		self.language = language if language != "None" else None
+		self.language_map = language_map if language_map != "None" else None
