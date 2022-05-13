@@ -1007,7 +1007,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									elif len(predicate_object_map.object_map.language) == 2:
 										object[i] += "@"+predicate_object_map.object_map.language
 								elif predicate_object_map.object_map.language_map is not None:
-									object[i] += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
+									lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)
+									if lang is not None:
+										object[i] += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 					else:
 						if predicate_object_map.object_map.term is None:
 							object = "<" + object + ">"
@@ -1025,7 +1027,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								elif len(predicate_object_map.object_map.language) == 2:
 									object += "@"+predicate_object_map.object_map.language
 							elif predicate_object_map.object_map.language_map is not None:
-								object += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
+								lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)
+								if lang is not None:
+									object += "@" + string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 				elif predicate_object_map.object_map.mapping_type == "reference":
 					object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object", triples_map.iterator, parent_map, namespace)
 					if object is not None:
@@ -1045,7 +1049,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 									elif len(predicate_object_map.object_map.language) == 2:
 										object[i] += "@"+predicate_object_map.object_map.language
 								elif predicate_object_map.object_map.language_map is not None:
-									object[i] += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
+									lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)
+									if lang is not None:
+										object[i] += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 								elif predicate_object_map.object_map.term is not None:
 									if "IRI" in predicate_object_map.object_map.term:
 										if " " not in object:
@@ -1068,7 +1074,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor, csv_fil
 								elif len(predicate_object_map.object_map.language) == 2:
 									object += "@"+predicate_object_map.object_map.language
 							elif predicate_object_map.object_map.language_map is not None:
-								object += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
+								lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)
+								if lang is not None:
+									object += "@"+ string_substitution_xml(predicate_object_map.object_map.language_map, ".+", child, "object", triples_map.iterator, parent_map, namespace)[1:-1]
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
 									if " " not in object:
@@ -1518,7 +1526,9 @@ def semantify_file_array(triples_map, triples_map_list, delimiter, output_file_d
 							elif len(predicate_object_map.object_map.language) == 2:
 								object += "@"+predicate_object_map.object_map.language
 						elif predicate_object_map.object_map.language_map is not None:
-							object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
+							lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)
+							if lang is not None:
+								object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -1911,7 +1921,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							elif len(predicate_object_map.object_map.language) == 2:
 								object += "@"+predicate_object_map.object_map.language
 						elif predicate_object_map.object_map.language_map is not None:
-							object += "@" + string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
+							lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)
+							if lang is not None:
+								object += "@" + string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -1936,7 +1948,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								elif len(predicate_object_map.object_map.language) == 2:
 									object_list[i] += "@"+predicate_object_map.object_map.language
 							elif predicate_object_map.object_map.language_map is not None:
-								object_list[i] += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
+									object_list[i] += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 							elif predicate_object_map.object_map.term is not None:
 								if "IRI" in predicate_object_map.object_map.term:
 									if " " not in object_list[i]:
@@ -1967,7 +1979,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							elif len(predicate_object_map.object_map.language) == 2:
 								object += "@"+predicate_object_map.object_map.language
 						elif predicate_object_map.object_map.language_map is not None:
-							object += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
+							lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)
+							if lang is not None:
+								object += "@"+ string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 						elif predicate_object_map.object_map.term is not None:
 							if "IRI" in predicate_object_map.object_map.term:
 								if " " not in object:
@@ -2581,7 +2595,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 							elif len(predicate_object_map.object_map.language) == 2:
 								object += "@"+predicate_object_map.object_map.language
 						elif predicate_object_map.object_map.language_map is not None:
-							object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]  
+							lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)
+							if lang is not None:
+								object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]  
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -2601,7 +2617,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						elif len(predicate_object_map.object_map.language) == 2:
 							object += "@"+predicate_object_map.object_map.language
 					elif predicate_object_map.object_map.language_map is not None:
-						object += "@"+ string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
+						lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)
+						if lang is not None:
+							object += "@"+ string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",ignore, triples_map.iterator)[1:-1]
 					elif predicate_object_map.object_map.term is not None:
 						if "IRI" in predicate_object_map.object_map.term:
 							if " " not in object:
@@ -3206,7 +3224,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						elif len(predicate_object_map.object_map.language) == 2:
 							object += "@"+predicate_object_map.object_map.language
 					elif predicate_object_map.object_map.language_map is not None:
-						object += "@" + string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
+						lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)
+						if lang is not None:
+							object += "@" + string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3226,7 +3246,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					elif len(predicate_object_map.object_map.language) == 2:
 						object += "@"+predicate_object_map.object_map.language
 				elif predicate_object_map.object_map.language_map is not None:
-					object += "@"+ string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
+					lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)
+					if lang is not None:
+						object += "@"+ string_substitution_array(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
@@ -3911,7 +3933,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						elif len(predicate_object_map.object_map.language) == 2:
 							object += "@"+predicate_object_map.object_map.language
 					elif predicate_object_map.object_map.language_map is not None:
-						object += "@" + string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
+						lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)
+						if lang is not None:
+							object += "@" + string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 			except TypeError:
 				object = None
 		elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3931,7 +3955,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					elif len(predicate_object_map.object_map.language) == 2:
 						object += "@"+predicate_object_map.object_map.language
 				elif predicate_object_map.object_map.language_map is not None:
-					object += "@"+ string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
+					lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)
+					if lang is not None:
+						object += "@"+ string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row, row_headers, "object",ignore)[1:-1]
 				elif predicate_object_map.object_map.term is not None:
 					if "IRI" in predicate_object_map.object_map.term:
 						if " " not in object:
