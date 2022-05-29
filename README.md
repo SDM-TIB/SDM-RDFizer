@@ -98,6 +98,7 @@ This work is licensed under Apache 2.0
 
 # Papers
 [1. Conference paper published as a resource at CIKM2020](https://dl.acm.org/doi/abs/10.1145/3340531.3412881)
+
 [2. Journal paper under the review](https://arxiv.org/pdf/2201.09694.pdf)
 
 # Authors
