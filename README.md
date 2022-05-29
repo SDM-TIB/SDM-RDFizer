@@ -93,9 +93,12 @@ See the results of the SDM-RDFizer over the RML test-cases at the [RML Implement
 ## Experimental Evaluations
 See the results of the experimental evaluations of SDM-RDFizer version 3.* at [SDM-RDFizer-Experiments repository](https://github.com/SDM-TIB/SDM-RDFizer-Experiments)
 
-
 ## License
 This work is licensed under Apache 2.0
+
+# Papers
+[1](https://dl.acm.org/doi/abs/10.1145/3340531.3412881)
+[2](https://arxiv.org/pdf/2201.09694.pdf)
 
 # Authors
 The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on Github. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, iglesias@l3s.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of Samaneh Jozashoori (samaneh.jozashoori@tib.eu), David Chaves-Fraga (dchaves@fi.upm.es), and Kemele Endris (kemele.endris@tib.eu)
