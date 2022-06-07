@@ -779,7 +779,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if row == None:
 				return None
 			if match in row.keys():
-				if row[match] != None and row[match] != "nan":
+				if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None":
 					if (type(row[match]).__name__) != "str" and row[match] != None:
 						if (type(row[match]).__name__) == "float":
 							row[match] = repr(row[match])
@@ -842,7 +842,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					print("The index needs to be indicated.\n")
 					return None
 				else:
-					if row[match] != None and row[match] != "nan":
+					if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None":
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
 							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
