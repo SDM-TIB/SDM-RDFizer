@@ -595,7 +595,7 @@ def mapping_parser(mapping_file):
 	mapping_graph = rdflib.Graph()
 
 	try:
-		mapping_graph.load(mapping_file, format='n3')
+		mapping_graph.parse(mapping_file, format='n3')
 	except Exception as n3_mapping_parse_exception:
 		print(n3_mapping_parse_exception)
 		print('Could not parse {} as a mapping file'.format(mapping_file))
