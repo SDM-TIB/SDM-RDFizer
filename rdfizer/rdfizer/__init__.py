@@ -158,7 +158,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 						if value not in hash_table[row[child_object.parent[0]]]:
 							hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
-						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) != None:
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 							if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" not in hash_table[row[child_object.parent[0]]]:
 								hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}) 
 				else:
@@ -170,7 +170,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 							value = value[1:-1] 
 						hash_table[row[child_object.parent[0]]].update({value : "object"})
 					else:
-						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) != None:
+						if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 							hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"})
 
 			else:
@@ -183,7 +183,7 @@ def hash_update(parent_data, parent_subject, child_object,join_id):
 							value = value[1:-1] 
 					hash_table.update({row[child_object.parent[0]] : {value : "object"}}) 
 				else:
-					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) != None:	
+					if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) is not None:
 						hash_table.update({row[child_object.parent[0]] : {"<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore, parent_subject.iterator) + ">" : "object"}})
 	join_table[join_id].update(hash_table)
 
@@ -2710,6 +2710,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												if str(triples_map_element.file_format).lower() == "csv":
 													reader = pd.read_csv(str(triples_map_element.data_source), dtype = str)#, encoding = "ISO-8859-1")
+													reader = reader.where(pd.notnull(reader), None)
 													reader = reader.drop_duplicates(keep ='first')
 													data = reader.to_dict(orient='records')
 													hash_maker(data, triples_map_element, predicate_object_map.object_map)
@@ -2752,6 +2753,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 														if str(triples_map_element.file_format).lower() == "csv":
 															reader = pd.read_csv(str(triples_map_element.data_source), dtype = str)#, encoding = "ISO-8859-1")
+															reader = reader.where(pd.notnull(reader), None)
 															reader = reader.drop_duplicates(keep ='first')
 															data = reader.to_dict(orient='records')
 															hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
