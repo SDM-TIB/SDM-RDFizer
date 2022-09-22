@@ -4530,7 +4530,7 @@ def translate_postgressql(triples_map):
 
 
 def semantify(config_path):
-
+	start_time = time.time()
 	if os.path.isfile(config_path) == False:
 		print("The configuration file " + config_path + " does not exist.")
 		print("Aborting...")
