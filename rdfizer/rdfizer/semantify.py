@@ -4696,7 +4696,7 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 										predicate_list = release_PTT(triples_map,predicate_list)
 									elif config["datasets"]["dbType"] == "postgres":	
-										database, query_list = translate_sql(triples_map)
+										database, query_list = translate_postgressql(triples_map)
 										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 										cursor = db.cursor()
 										if triples_map.query == "None":	
@@ -4851,7 +4851,7 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, wr, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 										predicate_list = release_PTT(triples_map,predicate_list)
 									elif config["datasets"]["dbType"] == "postgres":	
-										database, query_list = translate_sql(triples_map)
+										database, query_list = translate_postgressql(triples_map)
 										db = psycopg2.connect(host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
 										cursor = db.cursor()
 										if triples_map.query == "None":	
