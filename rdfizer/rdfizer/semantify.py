@@ -39,6 +39,8 @@ global triples
 triples = []
 global duplicate
 duplicate = ""
+global output_format
+output_format = ""
 global start_time
 start_time = time.time()
 global user, password, port, host
@@ -47,6 +49,8 @@ global join_table
 join_table = {}
 global po_table
 po_table = {}
+global prefixes
+prefixes = {}
 global enrichment
 enrichment = ""
 global ignore
@@ -62,6 +66,46 @@ general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
 						"http://www.w3.org/2002/07/owl#sameAs":"",
 						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
 						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
+
+def prefix_extraction(original):
+	string_prefixes = ""
+	f = open(original,"r")
+	original_mapping = f.readlines()
+	for prefix in original_mapping:
+		if ("prefix" in prefix) or ("base" in prefix):
+			elements = prefix.split(" ")
+			if "base" not in elements[0]:
+				if ">" in elements[2][:-1]:
+					prefixes[elements[2][1:-1].split(">")[0]] = elements[1][:-1]
+				else:
+					prefixes[elements[2][1:-1]] = elements[1][:-1]
+			string_prefixes += prefix 
+		else:
+			break
+	string_prefixes += "\n"
+	f.close()
+	return string_prefixes
+
+def determine_prefix(uri):
+	url = ""
+	value = ""
+	if "#" in uri:
+		url, value = uri.split("#")[0]+"#", uri.split("#")[1]
+	else:
+		value = uri.split("/")[len(uri.split("/"))-1]
+		char = ""
+		temp = ""
+		temp_string = uri
+		while char != "/":
+			temp = temp_string
+			temp_string = temp_string[:-1]
+			char = temp[len(temp)-1]
+		url = temp
+		if  "<" in url:
+			url = url[1:]
+		if ">" in value:
+			value = value[:-1]
+	return prefixes[url] + ":" + value
 
 def release_PTT(triples_map,predicate_list):
 	for po in triples_map.predicate_object_maps_list:
@@ -2431,6 +2475,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	print("TM:", triples_map.triples_map_name)
 
 	object_list = []
+	duplicate_type = False
 	
 	i = 0
 	no_update = True
@@ -2581,27 +2626,43 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								dictionary_table_update("<" + graph + ">")
 					if duplicate == "yes":
 						if dic_table[predicate + "_" + obj] not in g_triples:
-							output_file_descriptor.write(rdf_type)
+							if output_format.lower() == "n-triples":
+								output_file_descriptor.write(rdf_type)
+							else:
+								output_file_descriptor.write(subject + " a " + determine_prefix(obj))
 							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							g_triples.update({dic_table[predicate  + "_" + obj ] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + obj]]:
-							output_file_descriptor.write(rdf_type)
+							if output_format.lower() == "n-triples":
+								output_file_descriptor.write(rdf_type)
+							else:
+								output_file_descriptor.write(subject + " a " + determine_prefix(obj))
 							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							g_triples[dic_table[predicate + "_" + obj]].update({dic_table[subject] + "_" + dic_table[obj] : ""})
 							i += 1
+						else:
+							duplicate_type = True
 					else:
-						output_file_descriptor.write(rdf_type)
+						if output_format.lower() == "n-triples":
+							output_file_descriptor.write(rdf_type)
+						else:
+							output_file_descriptor.write(subject + " a " + determine_prefix(obj))
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
 
+		if output_format.lower() == "turtle" and len(triples_map.predicate_object_maps_list) == 0:
+			output_file_descriptor.write(".\n")
 		
 		for predicate_object_map in triples_map.predicate_object_maps_list:
 			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-				predicate = "<" + predicate_object_map.predicate_map.value + ">"
+				if output_format.lower() == "n-triples":
+					predicate = "<" + predicate_object_map.predicate_map.value + ">"
+				else:
+					predicate = determine_prefix(predicate_object_map.predicate_map.value)
 			elif predicate_object_map.predicate_map.mapping_type == "template":
 				if predicate_object_map.predicate_map.condition != "":
 						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
@@ -2636,7 +2697,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				else:
 					object = "\"" + predicate_object_map.object_map.value + "\""
 				if predicate_object_map.object_map.datatype != None:
-					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+					if output_format.lower() == "n-triples":
+						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+					else:
+						object = "\"" + object[1:-1] + "\"" + "^^{}".format(determine_prefix(predicate_object_map.object_map.datatype))
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
 					if predicate_object_map.object_map.term is None:
@@ -2680,7 +2744,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if "\n" in object:
 						object = object.replace("\n","\\n")
 					if predicate_object_map.object_map.datatype != None:
-						object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						if output_format.lower() == "n-triples":
+							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+						else:
+							object = "\"" + object[1:-1] + "\"" + "^^{}".format(determine_prefix(predicate_object_map.object_map.datatype))
 					elif predicate_object_map.object_map.language != None:
 						if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
 							object += "@es"
@@ -2853,6 +2920,18 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
 			else:
 				dictionary_table_update(predicate)
+
+			if output_format.lower() == "turtle" and triples_map.predicate_object_maps_list[0] == predicate_object_map and not duplicate_type:
+				if len(triples_map.predicate_object_maps_list) > 1:
+					output_file_descriptor.write(";\n")
+				elif len(triples_map.predicate_object_maps_list) == 1:
+					if object == None:
+						output_file_descriptor.write(".\n")
+					else:
+						output_file_descriptor.write(";\n")
+				elif len(triples_map.predicate_object_maps_list) == 0:
+					output_file_descriptor.write(".\n")						
+
 			if predicate != None and object != None and subject != None:
 				dictionary_table_update(subject)
 				dictionary_table_update(object)
@@ -2869,32 +2948,48 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					if duplicate == "yes":
 						if predicate in general_predicates:
 							if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:					
-								output_file_descriptor.write(triple)
+								if output_format.lower() == "n-triples":
+									output_file_descriptor.write(triple)
+								else:
+									turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-								output_file_descriptor.write(triple)
+								if output_format.lower() == "n-triples":
+									output_file_descriptor.write(triple)
+								else:
+									turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 						else:
 							if dic_table[predicate] not in g_triples:					
-								output_file_descriptor.write(triple)
+								if output_format.lower() == "n-triples":
+									output_file_descriptor.write(triple)
+								else:
+									turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
+
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
-								output_file_descriptor.write(triple)
+								if output_format.lower() == "n-triples":
+									output_file_descriptor.write(triple)
+								else:
+									turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1 
 					else:
-						output_file_descriptor.write(triple)
+						if output_format.lower() == "n-triples":
+							output_file_descriptor.write(triple)
+						else:
+							turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 						if (number_triple + i + 1) % 10000 == 0:
 							csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 						i += 1
@@ -2911,32 +3006,47 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if duplicate == "yes":
 							if predicate in general_predicates:
 								if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:					
-									output_file_descriptor.write(triple)
+									if output_format.lower() == "n-triples":
+										output_file_descriptor.write(triple)
+									else:
+										turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[object] not in g_triples[predicate + "_" + predicate_object_map.object_map.value]:
-									output_file_descriptor.write(triple)
+									if output_format.lower() == "n-triples":
+										output_file_descriptor.write(triple)
+									else:
+										turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 									i += 1
 							else:
 								if dic_table[predicate] not in g_triples:					
-									output_file_descriptor.write(triple)
+									if output_format.lower() == "n-triples":
+										output_file_descriptor.write(triple)
+									else:
+										turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
-									output_file_descriptor.write(triple)
+									if output_format.lower() == "n-triples":
+										output_file_descriptor.write(triple)
+									else:
+										turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 									i += 1
 						else:
-							output_file_descriptor.write(triple)
+							if output_format.lower() == "n-triples":
+								output_file_descriptor.write(triple)
+							else:
+								turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 							if (number_triple + i + 1) % 10000 == 0:
 								csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 							i += 1
@@ -2964,33 +3074,48 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								
 								if predicate in general_predicates:
 									if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-										output_file_descriptor.write(triple)
+										if output_format.lower() == "n-triples":
+											output_file_descriptor.write(triple)
+										else:
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										if (number_triple + i + 1) % 10000 == 0:
 											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 										g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 										i += 1
 									elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-										output_file_descriptor.write(triple)
+										if output_format.lower() == "n-triples":
+											output_file_descriptor.write(triple)
+										else:
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										if (number_triple + i + 1) % 10000 == 0:
 											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 										g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 										i += 1
 								else:
 									if dic_table[predicate] not in g_triples:
-										output_file_descriptor.write(triple)
+										if output_format.lower() == "n-triples":
+											output_file_descriptor.write(triple)
+										else:
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										if (number_triple + i + 1) % 10000 == 0:
 											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 										g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 										i += 1
 									elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
-										output_file_descriptor.write(triple)
+										if output_format.lower() == "n-triples":
+											output_file_descriptor.write(triple)
+										else:
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										if (number_triple + i + 1) % 10000 == 0:
 											csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 										g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 										i += 1
 
 							else:
-								output_file_descriptor.write(triple)
+								if output_format.lower() == "n-triples":
+									output_file_descriptor.write(triple)
+								else:
+									turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 								if (number_triple + i + 1) % 10000 == 0:
 									csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 								i += 1
@@ -3013,32 +3138,47 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								if duplicate == "yes":
 									if predicate in general_predicates:
 										if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:					
-											output_file_descriptor.write(triple)
+											if output_format.lower() == "n-triples":
+												output_file_descriptor.write(triple)
+											else:
+												turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 											if (number_triple + i + 1) % 10000 == 0:
 												csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 											g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 											i += 1
 										elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-											output_file_descriptor.write(triple)
+											if output_format.lower() == "n-triples":
+												output_file_descriptor.write(triple)
+											else:
+												turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 											if (number_triple + i + 1) % 10000 == 0:
 												csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 											g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 											i += 1
 									else:
 										if dic_table[predicate] not in g_triples:					
-											output_file_descriptor.write(triple)
+											if output_format.lower() == "n-triples":
+												output_file_descriptor.write(triple)
+											else:
+												turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 											if (number_triple + i + 1) % 10000 == 0:
 												csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 											g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 											i += 1
 										elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
-											output_file_descriptor.write(triple)
+											if output_format.lower() == "n-triples":
+												output_file_descriptor.write(triple)
+											else:
+												turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 											if (number_triple + i + 1) % 10000 == 0:
 												csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 											g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 											i += 1
 								else:
-									output_file_descriptor.write(triple)
+									if output_format.lower() == "n-triples":
+										output_file_descriptor.write(triple)
+									else:
+										turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 									if (number_triple + i + 1) % 10000 == 0:
 										csv_file.writerow([dataset_name, number_triple + i + 1, time.time()-start_time])
 									i += 1
@@ -4542,6 +4682,9 @@ def semantify(config_path):
 	global duplicate
 	duplicate = config["datasets"]["remove_duplicate"]
 
+	global output_format
+	output_format = config["datasets"]["output_format"]
+
 	enrichment = config["datasets"]["enrichment"]
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
@@ -4561,11 +4704,16 @@ def semantify(config_path):
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 					global base
 					base = extract_base(config[dataset_i]["mapping"])
-					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
-
+					if "n-triples" == output_format.lower():
+						output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
+					else:
+						output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".ttl"
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
 					
 					with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
+						if "turtle" == output_format.lower():
+							string_prefixes = prefix_extraction(config[dataset_i]["mapping"])
+							output_file_descriptor.write(string_prefixes)
 						sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"])
 						if sorted_sources:
 							if order_list:

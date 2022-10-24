@@ -6,6 +6,68 @@ import xml.etree.ElementTree as ET
 import urllib
 import math
 
+def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor):
+	if object_list:
+		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
+			if object == object_list[len(object_list) - 1]:
+				if len(object_list) == 1:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+				else:
+					output_file_descriptor.write("			" + object + ".\n\n")
+			elif object == object_list[0] and len(object_list) > 1:
+				if duplicate_type:
+					output_file_descriptor.write(subject + " " + predicate + " " + object+ ",\n")
+				else:
+					output_file_descriptor.write("		" + predicate + " " + object + ",\n")
+			else:
+				output_file_descriptor.write("			" + object + ",\n")
+		elif triples_map.subject_map.rdf_class != None or predicate_object_map != triples_map.predicate_object_maps_list[0]:
+			if object == object_list[len(object_list) - 1]:
+				if len(object_list) == 1:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
+				else:
+					output_file_descriptor.write("			" + object + ";\n\n")
+			elif object == object_list[0] and len(object_list) > 1:
+				if duplicate_type:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ",\n")
+				else:
+					output_file_descriptor.write("		" + predicate + " " + object + ",\n")
+			else:
+				output_file_descriptor.write("			" + object + ",\n")
+
+		elif triples_map.subject_map.rdf_class == None and predicate_object_map == triples_map.predicate_object_maps_list[0]:
+			if object == object_list[len(object_list) - 1]:
+				if len(object_list) == 1:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
+				else:
+					output_file_descriptor.write("			" + object + ";\n\n")
+			elif object == object_list[0]:
+				output_file_descriptor.write(subject + " " + predicate + " " + object + ",\n")
+			else:
+				output_file_descriptor.write("			" + object + ",\n")
+		else:
+			if object == object_list[len(object_list) - 1]:
+				if len(object_list) == 1:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+				else:
+					output_file_descriptor.write("			" + object + ".\n\n")
+			elif object == object_list[0]:
+				output_file_descriptor.write(subject + " " + predicate + " " + object + ",\n")
+			else:
+				output_file_descriptor.write("			" + object + ",\n")
+	else:
+		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
+			if duplicate_type:
+				output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+			else:
+				output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+		elif triples_map.subject_map.rdf_class != None or predicate_object_map != triples_map.predicate_object_maps_list[0]:
+			output_file_descriptor.write("		" + predicate + " " + object + ";\n")
+		elif triples_map.subject_map.rdf_class == None and predicate_object_map == triples_map.predicate_object_maps_list[0]:
+			output_file_descriptor.write(subject + " " + predicate + " " + object + ";")
+		else:
+			output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+
 def extract_base(file):
 	base = ""
 	f = open(file,"r")
