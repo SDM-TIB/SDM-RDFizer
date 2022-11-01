@@ -4185,7 +4185,10 @@ def semantify(config_path):
 	duplicate = config["datasets"]["remove_duplicate"]
 
 	global output_format
-	output_format = config["datasets"]["output_format"]
+	if "output_format" in config["datasets"]:
+		output_format = config["datasets"]["output_format"]
+	else:
+		output_format = "n-triples"
 
 	enrichment = config["datasets"]["enrichment"]
 

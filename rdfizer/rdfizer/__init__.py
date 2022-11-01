@@ -4185,7 +4185,10 @@ def semantify(config_path):
 	duplicate = config["datasets"]["remove_duplicate"]
 
 	global output_format
-	output_format = config["datasets"]["output_format"]
+	if "output_format" in config["datasets"]:
+		output_format = config["datasets"]["output_format"]
+	else:
+		output_format = "n-triples"
 
 	enrichment = config["datasets"]["enrichment"]
 
@@ -4481,17 +4484,17 @@ def semantify(config_path):
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
 												if config[dataset_i]["db"].lower() != "none":
-													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 												else:
-													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
+													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
 											if config[dataset_i]["db"].lower() != "none":
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 											else:
-												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"], config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
+												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
 									predicate_list = release_PTT(triples_map,predicate_list)
 								elif config["datasets"]["dbType"] == "postgres":	
 									database, query_list = translate_postgressql(triples_map)
@@ -4502,12 +4505,12 @@ def semantify(config_path):
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
 											for row in cursor:
-												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+												number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									else:
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["name"],config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
+											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									predicate_list = release_PTT(triples_map,predicate_list)					
 								else:
 									print("Invalid reference formulation or format")
