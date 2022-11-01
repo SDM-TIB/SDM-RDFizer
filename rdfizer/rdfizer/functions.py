@@ -1098,16 +1098,8 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 				print('Aborting...')
 				sys.exit(1)
 				return
-				# To-do:
-				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
-				#if term == "subject":
-				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
-				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-				#else:
-				#	return None
 		elif pattern == ".+":
 			match = reference_match.group(0)
-			match = match.lower()
 			if match in row_headers:
 				if row[row_headers.index(match)] is not None:
 					value = row[row_headers.index(match)]
