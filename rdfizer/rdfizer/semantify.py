@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import json
 import xml.etree.ElementTree as ET
-import psycopg2
+#import psycopg2
 import pandas as pd
 from .functions import *
 
@@ -2115,7 +2115,6 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 		"""
 
 	object_list = []
-	duplicate_type = False
 	triples_string = ""
 	
 	i = 0
@@ -2123,6 +2122,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	global blank_message
 	print("TM:",triples_map.triples_map_name)
 	for row in data:
+		duplicate_type = False
 		if triples_map.subject_map.subject_mapping_type == "template":
 			subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject", ignore, triples_map.iterator)	
 			if triples_map.subject_map.term_type is None:
@@ -2560,14 +2560,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 
 			if output_format.lower() == "turtle" and triples_map.predicate_object_maps_list[0] == predicate_object_map and not duplicate_type:
 				if len(triples_map.predicate_object_maps_list) > 1:
-					triples_string += ";\n"
+					output_file_descriptor.write(";\n")
 				elif len(triples_map.predicate_object_maps_list) == 1:
 					if object == None:
-						triples_string += ".\n"
+						output_file_descriptor.write(".\n")
 					else:
-						triples_string += ";\n"
+						output_file_descriptor.write(";\n")
 				elif len(triples_map.predicate_object_maps_list) == 0:
-					triples_string += ".\n"						
+					output_file_descriptor.write(".\n")					
 
 			if predicate != None and object != None and subject != None:
 				for graph in triples_map.subject_map.graph:
@@ -2691,14 +2691,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if output_format.lower() == "n-triples":
 											output_file_descriptor.write(triple)
 										else:
-											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map)
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 										i += 1
 									elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 										if output_format.lower() == "n-triples":
 											output_file_descriptor.write(triple)
 										else:
-											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map)
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 										i += 1
 								else:
@@ -2706,14 +2706,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										if output_format.lower() == "n-triples":
 											output_file_descriptor.write(triple)
 										else:
-											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map)
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 										i += 1
 									elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
 										if output_format.lower() == "n-triples":
 											output_file_descriptor.write(triple)
 										else:
-											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map)
+											turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 										g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 										i += 1
 
@@ -2721,7 +2721,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								if output_format.lower() == "n-triples":
 									output_file_descriptor.write(triple)
 								else:
-									turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map)
+									turtle_print(subject, predicate, obj, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor)
 								i += 1
 
 						if predicate[1:-1] in predicate_object_map.graph:
