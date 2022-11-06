@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import json
 import xml.etree.ElementTree as ET
-#import psycopg2
+import psycopg2
 import pandas as pd
 from .functions import *
 
