@@ -26,7 +26,7 @@ class TriplesMap:
 		self.triples_map_name = re.compile("((.*?))$").search(str(self.triples_map_id)).group(0)
 		self.data_source = data_source[7:] if data_source[:7] == "file://" else data_source
 		self.reference_formulation = ref_form
-		if self.reference_formulation != "None":
+		if self.reference_formulation != "None" and re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)) != None:
 			self.file_format = re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)).group(0)[1:]
 		else:
 			self.file_format = None

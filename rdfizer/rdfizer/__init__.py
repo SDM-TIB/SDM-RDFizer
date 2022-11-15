@@ -3759,12 +3759,15 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									child_root = child_tree.getroot()
 									hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
 							else:
-								database, query_list = translate_postgressql(triples_map_element)
-								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
-								cursor = db.cursor()
-								for query in query_list:
-									cursor.execute(query)
-									data = cursor
+								db_element = psycopg2.connect( host=host, user=user, password=password, dbname=db )
+								cursor = db_element.cursor()
+								if triples_map_element.query != None:
+									cursor.execute(triples_map_element.query)
+								else:
+									database, query_list = translate_postgressql(triples_map_element)
+									for query in query_list:
+										cursor.execute(query)
+								data = cursor
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 						jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
 						if row[row_headers.index(predicate_object_map.object_map.child[0])] != None:
@@ -3773,16 +3776,19 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					else:
 						if predicate_object_map.object_map.parent != None:
 							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
-								database, query_list = translate_postgressql(triples_map_element)
-								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
-								cursor = db.cursor()
-								for query in query_list:
-									temp_query = query.split("FROM")
-									parent_list = ""
-									for parent in predicate_object_map.object_map.parent:
-										parent_list += ", `" + parent + "`"
-									new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
-									cursor.execute(new_query)
+								db_element = psycopg2.connect( host=host, user=user, password=password, dbname=db )
+								cursor = db_element.cursor()
+								if triples_map_element.tablename != "None":
+									database, query_list = translate_postgressql(triples_map_element)
+									for query in query_list:
+										temp_query = query.split("FROM")
+										parent_list = ""
+										for parent in predicate_object_map.object_map.parent:
+											parent_list += ", `" + parent + "`"
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										cursor.execute(new_query)
+								else:
+									cursor.execute(triples_map_element.query)
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 							jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
 							if row[row_headers.index(predicate_object_map.object_map.child[0])] != None:
@@ -3792,8 +3798,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							try:
 								database, query_list = translate_postgressql(triples_map)
 								database2, query_list_origin = translate_postgressql(triples_map_element)
-								db = psycopg2.connect( host=host, user=user, password=password, dbname=db )
-								cursor = db.cursor()
+								db_element = psycopg2.connect( host=host, user=user, password=password, dbname=db )
+								cursor = db_element.cursor()
 								for query in query_list:
 									for q in query_list_origin:
 										query_1 = q.split("FROM")

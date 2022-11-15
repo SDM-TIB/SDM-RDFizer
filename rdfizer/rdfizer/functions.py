@@ -1109,6 +1109,8 @@ def string_substitution_postgres(string, pattern, row, row_headers, term, ignore
 						value = value.strftime("%Y-%m-%d")
 					elif type(value).__name__ == "datetime":
 						value = value.strftime("%Y-%m-%d T%H:%M:%S")
+					else:
+						value = str(value)
 
 					if re.search("^[\s|\t]*$", value) is None:
 						new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
