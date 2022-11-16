@@ -3761,7 +3761,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							else:
 								db_element = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 								cursor = db_element.cursor()
-								if triples_map_element.query != None:
+								if triples_map_element.query != None and triples_map_element.query != "None":
 									cursor.execute(triples_map_element.query)
 								else:
 									database, query_list = translate_postgressql(triples_map_element)
@@ -3784,7 +3784,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 										temp_query = query.split("FROM")
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
-											parent_list += ", `" + parent + "`"
+											if parent not in temp_query[0]:	
+												parent_list += ", \'" + parent + "\'"
 										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 								else:
@@ -4439,7 +4440,7 @@ def semantify(config_path):
 											data = reader.to_dict(orient='records')
 											for triples_map in sorted_sources[source_type][source]:
 												blank_message = True
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, config[dataset_i]["name"], data).result()
+												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 										else:
@@ -4447,7 +4448,7 @@ def semantify(config_path):
 												data = csv.DictReader(input_file_descriptor, delimiter=',') 
 												for triples_map in sorted_sources[source_type][source]:
 													blank_message = True
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, config[dataset_i]["name"], data).result()
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 													if duplicate == "yes":
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
@@ -4457,15 +4458,15 @@ def semantify(config_path):
 											for triples_map in sorted_sources[source_type][source]:
 												blank_message = True
 												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, config[dataset_i]["name"], data).result()
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
 												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, config[dataset_i]["name"], data, triples_map.iterator).result()
+													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, triples_map.iterator).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "XPath":
 									for source in order_list[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
 											blank_message = True
-											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["name"]).result()
+											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
 											predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
 					
 					if predicate_list:
