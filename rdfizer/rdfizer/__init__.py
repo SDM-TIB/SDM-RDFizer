@@ -506,7 +506,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 def hash_maker_array(parent_data, parent_subject, child_object):
 	hash_table = {}
 	row_headers=[x[0] for x in parent_data.description]
-	for row in parent_data:
+	for row in parent_data:	
 		element =row[row_headers.index(child_object.parent[0])]
 		if type(element) is int:
 			element = str(element)
@@ -3766,7 +3766,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								else:
 									database, query_list = translate_postgressql(triples_map_element)
 									for query in query_list:
-										cursor.execute(query)
+										temp_query = query.split("FROM")
+										parent_list = ""
+										for parent in predicate_object_map.object_map.parent:
+											if parent not in temp_query[0]:	
+												parent_list += ", \"" + parent + "\""
+										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+										cursor.execute(new_query)
 								data = cursor
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 						jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
@@ -3785,7 +3791,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 										parent_list = ""
 										for parent in predicate_object_map.object_map.parent:
 											if parent not in temp_query[0]:	
-												parent_list += ", \'" + parent + "\'"
+												parent_list += ", \"" + parent + "\""
 										new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
 										cursor.execute(new_query)
 								else:
