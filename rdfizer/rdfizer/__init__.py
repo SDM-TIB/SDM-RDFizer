@@ -3100,7 +3100,12 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 										cursor.execute(triples_map_element.query)
 									else:
 										for query in query_list:
-											cursor.execute(query)
+											temp_query = query.split("FROM")
+											parent_list = ""
+											for parent in predicate_object_map.object_map.parent:
+												parent_list += ", `" + parent + "`"
+											new_query = temp_query[0] + parent_list + " FROM " + temp_query[1]
+											cursor.execute(new_query)
 									hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 							jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
 							if row[row_headers.index(predicate_object_map.object_map.child[0])] != None and row[row_headers.index(predicate_object_map.object_map.child[0])] in jt:
