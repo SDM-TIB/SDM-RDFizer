@@ -158,6 +158,9 @@ def join_iterator(data, iterator, parent, child):
 					pass
 				else:
 					row = row[tp]
+			elif tp == "":
+				if len(row.keys()) == 1:
+					row = row[list(row.keys())[0]]
 			if new_iterator != ".":
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
@@ -1476,6 +1479,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						row = row[tp]
 					else:
 						row = []
+			elif "" == tp and isinstance(row,dict):
+				if len(row.keys()) == 1:
+					row = row[list(row.keys())[0]]
 			if new_iterator != ".":
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
