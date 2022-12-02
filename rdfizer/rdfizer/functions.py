@@ -780,7 +780,10 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 						row = row[tp]
 				elif  tp == "":
 					if len(row.keys()) == 1:
-						row = row[list(row.keys())[0]]
+						while list(row.keys())[0] not in temp_keys:
+							row = row[list(row.keys())[0]]
+							if isinstance(row,list):
+								break
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
 		if pattern == "{(.+?)}":

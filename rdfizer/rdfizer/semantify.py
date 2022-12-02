@@ -160,7 +160,20 @@ def join_iterator(data, iterator, parent, child):
 					row = row[tp]
 			elif tp == "":
 				if len(row.keys()) == 1:
-					row = row[list(row.keys())[0]]
+					while list(row.keys())[0] not in temp_keys:
+						if list(row.keys())[0] not in temp_keys:
+							row = row[list(row.keys())[0]]
+							if isinstance(row,list):
+								for sub_row in row:
+									join_iterator(sub_row, iterator, parent, child)
+								executed = False
+								break
+						else:
+							join_iterator(row[list(row.keys())[0]], "", parent, child)
+				else:
+					for key in list(row.keys()):
+						if key in temp_keys:
+							join_iterator(row[key], "", parent, child)
 			if new_iterator != ".":
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
@@ -1481,8 +1494,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						row = []
 			elif "" == tp and isinstance(row,dict):
 				if len(row.keys()) == 1:
-					row = row[list(row.keys())[0]]
-			if new_iterator != ".":
+					while list(row.keys())[0] not in temp_keys:
+						new_iterator += "."
+						row = row[list(row.keys())[0]]
+						if isinstance(row,list):
+							for sub_row in row:
+								i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, sub_row, iterator.replace(new_iterator[:-1],""))
+							executed = False
+							break			
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
 						i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, row[sub_row], iterator.replace(new_iterator[:-1],""))
@@ -1836,7 +1855,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										for query in query_list:
 											cursor.execute(query)
 										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
-								
 								if sublist(predicate_object_map.object_map.child,data.keys()):
 									if child_list_value(predicate_object_map.object_map.child,data) in join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
 										object_list = join_table[triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)][child_list_value(predicate_object_map.object_map.child,data)]
@@ -1856,79 +1874,89 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 													join_iterator(parent_data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 												else:
 													hash_maker(parent_data[list(parent_data.keys())[0]], triples_map_element, predicate_object_map.object_map)
-									if predicate_object_map.object_map.child[0] in data.keys():
-										if data[predicate_object_map.object_map.child[0]] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][data[predicate_object_map.object_map.child[0]]]
+									if "." in predicate_object_map.object_map.child[0]:
+										temp_keys = predicate_object_map.object_map.child[0].split(".")
+										temp_data = data
+										for temp in temp_keys:
+											temp_data = temp_data[temp]
+										if temp_data in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][temp_data]
 										else:
 											object_list = []
 									else:
-										if "." in predicate_object_map.object_map.child[0]:
-											iterators = predicate_object_map.object_map.child[0].split(".")
-											if "[*]" in iterators[0]:
-												data = data[iterators[0].split("[*]")[0]]
-												for row in data:
-													if str(row[iterators[1]]) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-														object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][str(row[iterators[1]])]
-														if predicate != None and subject != None and object_list:
-															for obj in object_list:
-																for graph in triples_map.subject_map.graph:
-																	if predicate_object_map.object_map.term != None:
-																		if "IRI" in predicate_object_map.object_map.term:
-																			triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+										if predicate_object_map.object_map.child[0] in data.keys():
+											if data[predicate_object_map.object_map.child[0]] in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+												object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][data[predicate_object_map.object_map.child[0]]]
+											else:
+												object_list = []
+										else:
+											if "." in predicate_object_map.object_map.child[0]:
+												iterators = predicate_object_map.object_map.child[0].split(".")
+												if "[*]" in iterators[0]:
+													data = data[iterators[0].split("[*]")[0]]
+													for row in data:
+														if str(row[iterators[1]]) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+															object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][str(row[iterators[1]])]
+															if predicate != None and subject != None and object_list:
+																for obj in object_list:
+																	for graph in triples_map.subject_map.graph:
+																		if predicate_object_map.object_map.term != None:
+																			if "IRI" in predicate_object_map.object_map.term:
+																				triple = subject + " " + predicate + " <" + obj[1:-1] + ">.\n"
+																			else:
+																				triple = subject + " " + predicate + " " + obj + ".\n"
 																		else:
 																			triple = subject + " " + predicate + " " + obj + ".\n"
-																	else:
-																		triple = subject + " " + predicate + " " + obj + ".\n"
-																	if graph != None and "defaultGraph" not in graph:
-																		if "{" in graph:
-																			triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore, iterator) + ">.\n"
-																		else:
-																			triple = triple[:-2] + " <" + graph + ">.\n"
-																	if duplicate == "yes":
-																		if (triple not in generated_triples) and (triple not in g_triples):
-																			output_file_descriptor.write(triple)
-																			generated_triples.update({triple : number_triple})
-																			g_triples.update({triple : number_triple})
-																			i += 1
-																	else:
-																		output_file_descriptor.write(triple)
-																		i += 1
-																if predicate[1:-1] in predicate_object_map.graph:
-																	triple = subject + " " + predicate + " " + obj + ".\n"
-																	if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
-																		if "{" in predicate_object_map.graph[predicate[1:-1]]:
-																			triple = triple[:-2] + " <" + string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject",ignore, iterator) + ">.\n"
-																		else:
-																			triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+																		if graph != None and "defaultGraph" not in graph:
+																			if "{" in graph:
+																				triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore, iterator) + ">.\n"
+																			else:
+																				triple = triple[:-2] + " <" + graph + ">.\n"
 																		if duplicate == "yes":
-																			if predicate not in g_triples:					
+																			if (triple not in generated_triples) and (triple not in g_triples):
 																				output_file_descriptor.write(triple)
 																				generated_triples.update({triple : number_triple})
-																				g_triples.update({predicate : {subject + "_" + object: triple}})
-																				i += 1
-																			elif subject + "_" + object not in g_triples[predicate]:
-																				output_file_descriptor.write(triple)
-																				generated_triples.update({triple : number_triple})
-																				g_triples[predicate].update({subject + "_" + object: triple})
-																				i += 1
-																			elif triple not in g_triples[predicate][subject + "_" + obj]: 
-																				output_file_descriptor.write(triple)
+																				g_triples.update({triple : number_triple})
 																				i += 1
 																		else:
 																			output_file_descriptor.write(triple)
 																			i += 1
-													object_list = []
-											elif "[" in iterators[0] and "]" in iterators[0]:
-												data = data[iterators[0].split("[")[0]]
-												index = int(iterators[0].split("[")[1].split("]")[0])
-												if index < len(data):
-													if str(data[index][iterators[1]]) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-														object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][str(data[int(index)][iterators[1]])]
-													else:
+																	if predicate[1:-1] in predicate_object_map.graph:
+																		triple = subject + " " + predicate + " " + obj + ".\n"
+																		if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+																			if "{" in predicate_object_map.graph[predicate[1:-1]]:
+																				triple = triple[:-2] + " <" + string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject",ignore, iterator) + ">.\n"
+																			else:
+																				triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
+																			if duplicate == "yes":
+																				if predicate not in g_triples:					
+																					output_file_descriptor.write(triple)
+																					generated_triples.update({triple : number_triple})
+																					g_triples.update({predicate : {subject + "_" + object: triple}})
+																					i += 1
+																				elif subject + "_" + object not in g_triples[predicate]:
+																					output_file_descriptor.write(triple)
+																					generated_triples.update({triple : number_triple})
+																					g_triples[predicate].update({subject + "_" + object: triple})
+																					i += 1
+																				elif triple not in g_triples[predicate][subject + "_" + obj]: 
+																					output_file_descriptor.write(triple)
+																					i += 1
+																			else:
+																				output_file_descriptor.write(triple)
+																				i += 1
 														object_list = []
-												else:
-													print("Requesting an element outside list range.")
-													object_list = []	
+												elif "[" in iterators[0] and "]" in iterators[0]:
+													data = data[iterators[0].split("[")[0]]
+													index = int(iterators[0].split("[")[1].split("]")[0])
+													if index < len(data):
+														if str(data[index][iterators[1]]) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+															object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][str(data[int(index)][iterators[1]])]
+														else:
+															object_list = []
+													else:
+														print("Requesting an element outside list range.")
+														object_list = []	
 
 									object = None
 								else:
