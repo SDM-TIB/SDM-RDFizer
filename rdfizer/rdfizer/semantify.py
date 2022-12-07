@@ -183,9 +183,24 @@ def join_iterator(data, iterator, parent, child):
 						else:
 							join_iterator(row[list(row.keys())[0]], "", parent, child)
 				else:
-					for key in list(row.keys()):
+					path = jsonpath_find(temp_keys[len(temp_keys)-1],row,"",[])
+					for key in path[0].split("."):
 						if key in temp_keys:
 							join_iterator(row[key], "", parent, child)
+						elif key in row:
+							row = row[key]
+							if isinstance(row,list):
+								for sub_row in row:
+									join_iterator(sub_row, iterator, parent, child)
+								executed = False
+								break
+							elif isinstance(row,dict):
+								join_iterator(row, iterator, parent, child)
+								executed = False
+								break
+							elif isinstance(row,str):
+								row = []
+								break 
 			if new_iterator != ".":
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
@@ -1979,6 +1994,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 									object = None
 								else:
+									print("hola")
 									if triples_map_element.iterator != triples_map.iterator:
 										parent_iterator = triples_map_element.iterator
 										child_keys = triples_map.iterator.split(".")

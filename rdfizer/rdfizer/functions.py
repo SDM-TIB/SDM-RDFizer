@@ -6,6 +6,30 @@ import xml.etree.ElementTree as ET
 import urllib
 import math
 
+def jsonpath_find(element, JSON, path, all_paths):
+	result_path = []
+	if all_paths != []:
+		return all_paths 
+	if element in JSON:
+		path = path + element
+		all_paths.append(path)
+		jsonpath_find(element, {}, path, all_paths)
+	for key in JSON:
+		if isinstance(JSON[key], dict):
+			newpath = jsonpath_find(element, JSON[key],path + key + '.',all_paths)
+			if len(newpath) > 0:
+				if newpath[0] not in result_path:
+					result_path.append(newpath[0])
+		elif isinstance(JSON[key], list):
+			for row in JSON[key]:
+				newpath = jsonpath_find(element,row,path + key + '.',all_paths)
+				if len(newpath) > 0:
+					if newpath[0] not in result_path:
+						result_path.append(newpath[0])
+	return result_path
+
+
+
 def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor):
 	if object_list:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
@@ -487,10 +511,13 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						value = row[match]
 					else:
 						temp = match.split(".")
-						value = row[temp[0]]
-						for element in temp:
-							if element in value:
-								value = value[element]
+						if temp[0] in row:
+							value = row[temp[0]]
+							for element in temp:
+								if element in value:
+									value = value[element]
+						else:
+							return None
 				else:
 					if match in row:
 						value = row[match]
