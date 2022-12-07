@@ -994,7 +994,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 				temp = match.split("{")
 				match = temp[len(temp)-1]
 			if match in row_headers:
-				if row[row_headers.index(match)] != None:# or row[row_headers.index(match)] != "None":
+				if row[row_headers.index(match)] != None:
 					value = row[row_headers.index(match)]
 					if (type(value).__name__) != "str":
 						if (type(value).__name__) != "float":
@@ -1008,6 +1008,8 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 						value = value.replace("b\'","")
 						value = value.replace("\'","")
 					if re.search("^[\s|\t]*$", value) is None:
+						if value == "-":
+							value = "UnKnown"
 						if "http" not in value:
 							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
@@ -1020,7 +1022,6 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 							while i < count:
 								new_string = "{" + new_string
 								i += 1
-							#new_string = new_string.replace(" ", "")
 
 					else:
 						return None
@@ -1033,13 +1034,6 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 				print('Aborting...')
 				sys.exit(1)
 				return
-				# To-do:
-				# Generate blank node when subject in csv is not a valid string (empty string, just spaces, just tabs or a combination of the last two)
-				#if term == "subject":
-				#	new_string = new_string[:start + offset_current_substitution] + str(uuid.uuid4()) + new_string[end + offset_current_substitution:]
-				#	offset_current_substitution = offset_current_substitution + len(row[match]) - (end - start)
-				#else:
-				#	return None
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if match in row_headers:
