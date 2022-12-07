@@ -151,13 +151,22 @@ def join_iterator(data, iterator, parent, child):
 			new_iterator += tp + "."
 			if "$" != tp and "" != tp:
 				if "[*][*]" in tp:
-					row = row[tp.split("[*][*]")[0]]
+					if tp.split("[*][*]")[0] in row:
+						row = row[tp.split("[*][*]")[0]]
+					else:
+						row = []
 				elif "[*]" in tp:
-					row = row[tp.split("[*]")[0]]
+					if tp.split("[*]")[0] in row:
+						row = row[tp.split("[*]")[0]]
+					else:
+						row = []
 				elif "*" == tp:
 					pass
 				else:
-					row = row[tp]
+					if tp in row:
+						row = row[tp]
+					else:
+						row = []
 			elif tp == "":
 				if len(row.keys()) == 1:
 					while list(row.keys())[0] not in temp_keys:
@@ -167,6 +176,9 @@ def join_iterator(data, iterator, parent, child):
 								for sub_row in row:
 									join_iterator(sub_row, iterator, parent, child)
 								executed = False
+								break
+							elif isinstance(row,str):
+								row = []
 								break
 						else:
 							join_iterator(row[list(row.keys())[0]], "", parent, child)
@@ -1501,6 +1513,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							for sub_row in row:
 								i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, sub_row, iterator.replace(new_iterator[:-1],""))
 							executed = False
+							break
+						if isinstance(row,str):
+							row = []
 							break			
 				if "*" == new_iterator[-2]:
 					for sub_row in row:
@@ -1878,8 +1893,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										temp_keys = predicate_object_map.object_map.child[0].split(".")
 										temp_data = data
 										for temp in temp_keys:
-											temp_data = temp_data[temp]
-										if temp_data in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+											if temp in temp_data:
+												temp_data = temp_data[temp]
+											else:
+												temp_data = ""
+												break
+										if temp_data in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]] and temp_data != "":
 											object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][temp_data]
 										else:
 											object_list = []
