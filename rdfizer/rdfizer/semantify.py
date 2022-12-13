@@ -3149,7 +3149,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 		elif predicate_object_map.object_map.mapping_type == "parent triples map":
 			for triples_map_element in triples_map_list:
 				if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename):
+					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename) or (triples_map_element.query != triples_map.query):
 						if len(predicate_object_map.object_map.child) == 1:
 							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
@@ -3288,29 +3288,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							object = None
 						else: 
 							try:
-								database, query_list = translate_sql(triples_map)
-								database2, query_list_origin = translate_sql(triples_map_element)
-								db = connector.connect(host = host, port = int(port), user = user, password = password)
-								cursor = db.cursor(buffered=True)
-								if dbase.lower() != "none":
-									cursor.execute("use " + dbase)
-								else:
-									if database != "None":
-										cursor.execute("use " + database)
-								if triples_map_element.query != "None":
-									cursor.execute(triples_map_element.query)
-								else:
-									for query in query_list:
-										for q in query_list_origin:
-											query_1 = q.split("FROM")
-											query_2 = query.split("SELECT")[1].split("FROM")[0]
-											query_new = query_1[0] + " , " + query_2.replace("DISTINCT","") + " FROM " + query_1[1]
-											cursor.execute(query_new)
-											r_h=[x[0] for x in cursor.description]
-											for r in cursor:
-												s = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", r, r_h, "subject",ignore)
-												if subject_value == s:
-													object = "<" + string_substitution_array(triples_map_element.subject_map.value, "{(.+?)}", r, r_h, "object",ignore) + ">"
+								object = "<" + string_substitution_array(triples_map_element.subject_map.value, "{(.+?)}", row, row_headers, "object",ignore) + ">"
 							except TypeError:
 								object = None
 					break
