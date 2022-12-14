@@ -33,44 +33,52 @@ def jsonpath_find(element, JSON, path, all_paths):
 def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor):
 	if object_list:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
-			if object == object_list[len(object_list) - 1]:
-				if len(object_list) == 1:
+			if object == list(object_list.keys())[0] and len(object_list) == 1:
+				if duplicate_type:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
 				else:
-					output_file_descriptor.write("			" + object + ".\n\n")
-			elif object == object_list[0] and len(object_list) > 1:
+					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+			elif object == list(object_list.keys())[0] and len(object_list) > 1:
 				if duplicate_type:
 					output_file_descriptor.write(subject + " " + predicate + " " + object+ ",\n")
 				else:
 					output_file_descriptor.write("		" + predicate + " " + object + ",\n")
+			elif object == list(object_list.keys())[len(object_list) - 1]:
+				if len(object_list) == 1:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+				else:
+					output_file_descriptor.write("			" + object + ".\n\n")
 			else:
 				output_file_descriptor.write("			" + object + ",\n")
-		elif triples_map.subject_map.rdf_class != None or predicate_object_map != triples_map.predicate_object_maps_list[0]:
-			if object == object_list[len(object_list) - 1]:
+		elif predicate_object_map != triples_map.predicate_object_maps_list[0]:
+			if object == list(object_list.keys())[len(object_list) - 1]:
 				if len(object_list) == 1:
-					output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
+					output_file_descriptor.write("		" + predicate + " " + object + ";\n")
 				else:
 					output_file_descriptor.write("			" + object + ";\n\n")
-			elif object == object_list[0] and len(object_list) > 1:
+			elif object == list(object_list.keys())[0] and len(object_list) > 1:
+				output_file_descriptor.write("		" + predicate + " " + object + ",\n")
+			else:
+				output_file_descriptor.write("			" + object + ",\n")
+
+		elif predicate_object_map == triples_map.predicate_object_maps_list[0]:
+			if object == list(object_list.keys())[len(object_list) - 1]:
+				if len(object_list) == 1:
+					if duplicate_type:
+						output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object + ";\n")
+				else:
+					output_file_descriptor.write("			" + object + ";\n")
+			elif object == list(object_list.keys())[0]:
 				if duplicate_type:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ",\n")
 				else:
 					output_file_descriptor.write("		" + predicate + " " + object + ",\n")
 			else:
 				output_file_descriptor.write("			" + object + ",\n")
-
-		elif triples_map.subject_map.rdf_class == None and predicate_object_map == triples_map.predicate_object_maps_list[0]:
-			if object == object_list[len(object_list) - 1]:
-				if len(object_list) == 1:
-					output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
-				else:
-					output_file_descriptor.write("			" + object + ";\n\n")
-			elif object == object_list[0]:
-				output_file_descriptor.write(subject + " " + predicate + " " + object + ",\n")
-			else:
-				output_file_descriptor.write("			" + object + ",\n")
 		else:
-			if object == object_list[len(object_list) - 1]:
+			if object == list(object_list.keys())[len(object_list) - 1]:
 				if len(object_list) == 1:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
 				else:
@@ -81,16 +89,22 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 				output_file_descriptor.write("			" + object + ",\n")
 	else:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
-			if duplicate_type:
-				output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
-			else:
+			if len(triples_map.predicate_object_maps_list) > 1:
 				output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
-		elif triples_map.subject_map.rdf_class != None or predicate_object_map != triples_map.predicate_object_maps_list[0]:
+			else:
+				if duplicate_type:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+				else:
+					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+		elif predicate_object_map != triples_map.predicate_object_maps_list[0]:
 			output_file_descriptor.write("		" + predicate + " " + object + ";\n")
-		elif triples_map.subject_map.rdf_class == None and predicate_object_map == triples_map.predicate_object_maps_list[0]:
-			output_file_descriptor.write(subject + " " + predicate + " " + object + ";")
+		elif predicate_object_map == triples_map.predicate_object_maps_list[0]:
+			if duplicate_type:
+				output_file_descriptor.write(subject + " " + predicate + " " + object + ";\n")
+			else:
+				output_file_descriptor.write("		" + predicate + " " + object + ";\n")
 		else:
-			output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+			output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
 
 def extract_base(file):
 	base = ""

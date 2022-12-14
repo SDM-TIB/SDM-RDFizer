@@ -2330,7 +2330,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 		if triples_map.subject_map.rdf_class != None and subject != None:
 			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 			for rdf_class in triples_map.subject_map.rdf_class:
-				if rdf_class != None:
+				if rdf_class != None and  "str" == type(rdf_class).__name__:
 					obj = "<{}>".format(rdf_class)
 					rdf_type = subject + " " + predicate + " " + obj + ".\n"
 					for graph in triples_map.subject_map.graph:
@@ -2635,7 +2635,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					dictionary_table_update(predicate + "_" + predicate_object_map.object_map.value)
 				else:
 					dictionary_table_update(predicate)
-
+			
 			if output_format.lower() == "turtle" and triples_map.predicate_object_maps_list[0] == predicate_object_map and not duplicate_type:
 				if len(triples_map.predicate_object_maps_list) > 1:
 					output_file_descriptor.write(";\n")
@@ -4260,7 +4260,6 @@ def semantify(config_path):
 		output_format = config["datasets"]["output_format"]
 	else:
 		output_format = "n-triples"
-
 	enrichment = config["datasets"]["enrichment"]
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
@@ -4441,7 +4440,10 @@ def semantify(config_path):
 									sys.exit(1)
 				print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 	else:
-		output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
+		if "turtle" == output_format.lower():
+			output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".ttl"
+		else:
+			output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
 
 		with ThreadPoolExecutor(max_workers=10) as executor:
 			with open(output_file, "w", encoding="utf-8") as output_file_descriptor:
@@ -4450,7 +4452,8 @@ def semantify(config_path):
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 					base = extract_base(config[dataset_i]["mapping"])
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
-
+					string_prefixes = prefix_extraction(config[dataset_i]["mapping"])
+					output_file_descriptor.write(string_prefixes)
 					print("Semantifying {}...".format(config[dataset_i]["name"]))
 				
 					sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"])
