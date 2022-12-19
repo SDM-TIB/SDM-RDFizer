@@ -30,7 +30,7 @@ def jsonpath_find(element, JSON, path, all_paths):
 
 
 
-def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor):
+def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor, generated):
 	if object_list:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
 			if object == list(object_list.keys())[0] and len(object_list) == 1:
@@ -110,8 +110,12 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 	else:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
 			if len(triples_map.predicate_object_maps_list) > 1:
-				output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
-				return "."
+				if generated == 0:
+					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+					return "."
+				else:
+					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+					return "."
 			else:
 				if duplicate_type:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
@@ -120,8 +124,12 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
 					return "."
 		elif predicate_object_map != triples_map.predicate_object_maps_list[0]:
-			output_file_descriptor.write("		" + predicate + " " + object)
-			return ";"
+			if duplicate_type:
+				output_file_descriptor.write(subject + " " + predicate + " " + object)
+				return ";"
+			else:
+				output_file_descriptor.write("		" + predicate + " " + object)
+				return ";"
 		elif predicate_object_map == triples_map.predicate_object_maps_list[0]:
 			if duplicate_type:
 				output_file_descriptor.write(subject + " " + predicate + " " + object)
