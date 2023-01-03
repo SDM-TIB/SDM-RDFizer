@@ -96,10 +96,10 @@ def determine_prefix(uri):
 			temp_string = temp_string[:-1]
 			char = temp[len(temp)-1]
 		url = temp
-		if  "<" in url:
-			url = url[1:]
-		if ">" in value:
-			value = value[:-1]
+	if  "<" in url:
+		url = url[1:]
+	if ">" in value:
+		value = value[:-1]
 	return prefixes[url] + ":" + value
 
 def release_PTT(triples_map,predicate_list):
