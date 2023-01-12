@@ -125,8 +125,12 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 					return "."
 		elif predicate_object_map != triples_map.predicate_object_maps_list[0]:
 			if duplicate_type:
-				output_file_descriptor.write(subject + " " + predicate + " " + object)
-				return ";"
+				if generated == 0:
+					output_file_descriptor.write(subject + " " + predicate + " " + object)
+					return ";"
+				else:
+					output_file_descriptor.write("		" + predicate + " " + object)
+					return ";"
 			else:
 				output_file_descriptor.write("		" + predicate + " " + object)
 				return ";"
