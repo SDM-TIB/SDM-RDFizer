@@ -4565,7 +4565,7 @@ def semantify(config_path):
 													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "XPath":
-									for source in order_list[source_type]:
+									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
 											blank_message = True
 											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
