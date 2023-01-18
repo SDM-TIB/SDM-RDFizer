@@ -35,7 +35,7 @@ triples = []
 global duplicate
 duplicate = ""
 global output_format
-output_format = ""
+output_format = "n-triples"
 global start_time
 start_time = time.time()
 global user, password, port, host
