@@ -3351,14 +3351,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 							i += 1
 					else:
@@ -3366,21 +3366,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 							i += 1
 				else:
 					try:
 						output_file_descriptor.write(triple)
 					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
+						output_file_descriptor.write(triple.encode("ISO 8859-1"))
 					i += 1
 			if predicate[1:-1] in predicate_object_map.graph:
 				triple = subject + " " + predicate + " " + object + ".\n"
@@ -3397,14 +3397,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[predicate + "_" + predicate_object_map.object_map.value]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 						else:
@@ -3412,21 +3412,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 					else:
 						try:
 							output_file_descriptor.write(triple)
 						except:
-							output_file_descriptor.write(triple.encode("utf-8"))
+							output_file_descriptor.write(triple.encode("ISO 8859-1"))
 						i += 1
 		elif predicate != None and subject != None and object_list:
 			dictionary_table_update(subject)
@@ -3447,14 +3447,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 								i += 1
 						else:
@@ -3462,21 +3462,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 								i += 1
 					else:
 						try:
 							output_file_descriptor.write(triple)
 						except:
-							output_file_descriptor.write(triple.encode("utf-8"))
+							output_file_descriptor.write(triple.encode("ISO 8859-1"))
 						i += 1
 				if predicate[1:-1] in predicate_object_map.graph:
 					triple = subject + " " + predicate + " " + obj + ".\n"
@@ -3493,14 +3493,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 									i += 1
 							else:
@@ -3508,21 +3508,21 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 									i += 1
 						else:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							i += 1
 			object_list = []
 		else:
@@ -3726,21 +3726,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							try:
 								output_file_descriptor.write(rdf_type)
 							except:
-								output_file_descriptor.write(rdf_type.encode("utf-8"))
+								output_file_descriptor.write(rdf_type.encode("ISO 8859-1"))
 							g_triples.update({dic_table[predicate  + "_" + obj ] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + obj]]:
 							try:
 								output_file_descriptor.write(rdf_type)
 							except:
-								output_file_descriptor.write(rdf_type.encode("utf-8"))
+								output_file_descriptor.write(rdf_type.encode("ISO 8859-1"))
 							g_triples[dic_table[predicate + "_" + obj]].update({dic_table[subject] + "_" + dic_table[obj] : ""})
 							i += 1
 					else:
 						try:
 							output_file_descriptor.write(rdf_type)
 						except:
-							output_file_descriptor.write(rdf_type.encode("utf-8"))
+							output_file_descriptor.write(rdf_type.encode("ISO 8859-1"))
 						i += 1
 
 	for predicate_object_map in triples_map.predicate_object_maps_list:
@@ -3941,14 +3941,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 							i += 1
 					else:
@@ -3956,21 +3956,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 							i += 1
 						elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 							i += 1
 				else:
 					try:
 						output_file_descriptor.write(triple)
 					except:
-						output_file_descriptor.write(triple.encode("utf-8"))
+						output_file_descriptor.write(triple.encode("ISO 8859-1"))
 					i += 1
 			if predicate[1:-1] in predicate_object_map.graph:
 				triple = subject + " " + predicate + " " + object + ".\n"
@@ -3987,14 +3987,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[predicate + "_" + predicate_object_map.object_map.value]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 						else:
@@ -4002,21 +4002,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[object]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 								i += 1
 					else:
 						try:
 							output_file_descriptor.write(triple)
 						except:
-							output_file_descriptor.write(triple.encode("utf-8"))
+							output_file_descriptor.write(triple.encode("ISO 8859-1"))
 		elif predicate != None and subject != None and object_list:
 			dictionary_table_update(subject)
 			for obj in object_list:
@@ -4036,14 +4036,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 								i += 1
 						else:
@@ -4051,21 +4051,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 								i += 1
 							elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
 								try:
 									output_file_descriptor.write(triple)
 								except:
-									output_file_descriptor.write(triple.encode("utf-8"))
+									output_file_descriptor.write(triple.encode("ISO 8859-1"))
 								g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 								i += 1
 					else:
 						try:
 							output_file_descriptor.write(triple)
 						except:
-							output_file_descriptor.write(triple.encode("utf-8"))
+							output_file_descriptor.write(triple.encode("ISO 8859-1"))
 						i += 1
 				if predicate[1:-1] in predicate_object_map.graph:
 					triple = subject + " " + predicate + " " + obj + ".\n"
@@ -4082,14 +4082,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 									i += 1
 							else:
@@ -4097,21 +4097,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples.update({dic_table[predicate] : {dic_table[subject] + "_" + dic_table[obj]: ""}})
 									i += 1
 								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
 									try:
 										output_file_descriptor.write(triple)
 									except:
-										output_file_descriptor.write(triple.encode("utf-8"))
+										output_file_descriptor.write(triple.encode("ISO 8859-1"))
 									g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[obj]: ""})
 									i += 1
 						else:
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								output_file_descriptor.write(triple.encode("utf-8"))
+								output_file_descriptor.write(triple.encode("ISO 8859-1"))
 							i += 1
 			object_list = []
 		else:
@@ -4314,7 +4314,7 @@ def semantify(config_path):
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".ttl"
 				print("Semantifying {}...".format(config[dataset_i]["name"]))
 				
-				with open(output_file, "w", encoding = "utf-8") as output_file_descriptor:
+				with open(output_file, "w", encoding = "ISO 8859-1") as output_file_descriptor:
 					if "turtle" == output_format.lower():
 						string_prefixes = prefix_extraction(config[dataset_i]["mapping"])
 						output_file_descriptor.write(string_prefixes)
@@ -4340,7 +4340,7 @@ def semantify(config_path):
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 										else:
 											for triples_map in sorted_sources[source_type][source]:
-												with open(source, "r", encoding = "utf-8") as input_file_descriptor:
+												with open(source, "r", encoding = "ISO 8859-1") as input_file_descriptor:
 													if ".csv" in source:
 														data = csv.DictReader(input_file_descriptor, delimiter=',')
 													else:
@@ -4389,7 +4389,7 @@ def semantify(config_path):
 										else:
 											for triples_map in sorted_sources[source_type][source]:
 												blank_message = True
-												with open(source, "r", encoding = "utf-8") as input_file_descriptor:
+												with open(source, "r", encoding = "ISO 8859-1") as input_file_descriptor:
 													if ".csv" in source:
 														data = csv.DictReader(input_file_descriptor, delimiter=',')
 													else:
@@ -4478,7 +4478,7 @@ def semantify(config_path):
 			output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".nt"
 
 		with ThreadPoolExecutor(max_workers=10) as executor:
-			with open(output_file, "w", encoding="utf-8") as output_file_descriptor:
+			with open(output_file, "w", encoding="ISO 8859-1") as output_file_descriptor:
 				for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 					dataset_i = "dataset" + str(int(dataset_number) + 1)
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
