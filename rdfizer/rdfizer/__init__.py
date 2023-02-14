@@ -1,16 +1,11 @@
-import os
-import re
 import csv
-import sys
 import rdflib
 from rdflib.plugins.sparql import prepareQuery
 from configparser import ConfigParser, ExtendedInterpolation
-import traceback
 from mysql import connector
 from concurrent.futures import ThreadPoolExecutor
 import time
 import json
-import xml.etree.ElementTree as ET
 import psycopg2
 import pandas as pd
 from .functions import *
@@ -20,7 +15,6 @@ try:
 except:
 	from .triples_map import TriplesMap as tm	
 
-import tracemalloc
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
 
