@@ -74,7 +74,9 @@ def prefix_extraction(original):
 					prefixes[elements[2][1:-1].split(">")[0]] = elements[1][:-1]
 				else:
 					prefixes[elements[2][1:-1]] = elements[1][:-1]
-			string_prefixes += prefix 
+			string_prefixes += prefix
+		elif prefix == "\n":
+			pass
 		else:
 			break
 	string_prefixes += "\n"
@@ -1994,7 +1996,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 									object = None
 								else:
-									print("hola")
 									if triples_map_element.iterator != triples_map.iterator:
 										parent_iterator = triples_map_element.iterator
 										child_keys = triples_map.iterator.split(".")
@@ -4444,7 +4445,6 @@ def semantify(config_path):
 										cursor.execute(triples_map.query)
 										row_headers=[x[0] for x in cursor.description]
 										for row in cursor:
-											#print(row)
 											if config[dataset_i]["db"].lower() != "none":
 												number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
 											else:
@@ -4586,10 +4586,13 @@ def semantify(config_path):
 									else:
 										if database != "None":
 											cursor.execute("use " + database)
+									print("adios")
 									if triples_map.query == "None":	
 										for query in query_list:
+											print(query)
 											cursor.execute(query)
 											row_headers=[x[0] for x in cursor.description]
+											print(row_headers)
 											for row in cursor:
 												if config[dataset_i]["db"].lower() != "none":
 													number_triple += executor.submit(semantify_mysql, row, row_headers, triples_map, triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
