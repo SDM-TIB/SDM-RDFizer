@@ -13,6 +13,7 @@ import json
 import xml.etree.ElementTree as ET
 import psycopg2
 import pandas as pd
+from urllib.request import urlopen
 from .functions import *
 
 try:
@@ -690,13 +691,21 @@ def mapping_parser(mapping_file):
 		prefix rr: <http://www.w3.org/ns/r2rml#> 
 		prefix rml: <http://semweb.mmlab.be/ns/rml#> 
 		prefix ql: <http://semweb.mmlab.be/ns/ql#> 
-		prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#> 
+		prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+		prefix td: <https://www.w3.org/2019/wot/td#>
+		prefix htv: <http://www.w3.org/2011/http#>
+		prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
 		SELECT DISTINCT *
 		WHERE {
 
 	# Subject -------------------------------------------------------------------------
 			?triples_map_id rml:logicalSource ?_source .
 			OPTIONAL{?_source rml:source ?data_source .}
+			OPTIONAL{
+				?_source rml:source ?data_link .
+				?data_link td:hasForm ?form .
+				?form hctl:hasTarget ?url_source .
+			}
 			OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
 			OPTIONAL { ?_source rml:iterator ?iterator . }
 			OPTIONAL { ?_source rr:tableName ?tablename .}
@@ -875,7 +884,10 @@ def mapping_parser(mapping_file):
 					object_map = tm.ObjectMap("parent triples map", join_predicate[jp]["triples_map"], str(result_predicate_object_map.object_datatype), join_predicate[jp]["childs"], join_predicate[jp]["parents"],result_predicate_object_map.term, result_predicate_object_map.language,result_predicate_object_map.language_value)
 					predicate_object_maps_list += [tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map,predicate_object_graph)]
 
-			current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.data_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
+			if result_triples_map.url_source is not None:
+				current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.url_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
+			else:
+				current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id), str(result_triples_map.data_source), subject_map, predicate_object_maps_list, ref_form=str(result_triples_map.ref_form), iterator=str(result_triples_map.iterator), tablename=str(result_triples_map.tablename), query=str(result_triples_map.query))
 			triples_map_list += [current_triples_map]
 
 		else:
@@ -1219,16 +1231,25 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 								if triples_map_element.data_source != triples_map.data_source:
 									if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-													hash_maker(data, triples_map_element, predicate_object_map.object_map)
-												else:
-													data = json.load(input_file_descriptor)
+											if "http" in triples_map_element.data_source:
+												if triples_map_element.file_format == "JSONPath":
+													response = urlopen(triples_map_element.data_source)
+													data = json.loads(response.read())
 													if isinstance(data, list):
 														hash_maker(data, triples_map_element, predicate_object_map.object_map)
 													elif len(data) < 2:
 														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+											else:
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														data = csv.DictReader(input_file_descriptor, delimiter=",")
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													else:
+														data = json.load(input_file_descriptor)
+														if isinstance(data, list):
+															hash_maker(data, triples_map_element, predicate_object_map.object_map)
+														elif len(data) < 2:
+															hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 										elif triples_map_element.file_format == "XPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -1703,7 +1724,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						if graph != None and "defaultGraph" not in graph:
 							if "{" in graph:	
 								rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore,iterator) + "> .\n"
-								dictionary_table_update("<" + string_substitution_json(graph, "{(.+?)}", row, "subject",ignore, triples_map.iterator) + ">")
+								dictionary_table_update("<" + string_substitution_json(graph, "{(.+?)}", data, "subject",ignore,iterator) + ">")
 							else:
 								rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
 								dictionary_table_update("<" + graph + ">")
@@ -1863,16 +1884,25 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							if triples_map_element.data_source != triples_map.data_source:
 								if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 									if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-											if str(triples_map_element.file_format).lower() == "csv":
-												data_element = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-												hash_maker(data_element, triples_map_element, predicate_object_map.object_map)
-											else:
-												data_element = json.load(input_file_descriptor)
-												if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
-													join_iterator(data_element, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+										if "http" in triples_map_element.data_source:
+												if triples_map_element.file_format == "JSONPath":
+													response = urlopen(triples_map_element.data_source)
+													data = json.loads(response.read())
+													if isinstance(data, list):
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													elif len(data) < 2:
+														hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+										else:
+											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+												if str(triples_map_element.file_format).lower() == "csv":
+													data_element = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+													hash_maker(data_element, triples_map_element, predicate_object_map.object_map)
 												else:
-													hash_maker(element[list(element.keys())[0]], triples_map_element, predicate_object_map.object_map)
+													data_element = json.load(input_file_descriptor)
+													if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+														join_iterator(data_element, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+													else:
+														hash_maker(data_element[list(data_element.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 									elif triples_map_element.file_format == "XPath":
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -2490,15 +2520,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								if len(predicate_object_map.object_map.child) == 1:
 									if (triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]) not in join_table:
 										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													reader = pd.read_csv(str(triples_map_element.data_source), dtype = str, encoding = "latin-1")
-													reader = reader.where(pd.notnull(reader), None)
-													reader = reader.drop_duplicates(keep ='first')
-													data = reader.to_dict(orient='records')
-													hash_maker(data, triples_map_element, predicate_object_map.object_map)
-												else:
-													data = json.load(input_file_descriptor)
+											if "http" in triples_map_element.data_source:
+												if triples_map_element.file_format == "JSONPath":
+													response = urlopen(triples_map_element.data_source)
+													data = json.loads(response.read())
 													if triples_map_element.iterator:
 														if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
 															join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
@@ -2512,6 +2537,29 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 															hash_maker(data, triples_map_element, predicate_object_map.object_map)
 														elif len(data) < 2:
 															hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+											else:
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														reader = pd.read_csv(str(triples_map_element.data_source), dtype = str, encoding = "latin-1")
+														reader = reader.where(pd.notnull(reader), None)
+														reader = reader.drop_duplicates(keep ='first')
+														data = reader.to_dict(orient='records')
+														hash_maker(data, triples_map_element, predicate_object_map.object_map)
+													else:
+														data = json.load(input_file_descriptor)
+														if triples_map_element.iterator:
+															if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+																join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+															else:
+																if isinstance(data, list):
+																	hash_maker(data, triples_map_element, predicate_object_map.object_map)
+																elif len(data) < 2:
+																	hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+														else:
+															if isinstance(data, list):
+																hash_maker(data, triples_map_element, predicate_object_map.object_map)
+															elif len(data) < 2:
+																hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 										elif triples_map_element.file_format == "XPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -2533,15 +2581,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 										else:
 											if no_update:
 												if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-													with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-														if str(triples_map_element.file_format).lower() == "csv":
-															reader = pd.read_csv(str(triples_map_element.data_source), dtype = str, encoding = "latin-1")
-															reader = reader.where(pd.notnull(reader), None)
-															reader = reader.drop_duplicates(keep ='first')
-															data = reader.to_dict(orient='records')
-															hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
-														else:
-															data = json.load(input_file_descriptor)
+													if "http" in triples_map_element.data_source:
+														if triples_map_element.file_format == "JSONPath":
+															response = urlopen(triples_map_element.data_source)
+															data = json.loads(response.read())
 															if triples_map_element.iterator:
 																if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
 																	join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
@@ -2555,6 +2598,29 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 																	hash_maker(data, triples_map_element, predicate_object_map.object_map)
 																elif len(data) < 2:
 																	hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+													else:
+														with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+															if str(triples_map_element.file_format).lower() == "csv":
+																reader = pd.read_csv(str(triples_map_element.data_source), dtype = str, encoding = "latin-1")
+																reader = reader.where(pd.notnull(reader), None)
+																reader = reader.drop_duplicates(keep ='first')
+																data = reader.to_dict(orient='records')
+																hash_update(data, triples_map_element, predicate_object_map.object_map, triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0])
+															else:
+																data = json.load(input_file_descriptor)
+																if triples_map_element.iterator:
+																	if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+																		join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
+																	else:
+																		if isinstance(data, list):
+																			hash_maker(data, triples_map_element, predicate_object_map.object_map)
+																		elif len(data) < 2:
+																			hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+																else:
+																	if isinstance(data, list):
+																		hash_maker(data, triples_map_element, predicate_object_map.object_map)
+																	elif len(data) < 2:
+																		hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 												if child_list_value(predicate_object_map.object_map.child,row) in join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
 													object_list = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
 												else:
@@ -2564,16 +2630,25 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 								else:
 									if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
 										if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-												if str(triples_map_element.file_format).lower() == "csv":
-													data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
-												else:
-													data = json.load(input_file_descriptor)
+											if "http" in triples_map_element.data_source:
+												if triples_map_element.file_format == "JSONPath":
+													response = urlopen(triples_map_element.data_source)
+													data = json.loads(response.read())
 													if isinstance(data, list):
 														hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 													elif len(data) < 2:
 														hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+											else:
+												with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+													if str(triples_map_element.file_format).lower() == "csv":
+														data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
+														hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+													else:
+														data = json.load(input_file_descriptor)
+														if isinstance(data, list):
+															hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+														elif len(data) < 2:
+															hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 										elif triples_map_element.file_format == "XPath":
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -3186,13 +3261,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						if len(predicate_object_map.object_map.child) == 1:
 							if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-										if str(triples_map_element.file_format).lower() == "csv":
-											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-											hash_maker(data, triples_map_element, predicate_object_map.object_map)
-										else:
-											data = json.load(input_file_descriptor)
-											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+									if "http" in triples_map_element.data_source:
+										if triples_map_element.file_format == "JSONPath":
+											response = urlopen(triples_map_element.data_source)
+											data = json.loads(response.read())
+											if isinstance(data, list):
+												hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+											elif len(data) < 2:
+												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+									else:
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											if str(triples_map_element.file_format).lower() == "csv":
+												data = csv.DictReader(input_file_descriptor, delimiter=",")
+												hash_maker(data, triples_map_element, predicate_object_map.object_map)
+											else:
+												data = json.load(input_file_descriptor)
+												if isinstance(data, list):
+													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+												elif len(data) < 2:
+													hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 								elif triples_map_element.file_format == "XPath":
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 										child_tree = ET.parse(input_file_descriptor)
@@ -3225,16 +3312,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						else:
 							if (triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)) not in join_table:
 								if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-										if str(triples_map_element.file_format).lower() == "csv":
-											data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
-										else:
-											data = json.load(input_file_descriptor)
+									if "http" in triples_map_element.data_source:
+										if triples_map_element.file_format == "JSONPath":
+											response = urlopen(triples_map_element.data_source)
+											data = json.loads(response.read())
 											if isinstance(data, list):
 												hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
 											elif len(data) < 2:
 												hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+									else:
+										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+											if str(triples_map_element.file_format).lower() == "csv":
+												data = csv.DictReader(input_file_descriptor, delimiter=",")
+												hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+											else:
+												data = json.load(input_file_descriptor)
+												if isinstance(data, list):
+													hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+												elif len(data) < 2:
+													hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 								elif triples_map_element.file_format == "XPath":
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -3374,7 +3470,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 							try:
 								output_file_descriptor.write(triple)
 							except:
-								print(triple)
 								output_file_descriptor.write(triple.encode("utf-8"))
 							g_triples[dic_table[predicate]].update({dic_table[subject] + "_" + dic_table[object]: ""})
 							i += 1
@@ -3840,13 +3935,22 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					if (triples_map_element.data_source != triples_map.data_source) or (triples_map_element.tablename != triples_map.tablename):
 						if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0] not in join_table:
 							if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
-								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
-									if str(triples_map_element.file_format).lower() == "csv":
-										data = csv.DictReader(input_file_descriptor, delimiter=delimiter)
-										hash_maker(data, triples_map_element, predicate_object_map.object_map)
-									else:
-										data = json.load(input_file_descriptor)
-										hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+								if "http" in triples_map_element.data_source:
+									if triples_map_element.file_format == "JSONPath":
+										response = urlopen(triples_map_element.data_source)
+										data = json.loads(response.read())
+										if isinstance(data, list):
+											hash_maker_list(data, triples_map_element, predicate_object_map.object_map)
+										elif len(data) < 2:
+											hash_maker_list(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
+								else:
+									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
+										if str(triples_map_element.file_format).lower() == "csv":
+											data = csv.DictReader(input_file_descriptor, delimiter=",")
+											hash_maker(data, triples_map_element, predicate_object_map.object_map)
+										else:
+											data = json.load(input_file_descriptor)
+											hash_maker(data[list(data.keys())[0]], triples_map_element, predicate_object_map.object_map)
 
 							elif triples_map_element.file_format == "XPath":
 								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
@@ -4353,23 +4457,26 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
-										with open(str(source), "r") as input_file_descriptor:
-											data = json.load(input_file_descriptor)
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-								elif source_type == "XPath":
-									for source in order_list[source_type]:
+										if "http" in source:
+											response = urlopen(source)
+											data = json.loads(response.read())
+										else:
+											data = json.load(source)
 										for triples_map in sorted_sources[source_type][source]:
 											blank_message = True
-											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
+											if isinstance(data, list):
+												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+											else:
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+								elif source_type == "XPath":
+										for source in order_list[source_type]:
+											for triples_map in sorted_sources[source_type][source]:
+												blank_message = True
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)			
 						else:
 							for source_type in sorted_sources:
 								if source_type == "csv":
@@ -4401,16 +4508,19 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
-										with open(str(source), "r") as input_file_descriptor:
-											data = json.load(input_file_descriptor)
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+										if "http" in source:
+											response = urlopen(source)
+											data = json.loads(response.read())
+										else:
+											data = json.load(source)
+										for triples_map in sorted_sources[source_type][source]:
+											blank_message = True
+											if isinstance(data, list):
+												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+											else:
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+											if duplicate == "yes":
+												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "XPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
@@ -4516,15 +4626,18 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
-										with open(str(source), "r") as input_file_descriptor:
-											data = json.load(input_file_descriptor)
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+										if "http" in source:
+											response = urlopen(source)
+											data = json.loads(response.read())
+										else:
+											data = json.load(source)
+										for triples_map in sorted_sources[source_type][source]:
+											blank_message = True
+											if isinstance(data, list):
+												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
+											else:
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+											predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "XPath":
 									for source in order_list[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
@@ -4556,15 +4669,18 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
-										with open(str(source), "r") as input_file_descriptor:
-											data = json.load(input_file_descriptor)
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+										if "http" in source:
+											response = urlopen(source)
+											data = json.loads(response.read())
+										else:
+											data = json.load(source)
+										for triples_map in sorted_sources[source_type][source]:
+											blank_message = True
+											if isinstance(data, list):
+												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+											else:
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+											predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "XPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
@@ -4586,7 +4702,6 @@ def semantify(config_path):
 									else:
 										if database != "None":
 											cursor.execute("use " + database)
-									print("adios")
 									if triples_map.query == "None":	
 										for query in query_list:
 											print(query)
