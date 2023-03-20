@@ -1,5 +1,4 @@
 import os
-import re
 import csv
 import sys
 import rdflib
@@ -15,13 +14,13 @@ import psycopg2
 import pandas as pd
 from urllib.request import urlopen
 from .functions import *
+import logging
 
 try:
 	from triples_map import TriplesMap as tm
 except:
 	from .triples_map import TriplesMap as tm	
 
-import tracemalloc
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the ) 
 
@@ -62,6 +61,19 @@ general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
 						"http://www.w3.org/2002/07/owl#sameAs":"",
 						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
 						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
+
+logger = None
+
+def get_logger(log_path='error.log'):
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.INFO)
+	formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+	file_handler = logging.FileHandler(log_path)
+	file_handler.setLevel(logging.ERROR)  # the log should only contain errors
+	file_handler.setFormatter(formatter)  # include the time and error level in the log
+	logger.addHandler(file_handler)
+	logger.addHandler(logging.StreamHandler())  # directly print to the console
+	return logger
 
 def prefix_extraction(original):
 	string_prefixes = ""
@@ -682,9 +694,8 @@ def mapping_parser(mapping_file):
 	try:
 		mapping_graph.parse(mapping_file, format='n3')
 	except Exception as n3_mapping_parse_exception:
-		print(n3_mapping_parse_exception)
-		print('Could not parse {} as a mapping file'.format(mapping_file))
-		print('Aborting...')
+		logger.exception(n3_mapping_parse_exception)
+		logger.exception('Could not parse {} as a mapping file. Aborting...'.format(mapping_file))
 		sys.exit(1)
 
 	mapping_query = """
@@ -4380,11 +4391,12 @@ def translate_postgressql(triples_map):
 	return triples_map.iterator, query_list
 
 
-def semantify(config_path):
+def semantify(config_path, log_path='error.log'):
+	global logger
+	logger = get_logger(log_path)
 	start_time = time.time()
 	if os.path.isfile(config_path) == False:
-		print("The configuration file " + config_path + " does not exist.")
-		print("Aborting...")
+		logger.error("The configuration file " + config_path + " does not exist. Aborting...")
 		sys.exit(1)
 
 	config = ConfigParser(interpolation=ExtendedInterpolation())
@@ -4457,12 +4469,12 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
-										if "http" in source:
-											response = urlopen(source)
-											data = json.loads(response.read())
-										else:
-											data = json.load(source)
 										for triples_map in sorted_sources[source_type][source]:
+											if "http" in sorted_sources[source_type][source][triples_map].data_source:
+												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+												data = json.loads(response.read())
+											else:
+												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
 											blank_message = True
 											if isinstance(data, list):
 												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
@@ -4508,12 +4520,12 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
-										if "http" in source:
-											response = urlopen(source)
-											data = json.loads(response.read())
-										else:
-											data = json.load(source)
 										for triples_map in sorted_sources[source_type][source]:
+											if "http" in sorted_sources[source_type][source][triples_map].data_source:
+												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+												data = json.loads(response.read())
+											else:
+												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
 											blank_message = True
 											if isinstance(data, list):
 												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
@@ -4578,8 +4590,7 @@ def semantify(config_path):
 											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									predicate_list = release_PTT(triples_map,predicate_list)					
 								else:
-									print("Invalid reference formulation or format")
-									print("Aborting...")
+									logger.error("Invalid reference formulation or format. Aborting...")
 									sys.exit(1)
 				print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 	else:
@@ -4626,12 +4637,12 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
-										if "http" in source:
-											response = urlopen(source)
-											data = json.loads(response.read())
-										else:
-											data = json.load(source)
 										for triples_map in sorted_sources[source_type][source]:
+											if "http" in sorted_sources[source_type][source][triples_map].data_source:
+												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+												data = json.loads(response.read())
+											else:
+												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
 											blank_message = True
 											if isinstance(data, list):
 												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
@@ -4669,12 +4680,12 @@ def semantify(config_path):
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
-										if "http" in source:
-											response = urlopen(source)
-											data = json.loads(response.read())
-										else:
-											data = json.load(source)
 										for triples_map in sorted_sources[source_type][source]:
+											if "http" in sorted_sources[source_type][source][triples_map].data_source:
+												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+												data = json.loads(response.read())
+											else:
+												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
 											blank_message = True
 											if isinstance(data, list):
 												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
@@ -4740,8 +4751,7 @@ def semantify(config_path):
 											number_triple += executor.submit(semantify_postgres, row, row_headers, triples_map, triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
 									predicate_list = release_PTT(triples_map,predicate_list)					
 								else:
-									print("Invalid reference formulation or format")
-									print("Aborting...")
+									logger.error("Invalid reference formulation or format. Aborting...")
 									sys.exit(1)
 					print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 

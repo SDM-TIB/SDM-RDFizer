@@ -463,7 +463,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							value = child[match[0]]
 							for elem in match[1:]:
 								if elem in value:
-									value = valuep[elem]
+									value = value[elem]
 									found = True
 								else:
 									found = False
@@ -541,6 +541,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					if match is not None:
 						if (type(value).__name__) == "int":
 								value = str(value)
+						elif (type(value).__name__) == "float":
+								value = str(value)
 						if isinstance(value, dict):
 							if value:
 								print("Index needed")
@@ -579,6 +581,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 				if match is not None:
 					if (type(value).__name__) == "int":
+							value = str(value)
+					if (type(value).__name__) == "float":
 							value = str(value)
 					if isinstance(value, dict):
 						if value:
