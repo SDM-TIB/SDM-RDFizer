@@ -6,6 +6,222 @@ import xml.etree.ElementTree as ET
 import urllib
 import math
 
+def extract_subject_values(row,attr_list,format, parent_map = None):
+	subject_attr = ""
+	if format == "JSONPath":
+		for attr in attr_list:
+			if "/" in attr:
+				temp = row
+				for att in attr.split("/"):
+					if att in temp:
+						temp = temp[att]
+					else:
+						return None
+				subject_attr += temp + "_"
+			else:
+				if attr in row:
+					subject_attr += row[attr] + "_"
+				else:
+					return None
+	elif format == "XML":
+		for attr in attr_list:
+			if "@" in attr:
+				match,level = attr.split("@")[1],attr.split("@")[0]
+				if "" == level:
+					if row.attrib[match] is not None:
+						subject_attr += row.attrib[match] + "_"
+					else:
+						return None
+				else:
+					if ".." == level[:-1]:
+						new_level = parent_map[row]
+					else:
+						new_level = row.find(level[:-1])
+					if new_level.attrib[match] is not None:
+						subject_attr += new_level.attrib[match] + "_"
+					else:
+						return None
+			else:
+				if row.find(match) is not None:
+					subject_attr += row.find(match).text.strip()+ "_"
+				else:
+					return None
+	return subject_attr[:-1]
+
+def translate_sql(triples_map):
+
+    query_list = []
+    proyections = []
+  
+    if "{" in triples_map.subject_map.value:
+        subject = triples_map.subject_map.value
+        count = count_characters(subject)
+        if (count == 1) and (subject.split("{")[1].split("}")[0] not in proyections):
+            subject = subject.split("{")[1].split("}")[0]
+            if "[" in subject:
+                subject = subject.split("[")[0]
+            proyections.append(subject)
+        elif count > 1:
+            subject_list = subject.split("{")
+            for s in subject_list:
+                if "}" in s:
+                    subject = s.split("}")[0]
+                    if "[" in subject:
+                        subject = subject.split("[")
+                    if subject not in proyections:
+                        proyections.append(subject)
+    else:
+        if triples_map.subject_map.value not in proyections:
+            proyections.append(triples_map.subject_map.value)
+
+    for po in triples_map.predicate_object_maps_list:
+        if po.object_map.mapping_type != "constant":
+            if "{" in po.object_map.value:
+                count = count_characters(po.object_map.value)
+                if 0 < count <= 1 :
+                    predicate = po.object_map.value.split("{")[1].split("}")[0]
+                    if "[" in predicate:
+                        predicate = predicate.split("[")[0]
+                    if predicate not in proyections:
+                        proyections.append(predicate)
+
+                elif 1 < count:
+                    predicate = po.object_map.value.split("{")
+                    for po_e in predicate:
+                        if "}" in po_e:
+                            pre = po_e.split("}")[0]
+                            if "[" in pre:
+                                pre = pre.split("[")
+                            if pre not in proyections:
+                                proyections.append(pre)
+            elif "#" in po.object_map.value:
+                pass
+            elif "/" in po.object_map.value:
+                pass
+            else:
+                predicate = po.object_map.value 
+                if "[" in predicate:
+                    predicate = predicate.split("[")[0]
+                if predicate not in proyections:
+                    proyections.append(predicate)
+            if po.object_map.child != None:
+                for c in po.object_map.child:
+                    if c not in proyections:
+                        proyections.append(c)
+
+    temp_query = "SELECT DISTINCT "
+    for p in proyections:
+        if type(p) == str:
+            if p != "None":
+                temp_query += "`" + p + "`, "
+        elif type(p) == list:
+            for pr in p:
+                temp_query += "`" + pr + "`, " 
+    temp_query = temp_query[:-2] 
+    if triples_map.tablename != "None":
+        temp_query = temp_query + " FROM " + triples_map.tablename + " WHERE " 
+    else:
+        temp_query = temp_query + " FROM " + triples_map.data_source + " WHERE " 
+    for p in proyections:
+        if type(p) == str:
+            if p != "None":
+                temp_query += "`" + p + "` IS NOT NULL AND "
+        elif type(p) == list:
+            for pr in p:
+                temp_query += "`" + pr + "` IS NOT NULL AND " 
+    temp_query = temp_query[:-5] 
+    temp_query += ";"
+    query_list.append(temp_query)
+
+    return triples_map.iterator, query_list
+
+
+def translate_postgressql(triples_map):
+
+	query_list = []
+	
+	
+	proyections = []
+
+		
+	if "{" in triples_map.subject_map.value:
+		subject = triples_map.subject_map.value
+		count = count_characters(subject)
+		if (count == 1) and (subject.split("{")[1].split("}")[0] not in proyections):
+			subject = subject.split("{")[1].split("}")[0]
+			if "[" in subject:
+				subject = subject.split("[")[0]
+			proyections.append(subject)
+		elif count > 1:
+			subject_list = subject.split("{")
+			for s in subject_list:
+				if "}" in s:
+					subject = s.split("}")[0]
+					if "[" in subject:
+						subject = subject.split("[")
+					if subject not in proyections:
+						proyections.append(subject)
+
+	for po in triples_map.predicate_object_maps_list:
+		if "{" in po.object_map.value:
+			count = count_characters(po.object_map.value)
+			if 0 < count <= 1 :
+				predicate = po.object_map.value.split("{")[1].split("}")[0]
+				if "[" in predicate:
+					predicate = predicate.split("[")[0]
+				if predicate not in proyections:
+					proyections.append(predicate)
+
+			elif 1 < count:
+				predicate = po.object_map.value.split("{")
+				for po_e in predicate:
+					if "}" in po_e:
+						pre = po_e.split("}")[0]
+						if "[" in pre:
+							pre = pre.split("[")
+						if pre not in proyections:
+							proyections.append(pre)
+		elif "#" in po.object_map.value:
+			pass
+		elif "/" in po.object_map.value:
+			pass
+		else:
+			predicate = po.object_map.value 
+			if "[" in predicate:
+				predicate = predicate.split("[")[0]
+			if predicate not in proyections:
+					proyections.append(predicate)
+		if po.object_map.child != None:
+			for child in po.object_map.child:
+				if child not in proyections:
+					proyections.append(child)
+
+	temp_query = "SELECT "
+	for p in proyections:
+		if p != "None":
+			if p == proyections[len(proyections)-1]:
+				temp_query += "\"" + p + "\""
+			else:
+				temp_query += "\"" + p + "\", " 
+		else:
+			temp_query = temp_query[:-2] 
+	if triples_map.tablename != "None":
+		temp_query = temp_query + " FROM " + triples_map.tablename + " WHERE "
+	else:
+		temp_query = temp_query + " FROM " + triples_map.data_source + " WHERE "
+	
+	for p in proyections:
+		if type(p) == str:
+			if p != "None":
+				temp_query += "\"" + p + "\" IS NOT NULL AND "
+		elif type(p) == list:
+			for pr in p:
+				temp_query += "\"" + pr + "\" IS NOT NULL AND " 
+	temp_query = temp_query[:-5] 
+	temp_query += ";"
+	query_list.append(temp_query)
+	return triples_map.iterator, query_list
+
 def jsonpath_find(element, JSON, path, all_paths):
 	result_path = []
 	if all_paths != []:
@@ -27,8 +243,6 @@ def jsonpath_find(element, JSON, path, all_paths):
 					if newpath[0] not in result_path:
 						result_path.append(newpath[0])
 	return result_path
-
-
 
 def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor, generated):
 	if object_list:
@@ -224,7 +438,7 @@ def source_sort(source_list, sorted_list, sublists):
 	else:
 		return combine_sublist(sublists, {})
 
-def files_sort(triples_map_list, ordered):
+def files_sort(triples_map_list, ordered, config):
 	predicate_list = {}
 	sorted_list = {}
 	order_list = {}
@@ -350,7 +564,54 @@ def files_sort(triples_map_list, ordered):
 							predicate = po.predicate_map.value + "_" + po.object_map.value
 							source_predicate["XPath"][str(tp.data_source)] = {predicate : ""}
 						else:
-							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""} 
+							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""}
+		else:
+			if tp.query == "None":
+				if config["datasets"]["dbType"] == "mysql":
+					database, query_list = translate_sql(tp)
+				elif config["datasets"]["dbType"] == "postgres":
+					database, query_list = translate_postgressql(tp)
+				query = query_list[0]
+			else:
+				query = tp.query
+			if config["datasets"]["dbType"] not in sorted_list:
+				sorted_list[config["datasets"]["dbType"]] = {query: {tp.triples_map_id : tp}}
+			else:
+				if query in sorted_list[config["datasets"]["dbType"]]:
+					sorted_list[config["datasets"]["dbType"]][query][tp.triples_map_id] = tp
+				else:
+					sorted_list[config["datasets"]["dbType"]][query] = {tp.triples_map_id : tp}
+			for po in tp.predicate_object_maps_list:
+				if po.predicate_map.value in general_predicates:
+					predicate = po.predicate_map.value + "_" + po.object_map.value
+					if predicate in predicate_list:
+						predicate_list[predicate] += 1
+					else:
+						predicate_list[predicate] = 1
+				else:
+					if po.predicate_map.value in predicate_list:
+						predicate_list[po.predicate_map.value] += 1
+					else:
+						predicate_list[po.predicate_map.value] = 1
+				if config["datasets"]["dbType"] not in source_predicate:
+					if po.predicate_map.value in general_predicates:
+						predicate = po.predicate_map.value + "_" + po.object_map.value
+						source_predicate[config["datasets"]["dbType"]] = {query : {predicate : ""}}
+					else:
+						source_predicate[config["datasets"]["dbType"]] = {query : {po.predicate_map.value : ""}}
+				else:
+					if query in source_predicate[config["datasets"]["dbType"]]:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate[config["datasets"]["dbType"]][query][predicate] = ""
+						else:
+							source_predicate[config["datasets"]["dbType"]][query][po.predicate_map.value] = ""
+					else:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							source_predicate[config["datasets"]["dbType"]][query] = {predicate : ""}
+						else:
+							source_predicate[config["datasets"]["dbType"]][query] = {po.predicate_map.value : ""}
 		if tp.subject_map.rdf_class is not None:
 			for rdf_type in tp.subject_map.rdf_class:
 				predicate = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" + "_" + "<{}>".format(rdf_type)
