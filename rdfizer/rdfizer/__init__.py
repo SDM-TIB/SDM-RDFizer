@@ -54,6 +54,8 @@ global enrichment
 enrichment = ""
 global ignore
 ignore = "yes"
+global mapping_partitions
+mapping_partitions = "no"
 global dic_table
 dic_table = {}
 global base
@@ -155,7 +157,7 @@ def release_PTT(triples_map,predicate_list):
 					if resource in dic_table:
 						if dic_table[resource] in g_triples:
 							g_triples.pop(dic_table[resource])
-	if triples_map.subject_map.rdf_class != None:
+	if triples_map.subject_map.rdf_class != [None]:
 		for rdf_type in triples_map.subject_map.rdf_class:
 			resource = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" + "_" + "<{}>".format(rdf_type)
 			if resource in predicate_list:
@@ -692,32 +694,51 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 def mappings_expansion(triples_map_list):
 	global generated_subjects
 	new_list = []
-	for triples_map in triples_map_list:
-		generated_subjects[triples_map.triples_map_id] = {"number_predicates" : len(triples_map.predicate_object_maps_list)}
-		subject_attr = []
-		if triples_map.subject_map.subject_mapping_type == "template":
-			for attr in triples_map.subject_map.value.split("{"):
-				if "}" in attr:
-					subject_attr.append(attr.split("}")[0])
-		elif triples_map.subject_map.subject_mapping_type == "reference":
-			subject_attr.append(triples_map.subject_map.reference)
-		generated_subjects[triples_map.triples_map_id]["subject_attr"] = subject_attr
-		if len(triples_map.predicate_object_maps_list) > 1:
-			i = 0
-			for po in triples_map.predicate_object_maps_list:
-				if i == 0:
-					subject_map = triples_map.subject_map
-				else:
-					subject_map = tm.SubjectMap(triples_map.subject_map.value,triples_map.subject_map.condition,triples_map.subject_map.subject_mapping_type,[None],triples_map.subject_map.term_type,triples_map.subject_map.graph)
-				if po.object_map.mapping_type == "parent triples map":
-					if po.object_map.child != None:
-						for triples_map_element in triples_map_list:
-							if po.object_map.value == triples_map_element.triples_map_id:
-								if len(triples_map_element.predicate_object_maps_list) > 1:
-									po.object_map.value = po.object_map.value + "_1"
-								if triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
-									if triples_map.data_source == triples_map_element.data_source:
-										if triples_map.iterator == triples_map_element.iterator:
+	if mapping_partitions == "yes":
+		for triples_map in triples_map_list:
+			generated_subjects[triples_map.triples_map_id] = {"number_predicates" : len(triples_map.predicate_object_maps_list)}
+			subject_attr = []
+			if triples_map.subject_map.subject_mapping_type == "template":
+				for attr in triples_map.subject_map.value.split("{"):
+					if "}" in attr:
+						subject_attr.append(attr.split("}")[0])
+			elif triples_map.subject_map.subject_mapping_type == "reference":
+				subject_attr.append(triples_map.subject_map.reference)
+			generated_subjects[triples_map.triples_map_id]["subject_attr"] = subject_attr
+			if len(triples_map.predicate_object_maps_list) > 1:
+				i = 0
+				for po in triples_map.predicate_object_maps_list:
+					if i == 0:
+						subject_map = triples_map.subject_map
+					else:
+						subject_map = tm.SubjectMap(triples_map.subject_map.value,triples_map.subject_map.condition,triples_map.subject_map.subject_mapping_type,[None],triples_map.subject_map.term_type,triples_map.subject_map.graph)
+					if po.object_map.mapping_type == "parent triples map":
+						if po.object_map.child != None:
+							for triples_map_element in triples_map_list:
+								if po.object_map.value == triples_map_element.triples_map_id:
+									if len(triples_map_element.predicate_object_maps_list) > 1:
+										po.object_map.value = po.object_map.value + "_1"
+									if triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
+										if triples_map.data_source == triples_map_element.data_source:
+											if triples_map.iterator == triples_map_element.iterator:
+												if po.object_map.child[0] == po.object_map.parent[0]:
+													if triples_map_element.subject_map.subject_mapping_type == "template":
+														object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+													else:
+														object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+													predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
+													new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+												else:
+													predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+													new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+											else:
+												predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+												new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+										else:
+											predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+											new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+									elif str(triples_map.file_format).lower() == "csv":
+										if triples_map.data_source == triples_map_element.data_source:
 											if po.object_map.child[0] == po.object_map.parent[0]:
 												if triples_map_element.subject_map.subject_mapping_type == "template":
 													object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
@@ -727,51 +748,13 @@ def mappings_expansion(triples_map_list):
 												new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
 											else:
 												predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-												new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+												new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
 										else:
 											predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-											new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+											new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
 									else:
-										predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-										new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-								elif str(triples_map.file_format).lower() == "csv":
-									if triples_map.data_source == triples_map_element.data_source:
-										if po.object_map.child[0] == po.object_map.parent[0]:
-											if triples_map_element.subject_map.subject_mapping_type == "template":
-												object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
-											else:
-												object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
-											predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
-											new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-										else:
-											predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-											new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-									else:
-										predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-										new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-								else:
-									if triples_map.query == triples_map_element.query or triples_map.tablename == triples_map_element.tablename:
-										if po.object_map.child[0] == po.object_map.parent[0]:
-											if triples_map_element.subject_map.subject_mapping_type == "template":
-												object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
-											else:
-												object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
-											predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
-											new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-										else:
-											predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-											new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-									else:
-										predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
-										new_list += [tm.TriplesMap(triples_map.triples_map_id,triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-								break
-					else:
-						for triples_map_element in triples_map_list:
-							if po.object_map.value == triples_map_element.triples_map_id:
-								if str(triples_map.file_format).lower() == "csv" or triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
-									if triples_map.data_source == triples_map_element.data_source:
-										if triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
-											if triples_map.iterator == triples_map_element.iterator:
+										if triples_map.query == triples_map_element.query or triples_map.tablename == triples_map_element.tablename:
+											if po.object_map.child[0] == po.object_map.parent[0]:
 												if triples_map_element.subject_map.subject_mapping_type == "template":
 													object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
 												else:
@@ -779,35 +762,96 @@ def mappings_expansion(triples_map_list):
 												predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
 												new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
 											else:
-												if len(triples_map_element.predicate_object_maps_list) > 1:
-													po.object_map.value = po.object_map.value + "_1" 
 												predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+												new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+										else:
+											predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+											new_list += [tm.TriplesMap(triples_map.triples_map_id+ "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+									break
+						else:
+							for triples_map_element in triples_map_list:
+								if po.object_map.value == triples_map_element.triples_map_id:
+									if str(triples_map.file_format).lower() == "csv" or triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
+										if triples_map.data_source == triples_map_element.data_source:
+											if triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
+												if triples_map.iterator == triples_map_element.iterator:
+													if triples_map_element.subject_map.subject_mapping_type == "template":
+														object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+													else:
+														object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+													predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
+													new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+												else:
+													if len(triples_map_element.predicate_object_maps_list) > 1:
+														po.object_map.value = po.object_map.value + "_1" 
+													predicate_object = tm.PredicateObjectMap(po.predicate_map, po.object_map,po.graph)
+													new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+											elif str(triples_map.file_format).lower() == "csv":
+												if triples_map_element.subject_map.subject_mapping_type == "template":
+													object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+												else:
+													object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+												predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
 												new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-										elif str(triples_map.file_format).lower() == "csv":
+										else:
+											new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+									else:
+										if (triples_map.query != "None" and triples_map_element.query != "None" and triples_map.query == triples_map_element.query) or (triples_map.tablename == triples_map_element.tablename and triples_map.tablename != "None" and triples_map_element.tablename != "None"):
 											if triples_map_element.subject_map.subject_mapping_type == "template":
 												object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
 											else:
 												object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
 											predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
 											new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+										else:
+											new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+								break
+					else:
+						new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+					i += 1
+			else:
+				new_list += [triples_map]
+	else:
+		for triples_map in triples_map_list:
+			pom_list = []
+			for po in triples_map.predicate_object_maps_list:
+				if po.object_map.mapping_type == "parent triples map":
+					for triples_map_element in triples_map_list:
+						if po.object_map.value == triples_map_element.triples_map_id:
+							if po.object_map.child != None:
+								if str(triples_map.file_format).lower() == "csv" or triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
+									if triples_map.data_source == triples_map_element.data_source:
+										if  po.object_map.child[0] == po.object_map.parent[0]:
+											if triples_map_element.subject_map.subject_mapping_type == "template":
+												object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+											else:
+												object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+											pom_list.append(tm.PredicateObjectMap(po.predicate_map, object_map,po.graph))
+										else:
+											pom_list.append(po)
 									else:
-										new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-								else:
-									if triples_map.query == triples_map_element.query or triples_map.tablename == triples_map_element.tablename:
+										pom_list.append(po)
+								elif (triples_map.query != "None" and triples_map_element.query != "None" and triples_map.query == triples_map_element.query) or (triples_map.tablename == triples_map_element.tablename and triples_map.tablename != "None" and triples_map_element.tablename != "None"):
+									if  po.object_map.child[0] == po.object_map.parent[0]:
 										if triples_map_element.subject_map.subject_mapping_type == "template":
 											object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
 										else:
 											object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
-										predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,po.graph)
-										new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[predicate_object],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
+										pom_list.append(tm.PredicateObjectMap(po.predicate_map, object_map,po.graph))
 									else:
-										new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-							break
+										pom_list.append(po)
+								else:
+									pom_list.append(po)
+							else:
+								if triples_map_element.subject_map.subject_mapping_type == "template":
+									object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+								else:
+									object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value, "None", "None", "None", triples_map_element.subject_map.term_type, "None","None")
+								pom_list.append(tm.PredicateObjectMap(po.predicate_map, object_map,po.graph))
 				else:
-					new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),triples_map.data_source,subject_map,[po],triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]
-				i += 1
-		else:
-			new_list += [triples_map]
+					pom_list.append(po)
+			new_list += [tm.TriplesMap(triples_map.triples_map_id, triples_map.data_source, triples_map.subject_map, pom_list, triples_map.reference_formulation,triples_map.iterator,triples_map.tablename,triples_map.query)]			
+
 	return new_list
 
 def mapping_parser(mapping_file):
@@ -1076,29 +1120,40 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 				if level == parent.tag:
 					level = parent_map[parent].tag + "/" + level
 					break
+		if mapping_partitions == "yes":
+			if triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+				predicate = "<" + triples_map.predicate_object_maps_list[0].predicate_map.value + ">"
+				constant_predicate = False
+			else:
+				predicate = None
+				constant_predicate = True
+		else:
+			predicate = None
+			constant_predicate = True
 		for child in root.iterfind(level, namespace):
 			create_subject = True
 			global generated_subjects
 
-			if "_" in triples_map.triples_map_id:
-				componets = triples_map.triples_map_id.split("_")[:-1]
-				triples_map_id = ""
-				for name in componets:
-					triples_map_id += name + "_"
-				triples_map_id = triples_map_id[:-1]
-			else:
-				triples_map_id = triples_map.triples_map_id
+			if mapping_partitions == "yes":
+				if "_" in triples_map.triples_map_id:
+					componets = triples_map.triples_map_id.split("_")[:-1]
+					triples_map_id = ""
+					for name in componets:
+						triples_map_id += name + "_"
+					triples_map_id = triples_map_id[:-1]
+				else:
+					triples_map_id = triples_map.triples_map_id
 
-			subject_attr = extract_subject_values(child,generated_subjects[triples_map_id]["subject_attr"],"XML",parent_map)
+				subject_attr = extract_subject_values(child,generated_subjects[triples_map_id]["subject_attr"],"XML",parent_map)
 
-			if subject_attr == None:
-				subject = None
-				create_subject = False
-			else:
-				if triples_map_id in generated_subjects:
-					if subject_attr in generated_subjects[triples_map_id]:
-						subject = generated_subjects[triples_map_id][subject_attr]
-						create_subject = False
+				if subject_attr == None:
+					subject = None
+					create_subject = False
+				else:
+					if triples_map_id in generated_subjects:
+						if subject_attr in generated_subjects[triples_map_id]:
+							subject = generated_subjects[triples_map_id][subject_attr]
+							create_subject = False
 
 			if create_subject:
 				subject_value = string_substitution_xml(triples_map.subject_map.value, "{(.+?)}", child, "subject", triples_map.iterator, parent_map, namespace)
@@ -1232,15 +1287,16 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 						except:
 							subject = None
 
-				if triples_map_id in generated_subjects:
-					if subject_attr in generated_subjects[triples_map_id]:
-						pass
+				if mapping_partitions == "yes":
+					if triples_map_id in generated_subjects:
+						if subject_attr in generated_subjects[triples_map_id]:
+							pass
+						else:
+							generated_subjects[triples_map_id][subject_attr] = subject
 					else:
-						generated_subjects[triples_map_id][subject_attr] = subject
-				else:
-					generated_subjects[triples_map_id] = {subject_attr : subject}
+						generated_subjects[triples_map_id] = {subject_attr : subject}
 
-			if triples_map.subject_map.rdf_class != None and subject != None:
+			if triples_map.subject_map.rdf_class != [None] and subject != None:
 				predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 				for rdf_class in triples_map.subject_map.rdf_class:
 					if rdf_class != None:
@@ -1272,35 +1328,36 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 
 
 			for predicate_object_map in triples_map.predicate_object_maps_list:
-				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				elif predicate_object_map.predicate_map.mapping_type == "template":
-					if predicate_object_map.predicate_map.condition != "":
-							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-							#if row[field] == condition:
+				if constant_predicate:
+					if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+						predicate = "<" + predicate_object_map.predicate_map.value + ">"
+					elif predicate_object_map.predicate_map.mapping_type == "template":
+						if predicate_object_map.predicate_map.condition != "":
+								#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+								#if row[field] == condition:
+								try:
+									predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate", triples_map.iterator, parent_map, namespace) + ">"
+								except:
+									predicate = None
+								#else:
+								#	predicate = None
+						else:
 							try:
 								predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate", triples_map.iterator, parent_map, namespace) + ">"
 							except:
 								predicate = None
+					elif predicate_object_map.predicate_map.mapping_type == "reference":
+						if predicate_object_map.predicate_map.condition != "":
+							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							#if row[field] == condition:
+							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map, namespace)
 							#else:
 							#	predicate = None
+						else:
+							predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map, namespace)
+						predicate = "<" + predicate[1:-1] + ">"
 					else:
-						try:
-							predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value, "{(.+?)}", child, "predicate", triples_map.iterator, parent_map, namespace) + ">"
-						except:
-							predicate = None
-				elif predicate_object_map.predicate_map.mapping_type == "reference":
-					if predicate_object_map.predicate_map.condition != "":
-						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-						#if row[field] == condition:
-						predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map, namespace)
-						#else:
-						#	predicate = None
-					else:
-						predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child, "predicate", triples_map.iterator, parent_map, namespace)
-					predicate = "<" + predicate[1:-1] + ">"
-				else:
-					predicate = None
+						predicate = None
 
 				if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 					if "/" in predicate_object_map.object_map.value:
@@ -1768,25 +1825,26 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 		create_subject = True
 		global generated_subjects
 
-		if "_" in triples_map.triples_map_id:
-			componets = triples_map.triples_map_id.split("_")[:-1]
-			triples_map_id = ""
-			for name in componets:
-				triples_map_id += name + "_"
-			triples_map_id = triples_map_id[:-1]
-		else:
-			triples_map_id = triples_map.triples_map_id
+		if mapping_partitions == "yes":
+			if "_" in triples_map.triples_map_id:
+				componets = triples_map.triples_map_id.split("_")[:-1]
+				triples_map_id = ""
+				for name in componets:
+					triples_map_id += name + "_"
+				triples_map_id = triples_map_id[:-1]
+			else:
+				triples_map_id = triples_map.triples_map_id
 
-		subject_attr = extract_subject_values(data,generated_subjects[triples_map_id]["subject_attr"],"JSONPath")
+			subject_attr = extract_subject_values(data,generated_subjects[triples_map_id]["subject_attr"],"JSONPath")
 
-		if subject_attr == None:
-			subject = None
-			create_subject = False
-		else:
-			if triples_map_id in generated_subjects:
-				if subject_attr in generated_subjects[triples_map_id]:
-					subject = generated_subjects[triples_map_id][subject_attr]
-					create_subject = False
+			if subject_attr == None:
+				subject = None
+				create_subject = False
+			else:
+				if triples_map_id in generated_subjects:
+					if subject_attr in generated_subjects[triples_map_id]:
+						subject = generated_subjects[triples_map_id][subject_attr]
+						create_subject = False
 
 		if create_subject:
 			subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject",ignore,iterator) 		
@@ -1922,15 +1980,16 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					except:
 						subject = None
 
-			if triples_map_id in generated_subjects:
-				if subject_attr in generated_subjects[triples_map_id]:
-					pass
+			if mapping_partitions == "yes":
+				if triples_map_id in generated_subjects:
+					if subject_attr in generated_subjects[triples_map_id]:
+						pass
+					else:
+						generated_subjects[triples_map_id][subject_attr] = subject
 				else:
-					generated_subjects[triples_map_id][subject_attr] = subject
-			else:
-				generated_subjects[triples_map_id] = {subject_attr : subject}
+					generated_subjects[triples_map_id] = {subject_attr : subject}
 
-		if triples_map.subject_map.rdf_class != None and subject != None:
+		if triples_map.subject_map.rdf_class != [None] and subject != None:
 			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 			for rdf_class in triples_map.subject_map.rdf_class:
 				if rdf_class != None:
@@ -2451,29 +2510,44 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	global generated_subjects
 	print("TM:",triples_map.triples_map_name)
 
+	if mapping_partitions == "yes":
+		if triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+			if output_format.lower() == "n-triples":
+				predicate = "<" + triples_map.predicate_object_maps_list[0].predicate_map.value + ">"
+			else:
+				predicate = determine_prefix(triples_map.predicate_object_maps_list[0].predicate_map.value)
+			constant_predicate = False
+		else:
+			predicate = None
+			constant_predicate = True
+	else:
+		predicate = None
+		constant_predicate = True
+
 	for row in data:
 		generated = 0
 		duplicate_type = False
 		create_subject = True
 		global generated_subjects
-		if "_" in triples_map.triples_map_id:
-			componets = triples_map.triples_map_id.split("_")[:-1]
-			triples_map_id = ""
-			for name in componets:
-				triples_map_id += name + "_"
-			triples_map_id = triples_map_id[:-1]
-		else:
-			triples_map_id = triples_map.triples_map_id
+		if mapping_partitions == "yes":
+			if "_" in triples_map.triples_map_id:
+				componets = triples_map.triples_map_id.split("_")[:-1]
+				triples_map_id = ""
+				for name in componets:
+					triples_map_id += name + "_"
+				triples_map_id = triples_map_id[:-1]
+			else:
+				triples_map_id = triples_map.triples_map_id
 
-		subject_attr = ""
-		for attr in generated_subjects[triples_map_id]["subject_attr"]:
-			subject_attr += str(row[attr]) + "_"
-		subject_attr = subject_attr[:-1]
+			if triples_map_id in generated_subjects:
+				subject_attr = ""
+				for attr in generated_subjects[triples_map_id]["subject_attr"]:
+					subject_attr += str(row[attr]) + "_"
+				subject_attr = subject_attr[:-1]
 
-		if triples_map_id in generated_subjects:
-			if subject_attr in generated_subjects[triples_map_id]:
-				subject = generated_subjects[triples_map_id][subject_attr]
-				create_subject = False
+				if subject_attr in generated_subjects[triples_map_id]:
+					subject = generated_subjects[triples_map_id][subject_attr]
+					create_subject = False
 
 		if create_subject:	
 			if triples_map.subject_map.subject_mapping_type == "template":
@@ -2601,16 +2675,17 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					except:
 						subject = None
 
-			if triples_map_id in generated_subjects:
-				if subject_attr in generated_subjects[triples_map_id]:
-					pass
+			if mapping_partitions == "yes":
+				if triples_map_id in generated_subjects:
+					if subject_attr in generated_subjects[triples_map_id]:
+						pass
+					else:
+						generated_subjects[triples_map_id][subject_attr] = subject
 				else:
-					generated_subjects[triples_map_id][subject_attr] = subject
-			else:
-				generated_subjects[triples_map_id] = {subject_attr : subject}
+					generated_subjects[triples_map_id] = {subject_attr : subject}
 
 
-		if triples_map.subject_map.rdf_class != None and subject != None:
+		if triples_map.subject_map.rdf_class != [None] and subject != None:
 			predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 			for rdf_class in triples_map.subject_map.rdf_class:
 				if rdf_class != None and  "str" == type(rdf_class).__name__:
@@ -2655,38 +2730,39 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			output_file_descriptor.write(".\n")
 		
 		for predicate_object_map in triples_map.predicate_object_maps_list:
-			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-				if output_format.lower() == "n-triples":
-					predicate = "<" + predicate_object_map.predicate_map.value + ">"
-				else:
-					predicate = determine_prefix(predicate_object_map.predicate_map.value)
-			elif predicate_object_map.predicate_map.mapping_type == "template":
-				if predicate_object_map.predicate_map.condition != "":
-						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-						#if row[field] == condition:
+			if constant_predicate:
+				if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+					if output_format.lower() == "n-triples":
+						predicate = "<" + predicate_object_map.predicate_map.value + ">"
+					else:
+						predicate = determine_prefix(predicate_object_map.predicate_map.value)
+				elif predicate_object_map.predicate_map.mapping_type == "template":
+					if predicate_object_map.predicate_map.condition != "":
+							#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+							#if row[field] == condition:
+							try:
+								predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate",ignore, triples_map.iterator) + ">"
+							except:
+								predicate = None
+							#else:
+							#	predicate = None
+					else:
 						try:
 							predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate",ignore, triples_map.iterator) + ">"
 						except:
 							predicate = None
+				elif predicate_object_map.predicate_map.mapping_type == "reference":
+					if predicate_object_map.predicate_map.condition != "":
+						#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
+						#if row[field] == condition:
+						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
 						#else:
 						#	predicate = None
+					else:
+						predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
+					predicate = "<" + predicate[1:-1] + ">"
 				else:
-					try:
-						predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}", row, "predicate",ignore, triples_map.iterator) + ">"
-					except:
-						predicate = None
-			elif predicate_object_map.predicate_map.mapping_type == "reference":
-				if predicate_object_map.predicate_map.condition != "":
-					#field, condition = condition_separetor(predicate_object_map.predicate_map.condition)
-					#if row[field] == condition:
-					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
-					#else:
-					#	predicate = None
-				else:
-					predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row, "predicate",ignore, triples_map.iterator)
-				predicate = "<" + predicate[1:-1] + ">"
-			else:
-				predicate = None
+					predicate = None
 
 			if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 				if "/" in predicate_object_map.object_map.value:
@@ -3218,7 +3294,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				continue
 	return i
 
-def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, host, port, user, password,dbase):
+def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, host, port, user, password,dbase, predicate):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -3253,24 +3329,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 	create_subject = True
 	i = 0
 
-	if "_" in triples_map.triples_map_id:
-		componets = triples_map.triples_map_id.split("_")[:-1]
-		triples_map_id = ""
-		for name in componets:
-			triples_map_id += name + "_"
-		triples_map_id = triples_map_id[:-1]
-	else:
-		triples_map_id = triples_map.triples_map_id
+	if mapping_partitions == "yes":
+		if "_" in triples_map.triples_map_id:
+			componets = triples_map.triples_map_id.split("_")[:-1]
+			triples_map_id = ""
+			for name in componets:
+				triples_map_id += name + "_"
+			triples_map_id = triples_map_id[:-1]
+		else:
+			triples_map_id = triples_map.triples_map_id
 
-	subject_attr = ""
-	for attr in generated_subjects[triples_map_id]["subject_attr"]:
-		subject_attr += str(row[row_headers.index(attr)]) + "_"
-	subject_attr = subject_attr[:-1]
+		if triples_map_id in generated_subjects:
+			subject_attr = ""
+			for attr in generated_subjects[triples_map_id]["subject_attr"]:
+				subject_attr += str(row[row_headers.index(attr)]) + "_"
+			subject_attr = subject_attr[:-1]
 
-	if triples_map_id in generated_subjects:
-		if subject_attr in generated_subjects[triples_map_id]:
-			subject = generated_subjects[triples_map_id][subject_attr]
-			create_subject = False
+			if subject_attr in generated_subjects[triples_map_id]:
+				subject = generated_subjects[triples_map_id][subject_attr]
+				create_subject = False
 
 	if create_subject:
 		subject_value = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject",ignore)
@@ -3408,15 +3485,16 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 				except:
 					subject = None
 
-		if triples_map_id in generated_subjects:
-			if subject_attr in generated_subjects[triples_map_id]:
-				pass
+		if mapping_partitions == "yes":
+			if triples_map_id in generated_subjects:
+				if subject_attr in generated_subjects[triples_map_id]:
+					pass
+				else:
+					generated_subjects[triples_map_id][subject_attr] = subject
 			else:
-				generated_subjects[triples_map_id][subject_attr] = subject
-		else:
-			generated_subjects[triples_map_id] = {subject_attr : subject}
+				generated_subjects[triples_map_id] = {subject_attr : subject}
 
-	if triples_map.subject_map.rdf_class != None and subject != None:
+	if triples_map.subject_map.rdf_class != [None] and subject != None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 		for rdf_class in triples_map.subject_map.rdf_class:
 			if rdf_class != None:
@@ -3447,24 +3525,25 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						i += 1
 
 	for predicate_object_map in triples_map.predicate_object_maps_list:
-		if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-			predicate = "<" + predicate_object_map.predicate_map.value + ">"
-		elif predicate_object_map.predicate_map.mapping_type == "template":
-			if predicate_object_map.predicate_map.condition != "":
-				try:
-					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-				except:
-					predicate = None
+		if predicate == None:
+			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+				predicate = "<" + predicate_object_map.predicate_map.value + ">"
+			elif predicate_object_map.predicate_map.mapping_type == "template":
+				if predicate_object_map.predicate_map.condition != "":
+					try:
+						predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+					except:
+						predicate = None
+				else:
+					try:
+						predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+					except:
+						predicate = None
+			elif predicate_object_map.predicate_map.mapping_type == "reference":
+				predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+				predicate = "<" + predicate[1:-1] + ">"
 			else:
-				try:
-					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-				except:
-					predicate = None
-		elif predicate_object_map.predicate_map.mapping_type == "reference":
-			predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
-			predicate = "<" + predicate[1:-1] + ">"
-		else:
-			predicate = None
+				predicate = None
 
 		if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 			if "/" in predicate_object_map.object_map.value:
@@ -3906,9 +3985,10 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 			object_list = []
 		else:
 			continue
+		predicate = None
 	return i
 
-def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, user, password, db, host):
+def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, user, password, db, host, predicate):
 
 	"""
 	(Private function, not accessible from outside this package)
@@ -3941,24 +4021,26 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 	global blank_message
 	global generated_subjects
 	i = 0
-	if "_" in triples_map.triples_map_id:
-		componets = triples_map.triples_map_id.split("_")[:-1]
-		triples_map_id = ""
-		for name in componets:
-			triples_map_id += name + "_"
-		triples_map_id = triples_map_id[:-1]
-	else:
-		triples_map_id = triples_map.triples_map_id
+	create_subject = True
+	if mapping_partitions == "yes":
+		if "_" in triples_map.triples_map_id:
+			componets = triples_map.triples_map_id.split("_")[:-1]
+			triples_map_id = ""
+			for name in componets:
+				triples_map_id += name + "_"
+			triples_map_id = triples_map_id[:-1]
+		else:
+			triples_map_id = triples_map.triples_map_id
 
-	subject_attr = ""
-	for attr in generated_subjects[triples_map_id]["subject_attr"]:
-		subject_attr += str(row[row_headers.index(attr)]) + "_"
-	subject_attr = subject_attr[:-1]
+		if triples_map_id in generated_subjects:
+			subject_attr = ""
+			for attr in generated_subjects[triples_map_id]["subject_attr"]:
+				subject_attr += str(row[row_headers.index(attr)]) + "_"
+			subject_attr = subject_attr[:-1]
 
-	if triples_map_id in generated_subjects:
-		if subject_attr in generated_subjects[triples_map_id]:
-			subject = generated_subjects[triples_map_id][subject_attr]
-			create_subject = False
+			if subject_attr in generated_subjects[triples_map_id]:
+				subject = generated_subjects[triples_map_id][subject_attr]
+				create_subject = False
 
 	if create_subject:
 		subject_value = string_substitution_array(triples_map.subject_map.value, "{(.+?)}", row, row_headers, "subject",ignore)
@@ -4104,15 +4186,16 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 				except:
 					subject = None
 
-		if triples_map_id in generated_subjects:
-			if subject_attr in generated_subjects[triples_map_id]:
-				pass
+		if mapping_partitions == "yes":
+			if triples_map_id in generated_subjects:
+				if subject_attr in generated_subjects[triples_map_id]:
+					pass
+				else:
+					generated_subjects[triples_map_id][subject_attr] = subject
 			else:
-				generated_subjects[triples_map_id][subject_attr] = subject
-		else:
-			generated_subjects[triples_map_id] = {subject_attr : subject}
+				generated_subjects[triples_map_id] = {subject_attr : subject}
 
-	if triples_map.subject_map.rdf_class != None and subject != None:
+	if triples_map.subject_map.rdf_class != [None] and subject != None:
 		predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 		for rdf_class in triples_map.subject_map.rdf_class:
 			if rdf_class != None:
@@ -4152,24 +4235,25 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						i += 1
 
 	for predicate_object_map in triples_map.predicate_object_maps_list:
-		if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-			predicate = "<" + predicate_object_map.predicate_map.value + ">"
-		elif predicate_object_map.predicate_map.mapping_type == "template":
-			if predicate_object_map.predicate_map.condition != "":
-				try:
-					predicate = "<" + string_substitution_postgres(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-				except:
-					predicate = None
+		if predicate == None:
+			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+				predicate = "<" + predicate_object_map.predicate_map.value + ">"
+			elif predicate_object_map.predicate_map.mapping_type == "template":
+				if predicate_object_map.predicate_map.condition != "":
+					try:
+						predicate = "<" + string_substitution_postgres(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+					except:
+						predicate = None
+				else:
+					try:
+						predicate = "<" + string_substitution_postgres(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+					except:
+						predicate = None
+			elif predicate_object_map.predicate_map.mapping_type == "reference":
+				predicate = string_substitution_postgres(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+				predicate = "<" + predicate[1:-1] + ">"
 			else:
-				try:
-					predicate = "<" + string_substitution_postgres(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-				except:
-					predicate = None
-		elif predicate_object_map.predicate_map.mapping_type == "reference":
-			predicate = string_substitution_postgres(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
-			predicate = "<" + predicate[1:-1] + ">"
-		else:
-			predicate = None
+				predicate = None
 
 		if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 			if "/" in predicate_object_map.object_map.value:
@@ -4533,6 +4617,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 			object_list = []
 		else:
 			continue
+		predicate = None
 	return i
 
 
@@ -4555,6 +4640,13 @@ def semantify(config_path, log_path='error.log'):
 		output_format = config["datasets"]["output_format"]
 	else:
 		output_format = "n-triples"
+
+	global mapping_partitions
+	if "mapping_partitions" in config["datasets"]:
+		mapping_partitions = config["datasets"]["mapping_partitions"]
+	else:
+		mapping_partitions = "no"
+
 	enrichment = config["datasets"]["enrichment"]
 
 	if not os.path.exists(config["datasets"]["output_folder"]):
@@ -4598,47 +4690,55 @@ def semantify(config_path, log_path='error.log'):
 												reader = reader.drop_duplicates(keep ='first')
 											data = reader.to_dict(orient='records')
 											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-												generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
-										else:
-											for triples_map in sorted_sources[source_type][source]:
-												with open(source, "r", encoding = "latin-1") as input_file_descriptor:
-													if ".csv" in source:
-														data = csv.DictReader(input_file_descriptor, delimiter=',')
-													else:
-														data = csv.DictReader(input_file_descriptor, delimiter='\t')
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
 													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 													if duplicate == "yes":
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+													if mapping_partitions == "yes":
+														generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+										else:
+											for triples_map in sorted_sources[source_type][source]:
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+													with open(source, "r", encoding = "latin-1") as input_file_descriptor:
+														if ".csv" in source:
+															data = csv.DictReader(input_file_descriptor, delimiter=',')
+														else:
+															data = csv.DictReader(input_file_descriptor, delimiter='\t')
+														blank_message = True
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
+														if duplicate == "yes":
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														if mapping_partitions == "yes":
+															generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											if "http" in sorted_sources[source_type][source][triples_map].data_source:
-												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
-												data = json.loads(response.read())
-											else:
-												data = json.load(open(source))
-											blank_message = True
-											if isinstance(data, list):
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-											else:
-												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												if "http" in sorted_sources[source_type][source][triples_map].data_source:
+													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+													data = json.loads(response.read())
+												else:
+													data = json.load(open(source))
+												blank_message = True
+												if isinstance(data, list):
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+												else:
+													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "XPath":
-										for source in order_list[source_type]:
-											for triples_map in sorted_sources[source_type][source]:
+									for source in order_list[source_type]:
+										for triples_map in sorted_sources[source_type][source]:
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:													
 												blank_message = True
 												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
-												generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)		
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)		
 						else:
 							for source_type in sorted_sources:
 								if source_type == "csv":
@@ -4653,47 +4753,55 @@ def semantify(config_path, log_path='error.log'):
 												reader = reader.drop_duplicates(keep ='first')
 											data = reader.to_dict(orient='records')
 											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-												generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
-										else:
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												with open(source, "r", encoding = "latin-1") as input_file_descriptor:
-													if ".csv" in source:
-														data = csv.DictReader(input_file_descriptor, delimiter=',')
-													else:
-														data = csv.DictReader(input_file_descriptor, delimiter='\t')
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 													if duplicate == "yes":
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+													if mapping_partitions == "yes":
+														generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+										else:
+											for triples_map in sorted_sources[source_type][source]:
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+													blank_message = True
+													with open(source, "r", encoding = "latin-1") as input_file_descriptor:
+														if ".csv" in source:
+															data = csv.DictReader(input_file_descriptor, delimiter=',')
+														else:
+															data = csv.DictReader(input_file_descriptor, delimiter='\t')
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
+														if duplicate == "yes":
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														if mapping_partitions == "yes":
+															generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											if "http" in sorted_sources[source_type][source][triples_map].data_source:
-												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
-												data = json.loads(response.read())
-											else:
-												data = json.load(open(source))
-											blank_message = True
-											if isinstance(data, list):
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-											else:
-												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												if "http" in sorted_sources[source_type][source][triples_map].data_source:
+													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+													data = json.loads(response.read())
+												else:
+													data = json.load(open(source))
+												blank_message = True
+												if isinstance(data, list):
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+												else:
+													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "XPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											blank_message = True
-											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												blank_message = True
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
 					if predicate_list:
 						for source_type in order_list:
 							blank_message = True
@@ -4711,23 +4819,32 @@ def semantify(config_path, log_path='error.log'):
 										row_headers=[x[0] for x in cursor.description]
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
-											print("TM:", sorted_sources[source_type][source][triples_map].triples_map_name)
-											if data == []:
-												for row in cursor:
-													if config[dataset_i]["db"].lower() != "none":
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_name)
+												if mapping_partitions == "yes":
+													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
 													else:
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-													data.append(row)
-											else:
-												for row in data:
-													if config[dataset_i]["db"].lower() != "none":
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
-													else:
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+														predicate = None
+												else:
+													predicate = None
+												if data == []:
+													for row in cursor:
+														if config[dataset_i]["db"].lower() != "none":
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"],predicate).result()
+														else:
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None",predicate).result()
+														data.append(row)
+												else:
+													for row in data:
+														if config[dataset_i]["db"].lower() != "none":
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"],predicate).result()
+														else:
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None",predicate).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "postgres":
 									for source in sorted_sources[source_type]:
 										db = psycopg2.connect( host=config[dataset_i]["host"], user= config[dataset_i]["user"], password=config[dataset_i]["password"], dbname=config[dataset_i]["db"] )
@@ -4736,17 +4853,26 @@ def semantify(config_path, log_path='error.log'):
 										row_headers=[x[0] for x in cursor.description]
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
-											print("TM:", triples_map.triples_map_name)
-											if data == []:
-												for row in cursor:
-													number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-													data.append(row)
-											else:
-												for row in data:
-													number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(triples_map,predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)					
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												print("TM:", triples_map.triples_map_name)
+												if mapping_partitions == "yes":
+													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
+													else:
+														predicate = None
+												else:
+													predicate = None
+												if data == []:
+													for row in cursor:
+														number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"],predicate).result()
+														data.append(row)
+												else:
+													for row in data:
+														number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"],predicate).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(triples_map,predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)					
 								else:
 									logger.error("Invalid reference formulation or format. Aborting...")
 									sys.exit(1)
@@ -4780,44 +4906,52 @@ def semantify(config_path, log_path='error.log'):
 												reader = reader.drop_duplicates(keep ='first')
 											data = reader.to_dict(orient='records')
 											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-												generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
-										else:
-											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												with open(source, "r", encoding = "latin-1") as input_file_descriptor:
-													data = csv.DictReader(input_file_descriptor, delimiter=',') 
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 													if duplicate == "yes":
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+													if mapping_partitions == "yes":
+														generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+										else:
+											for triples_map in sorted_sources[source_type][source]:
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+													blank_message = True
+													with open(source, "r", encoding = "latin-1") as input_file_descriptor:
+														data = csv.DictReader(input_file_descriptor, delimiter=',') 
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
+														if duplicate == "yes":
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														if mapping_partitions == "yes":
+															generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "JSONPath":
 									for source in order_list[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											if "http" in sorted_sources[source_type][source][triples_map].data_source:
-												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
-												data = json.loads(response.read())
-											else:
-												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
-											blank_message = True
-											if isinstance(data, list):
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
-											else:
-												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												if "http" in sorted_sources[source_type][source][triples_map].data_source:
+													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+													data = json.loads(response.read())
+												else:
+													data = json.load(sorted_sources[source_type][source][triples_map].data_source)
+												blank_message = True
+												if isinstance(data, list):
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
+												else:
+													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "XPath":
 									for source in order_list[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											blank_message = True
-											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)		
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												blank_message = True
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":	
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)		
 						else:
 							for source_type in sorted_sources:
 								if source_type == "csv":
@@ -4829,43 +4963,52 @@ def semantify(config_path, log_path='error.log'):
 												reader = reader.drop_duplicates(keep ='first')
 											data = reader.to_dict(orient='records')
 											for triples_map in sorted_sources[source_type][source]:
-												blank_message = True
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
-												if duplicate == "yes":
-													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)	
-										else:
-											with open(source, "r", encoding = "latin-1") as input_file_descriptor:
-												data = csv.DictReader(input_file_descriptor, delimiter=',') 
-												for triples_map in sorted_sources[source_type][source]:
+												if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
 													blank_message = True
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
 													if duplicate == "yes":
 														predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-														generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+													if mapping_partitions == "yes":	
+														generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)		
+										else:
+											with open(source, "r", encoding = "latin-1") as input_file_descriptor:
+												data = csv.DictReader(input_file_descriptor, delimiter=',') 
+												for triples_map in sorted_sources[source_type][source]:
+													if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+														blank_message = True
+														number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",", output_file_descriptor, data).result()
+														if duplicate == "yes":
+															predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+														if mapping_partitions == "yes":
+															generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "JSONPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											if "http" in sorted_sources[source_type][source][triples_map].data_source:
-												response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
-												data = json.loads(response.read())
-											else:
-												data = json.load(sorted_sources[source_type][source][triples_map].data_source)
-											blank_message = True
-											if isinstance(data, list):
-												number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-											else:
-												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												if "http" in sorted_sources[source_type][source][triples_map].data_source:
+													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
+													data = json.loads(response.read())
+												else:
+													data = json.load(sorted_sources[source_type][source][triples_map].data_source)
+												blank_message = True
+												if isinstance(data, list):
+													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
+												else:
+													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 								elif source_type == "XPath":
 									for source in sorted_sources[source_type]:
 										for triples_map in sorted_sources[source_type][source]:
-											blank_message = True
-											number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:												
+												blank_message = True
+												number_triple += executor.submit(semantify_xml, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
 					
 					if predicate_list:
 						for source_type in order_list:
@@ -4884,23 +5027,32 @@ def semantify(config_path, log_path='error.log'):
 										row_headers=[x[0] for x in cursor.description]
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
-											print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
-											if data == []:
-												for row in cursor:
-													if config[dataset_i]["db"].lower() != "none":
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
+												if mapping_partitions == "yes":
+													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
 													else:
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-													data.append(row)
-											else:
-												for row in data:
-													if config[dataset_i]["db"].lower() != "none":
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"]).result()
-													else:
-														number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None").result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+														predicate = None
+												else:
+													predicate = None
+												if data == []:
+													for row in cursor:
+														if config[dataset_i]["db"].lower() != "none":
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"],predicate).result()
+														else:
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None",predicate).result()
+														data.append(row)
+												else:
+													for row in data:
+														if config[dataset_i]["db"].lower() != "none":
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],config[dataset_i]["db"],predicate).result()
+														else:
+															number_triple += executor.submit(semantify_mysql, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor, config[dataset_i]["host"], int(config[dataset_i]["port"]), config[dataset_i]["user"], config[dataset_i]["password"],"None",predicate).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 										data = []
 								elif source_type == "postgres":
 									for source in sorted_sources[source_type]:
@@ -4910,17 +5062,26 @@ def semantify(config_path, log_path='error.log'):
 										row_headers=[x[0] for x in cursor.description]
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
-											print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
-											if data == []:
-												for row in cursor:
-													number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-													data.append(row)
-											else:
-												for row in data:
-													number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"]).result()
-											if duplicate == "yes":
-												predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
-											generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
+											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
+												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
+												if mapping_partitions == "yes":
+													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
+														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
+													else:
+														predicate = None
+												else:
+													predicate = None
+												if data == []:
+													for row in cursor:
+														number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"],preidcate).result()
+														data.append(row)
+												else:
+													for row in data:
+														number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"],predicate).result()
+												if duplicate == "yes":
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
+												if mapping_partitions == "yes":
+													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)
 										data = []
 								else:
 									logger.error("Invalid reference formulation or format. Aborting...")

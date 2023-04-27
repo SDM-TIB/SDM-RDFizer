@@ -119,17 +119,9 @@ def translate_sql(triples_map):
                 temp_query += "`" + pr + "`, " 
     temp_query = temp_query[:-2] 
     if triples_map.tablename != "None":
-        temp_query = temp_query + " FROM " + triples_map.tablename + " WHERE " 
+        temp_query = temp_query + " FROM " + triples_map.tablename 
     else:
-        temp_query = temp_query + " FROM " + triples_map.data_source + " WHERE " 
-    for p in proyections:
-        if type(p) == str:
-            if p != "None":
-                temp_query += "`" + p + "` IS NOT NULL AND "
-        elif type(p) == list:
-            for pr in p:
-                temp_query += "`" + pr + "` IS NOT NULL AND " 
-    temp_query = temp_query[:-5] 
+        temp_query = temp_query + " FROM " + triples_map.data_source 
     temp_query += ";"
     query_list.append(temp_query)
 
@@ -206,18 +198,10 @@ def translate_postgressql(triples_map):
 		else:
 			temp_query = temp_query[:-2] 
 	if triples_map.tablename != "None":
-		temp_query = temp_query + " FROM " + triples_map.tablename + " WHERE "
+		temp_query = temp_query + " FROM " + triples_map.tablename 
 	else:
-		temp_query = temp_query + " FROM " + triples_map.data_source + " WHERE "
+		temp_query = temp_query + " FROM " + triples_map.data_source 
 	
-	for p in proyections:
-		if type(p) == str:
-			if p != "None":
-				temp_query += "\"" + p + "\" IS NOT NULL AND "
-		elif type(p) == list:
-			for pr in p:
-				temp_query += "\"" + pr + "\" IS NOT NULL AND " 
-	temp_query = temp_query[:-5] 
 	temp_query += ";"
 	query_list.append(temp_query)
 	return triples_map.iterator, query_list
