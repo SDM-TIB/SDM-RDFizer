@@ -4803,7 +4803,7 @@ def semantify(config_path, log_path='error.log'):
 												if mapping_partitions == "yes":
 													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
 					if predicate_list:
-						for source_type in order_list:
+						for source_type in sorted_sources:
 							blank_message = True
 							if str(source_type).lower() != "csv" and source_type != "JSONPath" and source_type != "XPath":
 								if source_type == "mysql":
@@ -5011,7 +5011,7 @@ def semantify(config_path, log_path='error.log'):
 													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)	
 					
 					if predicate_list:
-						for source_type in order_list:
+						for source_type in sorted_sources:
 							blank_message = True
 							if str(source_type).lower() != "csv" and source_type != "JSONPath" and source_type != "XPath":
 								if source_type == "mysql":
