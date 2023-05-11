@@ -2177,7 +2177,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 													hash_maker(data_element, triples_map_element, predicate_object_map.object_map)
 												else:
 													data_element = json.load(input_file_descriptor)
-													if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+													if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]" and triples_map_element.iterator != "[*]":
 														join_iterator(data_element, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 													else:
 														hash_maker(data_element[list(data_element.keys())[0]], triples_map_element, predicate_object_map.object_map)
@@ -2186,7 +2186,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 											child_tree = ET.parse(input_file_descriptor)
 											child_root = child_tree.getroot()
-											hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)							
+											parent_map = {c: p for p in child_tree.iter() for c in p}
+											namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+											hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 									else:
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host=host, port=int(port), user=user, password=password)
@@ -2852,7 +2854,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													response = urlopen(triples_map_element.data_source)
 													data = json.loads(response.read())
 													if triples_map_element.iterator:
-														if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+														if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]" and triples_map_element.iterator != "[*]" and triples_map_element.iterator != "[*]":
 															join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 														else:
 															if isinstance(data, list):
@@ -2875,7 +2877,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 													else:
 														data = json.load(input_file_descriptor)
 														if triples_map_element.iterator:
-															if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+															if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]" and triples_map_element.iterator != "[*]" and triples_map_element.iterator != "[*]":
 																join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 															else:
 																if isinstance(data, list):
@@ -2892,7 +2894,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												child_tree = ET.parse(input_file_descriptor)
 												child_root = child_tree.getroot()
-												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
+												parent_map = {c: p for p in child_tree.iter() for c in p}
+												namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)									
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
@@ -2913,7 +2917,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 															response = urlopen(triples_map_element.data_source)
 															data = json.loads(response.read())
 															if triples_map_element.iterator:
-																if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+																if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]" and triples_map_element.iterator != "[*]":
 																	join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 																else:
 																	if isinstance(data, list):
@@ -2936,7 +2940,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 															else:
 																data = json.load(input_file_descriptor)
 																if triples_map_element.iterator:
-																	if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]":
+																	if triples_map_element.iterator != "None" and triples_map_element.iterator != "$.[*]" and triples_map_element.iterator != "[*]":
 																		join_iterator(data, triples_map_element.iterator, triples_map_element, predicate_object_map.object_map)
 																	else:
 																		if isinstance(data, list):
@@ -2981,7 +2985,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 												child_tree = ET.parse(input_file_descriptor)
 												child_root = child_tree.getroot()
-												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)						
+												parent_map = {c: p for p in child_tree.iter() for c in p}
+												namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 										else:
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
@@ -3645,7 +3651,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 										child_tree = ET.parse(input_file_descriptor)
 										child_root = child_tree.getroot()
-										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
+										parent_map = {c: p for p in child_tree.iter() for c in p}
+										namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)									
 								else:
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host = host, port = int(port), user = user, password = password)
@@ -3697,7 +3705,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 									with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 										child_tree = ET.parse(input_file_descriptor)
 										child_root = child_tree.getroot()
-										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)						
+										parent_map = {c: p for p in child_tree.iter() for c in p}
+										namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+										hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 								else:
 									database, query_list = translate_sql(triples_map_element)
 									db = connector.connect(host=host, port=int(port), user=user, password=password)
@@ -4351,7 +4361,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
 									child_tree = ET.parse(input_file_descriptor)
 									child_root = child_tree.getroot()
-									hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map)								
+									parent_map = {c: p for p in child_tree.iter() for c in p}
+									namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
+									hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)									
 							else:
 								db_element = psycopg2.connect( host=host, user=user, password=password, dbname=db )
 								cursor = db_element.cursor()
@@ -4782,7 +4794,7 @@ def semantify(config_path, log_path='error.log'):
 													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
 													data = json.loads(response.read())
 												else:
-													data = json.load(open(source))
+													data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
 												blank_message = True
 												if isinstance(data, list):
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
@@ -4989,7 +5001,7 @@ def semantify(config_path, log_path='error.log'):
 													response = urlopen(sorted_sources[source_type][source][triples_map].data_source)
 													data = json.loads(response.read())
 												else:
-													data = json.load(sorted_sources[source_type][source][triples_map].data_source)
+													data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
 												blank_message = True
 												if isinstance(data, list):
 													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
