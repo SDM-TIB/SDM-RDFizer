@@ -1501,7 +1501,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 												child_root = child_tree.getroot()
 												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 										else:
-											database, query_list = translate_sql(triples_map)
+											database, query_list = translate_sql(triples_map_element)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + datab)
@@ -2192,7 +2192,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 											namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
 											hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 									else:
-										database, query_list = translate_sql(triples_map)
+										database, query_list = translate_sql(triples_map_element)
 										db = connector.connect(host=host, port=int(port), user=user, password=password)
 										cursor = db.cursor(buffered=True)
 										cursor.execute("use " + datab)
@@ -2901,7 +2901,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 												namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
 												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)									
 										else:
-											database, query_list = translate_sql(triples_map)
+											database, query_list = translate_sql(triples_map_element)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + datab)
@@ -2992,7 +2992,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 												namespace = dict([node for _, node in ET.iterparse(str(triples_map_element.data_source),events=['start-ns'])])
 												hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map, parent_map, namespace)							
 										else:
-											database, query_list = translate_sql(triples_map)
+											database, query_list = translate_sql(triples_map_element)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
 											cursor.execute("use " + datab)
