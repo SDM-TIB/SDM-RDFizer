@@ -42,8 +42,8 @@ global output_format
 output_format = "n-triples"
 global start_time
 start_time = time.time()
-global user, password, port, host
-user, password, port, host = "", "", "", ""
+global user, password, port, host, datab
+user, password, port, host, db = "", "", "", "", ""
 global join_table 
 join_table = {}
 global po_table
@@ -1102,6 +1102,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 	generated_triples = {}
 	object_list = []
 	global blank_message
+	global host, port, user, password, datab
 	with open(str(triples_map.data_source), "r") as input_file_descriptor:
 		tree = ET.parse(input_file_descriptor)
 		root = tree.getroot()
@@ -1503,7 +1504,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
-											cursor.execute("use " + database)
+											cursor.execute("use " + datab)
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
@@ -1759,6 +1760,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 	generated_triples = {}
 	object_list = []
 	global blank_message
+	global host, port, user, password, datab
 	i = 0
 	if iterator != "None" and iterator != "$.[*]" and iterator != "":
 		new_iterator = ""
@@ -2193,7 +2195,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 										database, query_list = translate_sql(triples_map)
 										db = connector.connect(host=host, port=int(port), user=user, password=password)
 										cursor = db.cursor(buffered=True)
-										cursor.execute("use " + database)
+										cursor.execute("use " + datab)
 										for query in query_list:
 											cursor.execute(query)
 										hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
@@ -2510,6 +2512,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	no_update = True
 	global blank_message
 	global generated_subjects
+	global user, password, port, host, datab
 	print("TM:",triples_map.triples_map_name)
 
 	if mapping_partitions == "yes":
@@ -2901,7 +2904,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
-											cursor.execute("use " + database)
+											cursor.execute("use " + datab)
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
@@ -2992,7 +2995,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 											database, query_list = translate_sql(triples_map)
 											db = connector.connect(host=host, port=int(port), user=user, password=password)
 											cursor = db.cursor(buffered=True)
-											cursor.execute("use " + database)
+											cursor.execute("use " + datab)
 											for query in query_list:
 												cursor.execute(query)
 											hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
@@ -4667,6 +4670,7 @@ def semantify(config_path, log_path='error.log'):
 	global number_triple
 	global blank_message
 	global generated_subjects
+	global user, password, port, host, datab
 	start = time.time()
 	if config["datasets"]["all_in_one_file"] == "no":
 
@@ -4680,6 +4684,13 @@ def semantify(config_path, log_path='error.log'):
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".nt"
 				else:
 					output_file = config["datasets"]["output_folder"] + "/" + config[dataset_i]["name"] + ".ttl"
+
+				if "host" in config[dataset_i]:
+					user = config[dataset_i]["user"]
+					password = config[dataset_i]["password"]
+					port = config[dataset_i]["port"]
+					host = config[dataset_i]["host"]
+					datab = config[dataset_i]["db"]
 				print("Semantifying {}...".format(config[dataset_i]["name"]))
 				
 				with open(output_file, "w") as output_file_descriptor:
@@ -4899,6 +4910,12 @@ def semantify(config_path, log_path='error.log'):
 			with open(output_file, "w") as output_file_descriptor:
 				for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
 					dataset_i = "dataset" + str(int(dataset_number) + 1)
+					if "host" in config[dataset_i]:
+						user = config[dataset_i]["user"]
+						password = config[dataset_i]["password"]
+						port = config[dataset_i]["port"]
+						host = config[dataset_i]["host"]
+						datab = config[dataset_i]["db"]
 					triples_map_list = mapping_parser(config[dataset_i]["mapping"])
 					base = extract_base(config[dataset_i]["mapping"])
 					if "turtle" == output_format.lower():
