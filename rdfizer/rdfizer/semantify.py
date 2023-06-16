@@ -4877,7 +4877,7 @@ def semantify(config_path, log_path='error.log'):
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
 											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
-												print("TM:", triples_map.triples_map_name)
+												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_name)
 												if mapping_partitions == "yes":
 													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
 														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
@@ -4893,7 +4893,7 @@ def semantify(config_path, log_path='error.log'):
 													for row in data:
 														number_triple += executor.submit(semantify_postgres, row, row_headers, sorted_sources[source_type][source][triples_map], triples_map_list, output_file_descriptor,config[dataset_i]["user"], config[dataset_i]["password"], config[dataset_i]["db"], config[dataset_i]["host"],predicate).result()
 												if duplicate == "yes":
-													predicate_list = release_PTT(triples_map,predicate_list)
+													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 												if mapping_partitions == "yes":
 													generated_subjects = release_subjects(sorted_sources[source_type][source][triples_map],generated_subjects)					
 								else:

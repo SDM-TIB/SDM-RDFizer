@@ -196,7 +196,10 @@ def translate_postgressql(triples_map):
 			else:
 				temp_query += "\"" + p + "\", " 
 		else:
-			temp_query = temp_query[:-2] 
+			if p == proyections[len(proyections)-1]:
+				temp_query = temp_query[:-2] 
+			else:
+				temp_query = temp_query[:-1] 
 	if triples_map.tablename != "None":
 		temp_query = temp_query + " FROM " + triples_map.tablename 
 	else:
