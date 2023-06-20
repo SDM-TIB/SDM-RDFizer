@@ -4385,8 +4385,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								data = cursor
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 						jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
-						if row[row_headers.index(predicate_object_map.object_map.child[0])] != None and row[row_headers.index(predicate_object_map.object_map.child[0])] in jt:
-							object_list = jt[row[row_headers.index(predicate_object_map.object_map.child[0])]]
+						if row[row_headers.index(predicate_object_map.object_map.child[0])] != None and str(row[row_headers.index(predicate_object_map.object_map.child[0])]) in jt:
+							object_list = jt[str(row[row_headers.index(predicate_object_map.object_map.child[0])])]
 						object = None
 					else:
 						if predicate_object_map.object_map.parent != None:
@@ -4407,8 +4407,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 									cursor.execute(triples_map_element.query)
 								hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
 							jt = join_table[triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]
-							if row[row_headers.index(predicate_object_map.object_map.child[0])] != None and row[row_headers.index(predicate_object_map.object_map.child[0])] in jt:
-								object_list = jt[row[row_headers.index(predicate_object_map.object_map.child[0])]]
+							if row[row_headers.index(predicate_object_map.object_map.child[0])] != None and str(row[row_headers.index(predicate_object_map.object_map.child[0])]) in jt:
+								object_list = str(jt[row[row_headers.index(predicate_object_map.object_map.child[0])]])
 							object = None
 						else:
 							try:
