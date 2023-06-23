@@ -4246,6 +4246,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						except:
 							output_file_descriptor.write(rdf_type.encode("utf-8"))
 						i += 1
+		predicate = None
 
 	for predicate_object_map in triples_map.predicate_object_maps_list:
 		if predicate == None:
