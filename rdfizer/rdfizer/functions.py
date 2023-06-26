@@ -703,29 +703,32 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 			elif "." in match:
 				if "[*]" in match:
-					child_list = row[match.split("[*]")[0]]
-					match = match.split(".")[1:]
-					if len(match) > 1:
-						for child in child_list:
-							found = False
-							value = child[match[0]]
-							for elem in match[1:]:
-								if elem in value:
-									value = value[elem]
-									found = True
-								else:
-									found = False
-									value = None
+					if match.split("[*]")[0] in row:
+						child_list = row[match.split("[*]")[0]]
+						match = match.split(".")[1:]
+						if len(match) > 1:
+							for child in child_list:
+								found = False
+								value = child[match[0]]
+								for elem in match[1:]:
+									if elem in value:
+										value = value[elem]
+										found = True
+									else:
+										found = False
+										value = None
+										break
+								if found:
 									break
-							if found:
-								break
-						value = None
+							value = None
+						else:
+							value = None
+							for child in child_list:
+								if match[0] in child:
+									value = child[match[0]]
+									break
 					else:
 						value = None
-						for child in child_list:
-							if match[0] in child:
-								value = child[match[0]]
-								break
 
 				else:
 					temp = match.split(".")
