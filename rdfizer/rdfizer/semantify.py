@@ -4640,13 +4640,17 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 def semantify(config_path, log_path='error.log'):
 	global logger
 	logger = get_logger(log_path)
-	start_time = time.time()
-	if os.path.isfile(config_path) == False:
-		logger.error("The configuration file " + config_path + " does not exist. Aborting...")
-		sys.exit(1)
 
 	config = ConfigParser(interpolation=ExtendedInterpolation())
-	config.read(config_path)
+	if isinstance(config_path, dict):
+		config.read_dict(config_path)
+	else:
+		if not os.path.isfile(config_path):
+			logger.error("The configuration file " + config_path + " does not exist. Aborting...")
+			sys.exit(1)
+		config.read(config_path)
+
+	start_time = time.time()
 
 	global duplicate
 	duplicate = config["datasets"]["remove_duplicate"]
