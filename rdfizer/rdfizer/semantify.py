@@ -1,15 +1,11 @@
-import os
 import csv
-import sys
 import rdflib
 from rdflib.plugins.sparql import prepareQuery
 from configparser import ConfigParser, ExtendedInterpolation
-import traceback
 from mysql import connector
 from concurrent.futures import ThreadPoolExecutor
 import time
 import json
-import xml.etree.ElementTree as ET
 import psycopg2
 import pandas as pd
 from urllib.request import urlopen
@@ -68,18 +64,19 @@ general_predicates = {"http://www.w3.org/2000/01/rdf-schema#subClassOf":"",
 						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
 						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
 
-logger = None
+logger: logging.Logger
 
 def get_logger(log_path='error.log'):
-	logger = logging.getLogger(__name__)
-	logger.setLevel(logging.INFO)
+	logger_ = logging.getLogger('rdfizer')
+	logger_.handlers.clear()
+	logger_.setLevel(logging.INFO)
 	formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
 	file_handler = logging.FileHandler(log_path)
 	file_handler.setLevel(logging.ERROR)  # the log should only contain errors
 	file_handler.setFormatter(formatter)  # include the time and error level in the log
-	logger.addHandler(file_handler)
-	logger.addHandler(logging.StreamHandler())  # directly print to the console
-	return logger
+	logger_.addHandler(file_handler)
+	logger_.addHandler(logging.StreamHandler())  # directly print to the console
+	return logger_
 
 def prefix_extraction(original):
 	string_prefixes = ""
@@ -331,7 +328,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 											if "." in value:
 												value = value.replace(".","2E")
 											if blank_message:
-												print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+												logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 												blank_message = False
 										else:
 											value = "_:" + encode_char(value).replace("%","")
@@ -358,7 +355,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 										if "." in value:
 											value = value.replace(".","2E")
 										if blank_message:
-											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 											blank_message = False
 									else:
 										value = "_:" + encode_char(value).replace("%","")
@@ -387,7 +384,7 @@ def hash_maker(parent_data, parent_subject, child_object):
 									if "." in value:
 										value = value.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -423,7 +420,7 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 										if "." in value:
 											value = value.replace(".","2E")
 										if blank_message:
-											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 											blank_message = False
 									else:
 										value = "_:" + encode_char(value).replace("%","")
@@ -452,7 +449,7 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 										if "." in value:
 											value = value.replace(".","2E")
 										if blank_message:
-											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 											blank_message = False
 									else:
 										value = "_:" + encode_char(value).replace("%","")
@@ -481,7 +478,7 @@ def hash_maker_list(parent_data, parent_subject, child_object):
 									if "." in value:
 										value = value.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -515,7 +512,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 									if "." in value:
 										value = value.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -542,7 +539,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 									if "." in value:
 										value = value.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -569,7 +566,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
 								if "." in value:
 									value = value.replace(".","2E")
 								if blank_message:
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 									blank_message = False
 							else:
 								value = "_:" + encode_char(value).replace("%","")
@@ -626,7 +623,7 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 									if "." in value:
 										value = value.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -653,7 +650,7 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 								if "/" in value:
 									value = "_:" + encode_char(value.replace("/","2F")).replace("%","")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									value = "_:" + encode_char(value).replace("%","")
@@ -680,7 +677,7 @@ def hash_maker_array_list(parent_data, parent_subject, child_object, r_w):
 							if "/" in value:
 								value = "_:" + encode_char(value.replace("/","2F")).replace("%","")
 								if blank_message:
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 									blank_message = False
 							else:
 								value = "_:" + encode_char(value).replace("%","")
@@ -1096,7 +1093,7 @@ def mapping_parser(mapping_file):
 
 
 def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
-	print("TM:", triples_map.triples_map_name)
+	logger.info("TM: " + triples_map.triples_map_name)
 	i = 0
 	triples_map_triples = {}
 	generated_triples = {}
@@ -1201,7 +1198,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 									if "/" in subject_value:
 										subject  = "_:" + encode_char(subject_value.replace("/","2F")).replace("%","")
 										if blank_message:
-											print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+											logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 											blank_message = False
 									else:
 										subject = "_:" + encode_char(subject_value).replace("%","") 
@@ -1248,7 +1245,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 								else:
 									subject = "<" + subject_value + ">"
 							else:
-								print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+								logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
 								subject = None 
 						except:
 							subject = None
@@ -1754,7 +1751,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 	return i
 
 def semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, data, iterator):
-	print("TM:", triples_map.triples_map_name)
+	logger.info("TM: " + triples_map.triples_map_name)
 
 	triples_map_triples = {}
 	generated_triples = {}
@@ -1896,7 +1893,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 								if "/" in subject_value:
 									subject  = "_:" + encode_char(subject_value.replace("/","2F")).replace("%","")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									subject = "_:" + encode_char(subject_value).replace("%","")
@@ -1942,7 +1939,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 							else:
 								subject = "<" + subject_value + ">"
 						else:
-							print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+							logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
 							subject = None 
 					except:
 						subject = None
@@ -2069,7 +2066,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator)
 						if "/" in object:
 							object  = object.replace("/","2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
+							logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
 						if "." in object:
 							object = object.replace(".","2E")
 						object = encode_char(object)
@@ -2303,7 +2300,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 														else:
 															object_list = []
 													else:
-														print("Requesting an element outside list range.")
+														logger.error("Requesting an element outside list range.")
 														object_list = []	
 
 									object = None
@@ -2513,7 +2510,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 	global blank_message
 	global generated_subjects
 	global user, password, port, host, datab
-	print("TM:",triples_map.triples_map_name)
+	logger.info("TM: " + triples_map.triples_map_name)
 
 	if mapping_partitions == "yes":
 		if triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or triples_map.predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
@@ -2604,7 +2601,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 									if "." in subject:
 										subject = subject.replace(".","2E")
 									if blank_message:
-										print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+										logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 										blank_message = False
 								else:
 									subject = "_:" + encode_char(subject_value).replace("%","")
@@ -2790,7 +2787,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 						if "/" in object:
 							object  = object.replace("/","2F")
 							if blank_message:
-								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+								logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 								blank_message = False
 						if "." in object:
 							object = object.replace(".","2E")
@@ -3409,7 +3406,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 								if "." in subject:
 									subject = subject.replace(".","2E")
 								if blank_message:
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 									blank_message = False
 							else:
 								subject = "_:" + encode_char(subject_value).replace("%","")
@@ -3454,7 +3451,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						else:
 							subject = "<" + subject_value + ">"
 					else:
-						print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+						logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
 						subject = None 
 				except:
 					subject = None
@@ -3572,7 +3569,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					if "/" in object:
 						object  = object.replace("/","2F")
 						if blank_message:
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+							logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 							blank_message = False
 					if "." in object:
 						object = object.replace(".","2E")
@@ -4108,7 +4105,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 								if "." in subject:
 									subject = subject.replace(".","2E")
 								if blank_message:
-									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+									logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 									blank_message = False
 							else:
 								subject = "_:" + encode_char(subject_value).replace("%","")
@@ -4155,7 +4152,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 						else:
 							subject = "<" + subject_value + ">"
 					else:
-						print("<http://example.com/base/" + subject_value + "> is an invalid URL")
+						logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
 						subject = None 
 				except:
 					subject = None
@@ -4287,7 +4284,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 					if "/" in object:
 						object  = encode_char(object.replace("/","2F")).replace("%","")
 						if blank_message:
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+							logger.warning("Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
 							blank_message = False
 					if "." in object:
 						object = object.replace(".","2E")
@@ -4640,13 +4637,17 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 def semantify(config_path, log_path='error.log'):
 	global logger
 	logger = get_logger(log_path)
-	start_time = time.time()
-	if os.path.isfile(config_path) == False:
-		logger.error("The configuration file " + config_path + " does not exist. Aborting...")
-		sys.exit(1)
 
 	config = ConfigParser(interpolation=ExtendedInterpolation())
-	config.read(config_path)
+	if isinstance(config_path, dict):
+		config.read_dict(config_path)
+	else:
+		if not os.path.isfile(config_path):
+			logger.error("The configuration file " + config_path + " does not exist. Aborting...")
+			sys.exit(1)
+		config.read(config_path)
+
+	start_time = time.time()
 
 	global duplicate
 	duplicate = config["datasets"]["remove_duplicate"]
@@ -4692,7 +4693,7 @@ def semantify(config_path, log_path='error.log'):
 					port = config[dataset_i]["port"]
 					host = config[dataset_i]["host"]
 					datab = config[dataset_i]["db"]
-				print("Semantifying {}...".format(config[dataset_i]["name"]))
+				logger.info("Semantifying {}...".format(config[dataset_i]["name"]))
 				
 				with open(output_file, "w") as output_file_descriptor:
 					if "turtle" == output_format.lower():
@@ -4844,7 +4845,7 @@ def semantify(config_path, log_path='error.log'):
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
 											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
-												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_name)
+												logger.info("TM: " + sorted_sources[source_type][source][triples_map].triples_map_name)
 												if mapping_partitions == "yes":
 													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
 														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
@@ -4878,7 +4879,7 @@ def semantify(config_path, log_path='error.log'):
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
 											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
-												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_name)
+												logger.info("TM: " + sorted_sources[source_type][source][triples_map].triples_map_name)
 												if mapping_partitions == "yes":
 													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
 														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
@@ -4900,7 +4901,7 @@ def semantify(config_path, log_path='error.log'):
 								else:
 									logger.error("Invalid reference formulation or format. Aborting...")
 									sys.exit(1)
-				print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
+				logger.info("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 	else:
 		if "turtle" == output_format.lower():
 			output_file = config["datasets"]["output_folder"] + "/" + config["datasets"]["name"] + ".ttl"
@@ -4922,7 +4923,7 @@ def semantify(config_path, log_path='error.log'):
 					if "turtle" == output_format.lower():
 						string_prefixes = prefix_extraction(config[dataset_i]["mapping"])
 						output_file_descriptor.write(string_prefixes)
-					print("Semantifying {}...".format(config[dataset_i]["name"]))
+					logger.info("Semantifying {}...".format(config[dataset_i]["name"]))
 					sorted_sources, predicate_list, order_list = files_sort(triples_map_list, config["datasets"]["ordered"],config)
 					if sorted_sources:
 						if order_list:
@@ -5058,7 +5059,7 @@ def semantify(config_path, log_path='error.log'):
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
 											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
-												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
+												logger.info("TM: " + sorted_sources[source_type][source][triples_map].triples_map_id)
 												if mapping_partitions == "yes":
 													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
 														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
@@ -5093,7 +5094,7 @@ def semantify(config_path, log_path='error.log'):
 										data = []
 										for triples_map in sorted_sources[source_type][source]:
 											if (len(sorted_sources[source_type][source][triples_map].predicate_object_maps_list) > 0 and sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value != "None") or sorted_sources[source_type][source][triples_map].subject_map.rdf_class != [None]:
-												print("TM:", sorted_sources[source_type][source][triples_map].triples_map_id)
+												logger.info("TM: " + sorted_sources[source_type][source][triples_map].triples_map_id)
 												if mapping_partitions == "yes":
 													if sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant" or sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.mapping_type == "constant shortcut":
 														predicate = "<" + sorted_sources[source_type][source][triples_map].predicate_object_maps_list[0].predicate_map.value + ">"
@@ -5116,11 +5117,11 @@ def semantify(config_path, log_path='error.log'):
 								else:
 									logger.error("Invalid reference formulation or format. Aborting...")
 									sys.exit(1)
-					print("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
+					logger.info("Successfully semantified {}.\n\n".format(config[dataset_i]["name"]))
 
 	duration = time.time() - start_time
 
-	print("Successfully semantified all datasets in {:.3f} seconds.".format(duration))
+	logger.info("Successfully semantified all datasets in {:.3f} seconds.".format(duration))
 
 		
 
