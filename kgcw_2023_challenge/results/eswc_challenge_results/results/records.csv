@@ -1,0 +1,5 @@
+Test Case, Execution Time
+10k rows 20 columns,9.1837
+100k rows 20 columns,76.6287
+1M rows 20 columns,742.151
+10M rows 20 columns,13810.1126
