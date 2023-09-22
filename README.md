@@ -84,7 +84,7 @@ You can easily customize your own configurations from the set of features that S
 
 ## Version 
 ```
-4.7.1.9
+4.7.2
 ```
 
 ## RML-Test Cases

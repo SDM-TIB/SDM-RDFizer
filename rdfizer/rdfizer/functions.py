@@ -234,30 +234,57 @@ def jsonpath_find(element, JSON, path, all_paths):
 def turtle_print(subject, predicate, object, object_list, duplicate_type, predicate_object_map, triples_map, output_file_descriptor, generated):
 	if object_list:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
-			if object == list(object_list.keys())[0] and len(object_list) == 1:
-				if duplicate_type:
-					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
-					return "."
+			if triples_map.subject_map.rdf_class == [None]:
+				output_file_descriptor.write(subject + " " + predicate + " " + object)
+				if object == list(object_list.keys())[0] and len(object_list) == 1:
+					if duplicate_type:
+						output_file_descriptor.write(".\n")
+						return "."
+					else:
+						output_file_descriptor.write(".\n\n")
+						return "."
+				elif object == list(object_list.keys())[0] and len(object_list) > 1:
+					if duplicate_type:
+						output_file_descriptor.write(",\n")
+						return ","
+					else:
+						output_file_descriptor.write(",\n")
+						return ","
+				elif object == list(object_list.keys())[len(object_list) - 1]:
+					if len(object_list) == 1:
+						output_file_descriptor.write(".\n\n")
+						return "."
+					else:
+						output_file_descriptor.write(".\n\n")
+						return "."
 				else:
-					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
-					return "."
-			elif object == list(object_list.keys())[0] and len(object_list) > 1:
-				if duplicate_type:
-					output_file_descriptor.write(subject + " " + predicate + " " + object+ ",\n")
+					output_file_descriptor.write(",\n")
 					return ","
-				else:
-					output_file_descriptor.write("		" + predicate + " " + object + ",\n")
-					return ","
-			elif object == list(object_list.keys())[len(object_list) - 1]:
-				if len(object_list) == 1:
-					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
-					return "."
-				else:
-					output_file_descriptor.write("			" + object + ".\n\n")
-					return "."
 			else:
-				output_file_descriptor.write("			" + object + ",\n")
-				return ","
+				if object == list(object_list.keys())[0] and len(object_list) == 1:
+					if duplicate_type:
+						output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n")
+						return "."
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+						return "."
+				elif object == list(object_list.keys())[0] and len(object_list) > 1:
+					if duplicate_type:
+						output_file_descriptor.write(subject + " " + predicate + " " + object+ ",\n")
+						return ","
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object + ",\n")
+						return ","
+				elif object == list(object_list.keys())[len(object_list) - 1]:
+					if len(object_list) == 1:
+						output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+						return "."
+					else:
+						output_file_descriptor.write("			" + object + ".\n\n")
+						return "."
+				else:
+					output_file_descriptor.write("			" + object + ",\n")
+					return ","
 		elif predicate_object_map != triples_map.predicate_object_maps_list[0]:
 			if object == list(object_list.keys())[len(object_list) - 1]:
 				if len(object_list) == 1:
@@ -274,7 +301,17 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 				return ";"
 
 		elif predicate_object_map == triples_map.predicate_object_maps_list[0]:
-			if object == list(object_list.keys())[len(object_list) - 1]:
+			if triples_map.subject_map.rdf_class == [None]:
+				if len(object_list) == 1:
+					if duplicate_type:
+						output_file_descriptor.write(subject + " " + predicate + " " + object)
+						return ";"
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object)
+						return ";"
+				else:
+					output_file_descriptor.write("			" + object + ";\n")
+			elif object == list(object_list.keys())[len(object_list) - 1]:
 				if len(object_list) == 1:
 					if duplicate_type:
 						output_file_descriptor.write(subject + " " + predicate + " " + object)
@@ -310,6 +347,9 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 				return ","
 	else:
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
+			if triples_map.subject_map.rdf_class == [None]:
+				output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+				return "."
 			if len(triples_map.predicate_object_maps_list) > 1:
 				if generated == 0:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
@@ -336,6 +376,9 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 				output_file_descriptor.write("		" + predicate + " " + object)
 				return ";"
 		elif predicate_object_map == triples_map.predicate_object_maps_list[0]:
+			if triples_map.subject_map.rdf_class == [None]:
+				output_file_descriptor.write(subject + " " + predicate + " " + object)
+				return ";"
 			if duplicate_type:
 				output_file_descriptor.write(subject + " " + predicate + " " + object)
 				return ";"
@@ -706,36 +749,62 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					if match.split("[*]")[0] in row:
 						child_list = row[match.split("[*]")[0]]
 						match = match.split(".")[1:]
-						if len(match) > 1:
-							for child in child_list:
-								found = False
+						object_list = []
+						for child in child_list:
+							if len(match) > 1:
 								value = child[match[0]]
-								for elem in match[1:]:
-									if elem in value:
-										value = value[elem]
-										found = True
-									else:
-										found = False
-										value = None
-										break
-								if found:
-									break
-							value = None
-						else:
-							value = None
-							for child in child_list:
+								for element in match:
+									if element in value:
+										value = value[element]
+							else:
 								if match[0] in child:
 									value = child[match[0]]
-									break
+								else:
+									value = None
+							if value is not None:
+								if (type(value).__name__) != "str":
+									if (type(value).__name__) != "float":
+										value = str(value)
+									else:
+										value = str(math.ceil(value))
+								else:
+									if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+										value = str(math.ceil(float(value))) 
+								if re.search("^[\s|\t]*$", value) is None:
+									if "http" not in value:
+										value = encode_char(value)
+									new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+									if "\\" in new_string:
+										new_string = new_string.replace("\\", "")
+										count = new_string.count("}")
+										i = 0
+										new_string = " " + new_string
+										while i < count:
+											new_string = "{" + new_string
+											i += 1
+									object_list.append(new_string)
+									new_string = string
+									offset_current_substitution = 0
+						return object_list
+						
 					else:
 						value = None
 
 				else:
 					temp = match.split(".")
-					value = row[temp[0]]
-					for t in temp:
-						if t != temp[0]:
-							value = value[t]						
+					if temp[0] in row:
+						value = row[temp[0]]
+						for element in temp[1:]:
+							if value != None:
+								if element in value:
+									value = value[element]
+								else:
+									return None
+							else:
+								return None
+					else:
+						return None						
 			else:
 				if match in row:
 					value = row[match]
@@ -819,9 +888,14 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						temp = match.split(".")
 						if temp[0] in row:
 							value = row[temp[0]]
-							for element in temp:
-								if element in value:
-									value = value[element]
+							for element in temp[1:]:
+								if value != None:
+									if element in value:
+										value = value[element]
+									else:
+										return None
+								else:
+									return None
 						else:
 							return None
 				else:

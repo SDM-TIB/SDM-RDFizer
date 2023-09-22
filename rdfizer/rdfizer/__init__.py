@@ -2061,33 +2061,53 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 					object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
 			elif predicate_object_map.object_map.mapping_type == "template":
 				try:
-					if predicate_object_map.object_map.term is None:
-						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
-					elif "IRI" in predicate_object_map.object_map.term:
-						object = "<" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + ">"
-					elif "BlankNode" in predicate_object_map.object_map.term:
-						object = "_:" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator)
-						if "/" in object:
-							object  = object.replace("/","2F")
-							print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
-						if "." in object:
-							object = object.replace(".","2E")
-						object = encode_char(object)
+					object = string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator)
+					if isinstance(object,list):
+						object_list = object
+						object = None
+						i = 0
+						while i < len(object_list):
+							if predicate_object_map.object_map.term is None:
+								object_list[i] = "<" + object_list[i] + ">"
+							elif "IRI" in predicate_object_map.object_map.term:
+								object_list[i] = "<" + object_list[i] + ">"
+							elif "BlankNode" in predicate_object_map.object_map.term:
+								object_list[i] = "_:" + object_list[i]
+								if "/" in object:
+									object_list[i]  = object_list[i].replace("/","2F")
+									print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
+								if "." in object_list[i]:
+									object_list[i] = object_list[i].replace(".","2E")
+								object_list[i] = encode_char(object_list[i])
+							i += 1
 					else:
-						object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
-						if predicate_object_map.object_map.datatype != None:
-							object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
-						elif predicate_object_map.object_map.language != None:
-							if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
-								object += "@es"
-							elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
-								object += "@en"
-							elif len(predicate_object_map.object_map.language) == 2:
-								object += "@"+predicate_object_map.object_map.language
-						elif predicate_object_map.object_map.language_map != None:
-							lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)
-							if lang != None:
-								object += "@" + string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
+						if predicate_object_map.object_map.term is None:
+							object = "<" + object + ">"
+						elif "IRI" in predicate_object_map.object_map.term:
+							object = "<" + object + ">"
+						elif "BlankNode" in predicate_object_map.object_map.term:
+							object = "_:" + object
+							if "/" in object:
+								object  = object.replace("/","2F")
+								print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
+							if "." in object:
+								object = object.replace(".","2E")
+							object = encode_char(object)
+						else:
+							object = "\"" + string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",ignore, iterator) + "\""
+							if predicate_object_map.object_map.datatype != None:
+								object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
+							elif predicate_object_map.object_map.language != None:
+								if "spanish" in predicate_object_map.object_map.language or "es" in predicate_object_map.object_map.language :
+									object += "@es"
+								elif "english" in predicate_object_map.object_map.language or "en" in predicate_object_map.object_map.language :
+									object += "@en"
+								elif len(predicate_object_map.object_map.language) == 2:
+									object += "@"+predicate_object_map.object_map.language
+							elif predicate_object_map.object_map.language_map != None:
+								lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)
+								if lang != None:
+									object += "@" + string_substitution_json(predicate_object_map.object_map.language_map, ".+", data, "object",ignore, iterator)[1:-1]
 				except TypeError:
 					object = None
 			elif predicate_object_map.object_map.mapping_type == "reference":
@@ -3050,15 +3070,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					dictionary_table_update(predicate)
 			
 			if output_format.lower() == "turtle" and triples_map.predicate_object_maps_list[0] == predicate_object_map and not duplicate_type:
-				if len(triples_map.predicate_object_maps_list) > 1:
-					output_file_descriptor.write(";\n")
-				elif len(triples_map.predicate_object_maps_list) == 1:
-					if object == None and object_list == []:
-						output_file_descriptor.write(".\n")
-					else:
+				if triples_map.subject_map.rdf_class != [None]:
+					if len(triples_map.predicate_object_maps_list) > 1:
 						output_file_descriptor.write(";\n")
-				elif len(triples_map.predicate_object_maps_list) == 0:
-					output_file_descriptor.write(".\n")					
+					elif len(triples_map.predicate_object_maps_list) == 1:
+						if object == None and object_list == []:
+							output_file_descriptor.write(".\n")
+						else:
+							output_file_descriptor.write(";\n")
+					elif len(triples_map.predicate_object_maps_list) == 0:
+						output_file_descriptor.write(".\n")					
 
 			if end_turtle == ";":
 				if predicate != None and object != None and subject != None:
@@ -4745,10 +4766,7 @@ def semantify(config_path, log_path='error.log'):
 												else:
 													data = json.load(open(source))
 												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 												if mapping_partitions == "yes":
@@ -4808,10 +4826,7 @@ def semantify(config_path, log_path='error.log'):
 												else:
 													data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
 												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 												if mapping_partitions == "yes":
@@ -4964,10 +4979,7 @@ def semantify(config_path, log_path='error.log'):
 												else:
 													data = json.load(sorted_sources[source_type][source][triples_map].data_source)
 												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor,  data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 												if mapping_partitions == "yes":
@@ -5021,10 +5033,7 @@ def semantify(config_path, log_path='error.log'):
 												else:
 													data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
 												blank_message = True
-												if isinstance(data, list):
-													number_triple += executor.submit(semantify_file, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data).result()
-												else:
-													number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
+												number_triple += executor.submit(semantify_json, sorted_sources[source_type][source][triples_map], triples_map_list, ",",output_file_descriptor, data, sorted_sources[source_type][source][triples_map].iterator).result()
 												if duplicate == "yes":
 													predicate_list = release_PTT(sorted_sources[source_type][source][triples_map],predicate_list)
 												if mapping_partitions == "yes":
