@@ -3077,10 +3077,12 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 					elif len(triples_map.predicate_object_maps_list) == 1:
 						if object == None and object_list == []:
 							output_file_descriptor.write(".\n")
+							end_turtle = "."
 						else:
 							output_file_descriptor.write(";\n")
 					elif len(triples_map.predicate_object_maps_list) == 0:
-						output_file_descriptor.write(".\n")					
+						output_file_descriptor.write(".\n")
+						end_turtle = "."					
 
 			if end_turtle == ";":
 				if predicate != None and object != None and subject != None:

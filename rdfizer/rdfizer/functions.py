@@ -236,7 +236,10 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
 			if triples_map.subject_map.rdf_class == [None]:
 				if len(triples_map.predicate_object_maps_list) > 1:
-					output_file_descriptor.write("		" + predicate + " " + object)
+					if generated == 0:
+						output_file_descriptor.write(subject + " " + predicate + " " + object)
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object)
 				else:
 					output_file_descriptor.write(subject + " " + predicate + " " + object)
 				if object == list(object_list.keys())[0] and len(object_list) == 1:
@@ -352,7 +355,12 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 		if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
 			if triples_map.subject_map.rdf_class == [None]:
 				if len(triples_map.predicate_object_maps_list) > 1:
-					output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+					if generated == 0:
+						output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
+						return "."
+					else:
+						output_file_descriptor.write("		" + predicate + " " + object + ".\n\n")
+						return "."
 				else:
 					output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
 				return "."
