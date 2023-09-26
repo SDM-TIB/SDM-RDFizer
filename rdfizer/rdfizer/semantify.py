@@ -3073,7 +3073,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 			if output_format.lower() == "turtle" and triples_map.predicate_object_maps_list[0] == predicate_object_map and not duplicate_type:
 				if triples_map.subject_map.rdf_class != [None]:
 					if len(triples_map.predicate_object_maps_list) > 1:
-						output_file_descriptor.write(";\n")
+							output_file_descriptor.write(";\n")
 					elif len(triples_map.predicate_object_maps_list) == 1:
 						if object == None and object_list == []:
 							output_file_descriptor.write(".\n")
@@ -3086,7 +3086,26 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 				if predicate != None and object != None and subject != None:
 					output_file_descriptor.write(";\n")
 				elif predicate != None and subject != None and object_list:
-					output_file_descriptor.write(";\n")
+					if triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1] == predicate_object_map:
+						temp_end = "."
+						for obj in object_list:
+							if predicate in general_predicates:
+								if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+									temp_end = ";"
+								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+									temp_end = ";"
+							else:
+								if dic_table[predicate] not in g_triples:
+									temp_end = ";"
+								elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
+									temp_end = ";"
+						if temp_end == ".":
+							output_file_descriptor.write(".\n\n")
+							end_turtle = "."
+						else:
+							output_file_descriptor.write(";\n")
+					else:
+						output_file_descriptor.write(";\n")
 				else:
 					if predicate_object_map == triples_map.predicate_object_maps_list[len(triples_map.predicate_object_maps_list)-1]:
 						output_file_descriptor.write(".\n\n")
