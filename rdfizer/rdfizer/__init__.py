@@ -3577,25 +3577,24 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 						i += 1
 
 	for predicate_object_map in triples_map.predicate_object_maps_list:
-		if predicate == None:
-			if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
-				predicate = "<" + predicate_object_map.predicate_map.value + ">"
-			elif predicate_object_map.predicate_map.mapping_type == "template":
-				if predicate_object_map.predicate_map.condition != "":
-					try:
-						predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-					except:
-						predicate = None
-				else:
-					try:
-						predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
-					except:
-						predicate = None
-			elif predicate_object_map.predicate_map.mapping_type == "reference":
-				predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
-				predicate = "<" + predicate[1:-1] + ">"
+		if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
+			predicate = "<" + predicate_object_map.predicate_map.value + ">"
+		elif predicate_object_map.predicate_map.mapping_type == "template":
+			if predicate_object_map.predicate_map.condition != "":
+				try:
+					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+				except:
+					predicate = None
 			else:
-				predicate = None
+				try:
+					predicate = "<" + string_substitution_array(predicate_object_map.predicate_map.value, "{(.+?)}", row, row_headers, "predicate",ignore) + ">"
+				except:
+					predicate = None
+		elif predicate_object_map.predicate_map.mapping_type == "reference":
+			predicate = string_substitution_array(predicate_object_map.predicate_map.value, ".+", row, row_headers, "predicate",ignore)
+			predicate = "<" + predicate[1:-1] + ">"
+		else:
+			predicate = None
 
 		if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
 			if "/" in predicate_object_map.object_map.value:
