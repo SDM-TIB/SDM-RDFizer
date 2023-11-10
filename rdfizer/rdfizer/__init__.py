@@ -3488,9 +3488,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
 		elif triples_map.subject_map.subject_mapping_type == "reference":
 			if triples_map.subject_map.condition == "":
-				subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers, "subject",ignore)
-				subject_value = subject_value[1:-1]
 				try:
+					subject_value = string_substitution_array(triples_map.subject_map.value, ".+", row, row_headers, "subject",ignore)
+					subject_value = subject_value[1:-1]
 					if " " not in subject_value:
 						if "http" not in subject_value:
 							subject = "<" + base + subject_value + ">"
@@ -3499,13 +3499,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 					else:
 						logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
 						subject = None 
+					if triples_map.subject_map.term_type == "IRI":
+						if " " not in subject_value:
+							subject = "<" + subject_value + ">"
+						else:
+							subject = None
 				except:
 					subject = None
-				if triples_map.subject_map.term_type == "IRI":
-					if " " not in subject_value:
-						subject = "<" + subject_value + ">"
-					else:
-						subject = None
 
 			else:
 			#	field, condition = condition_separetor(triples_map.subject_map.condition)
