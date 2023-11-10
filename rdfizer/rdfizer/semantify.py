@@ -1612,12 +1612,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
             if triples_map.subject_map.rdf_class != [None] and subject != None:
                 predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
                 for rdf_class in triples_map.subject_map.rdf_class:
-					if rdf_class != None:
-						obj = "<{}>".format(rdf_class)
+                    if rdf_class != None:
+                        obj = "<{}>".format(rdf_class)
                         dictionary_table_update(subject)
                         dictionary_table_update(obj)
                         dictionary_table_update(predicate + "_" + obj)
-						rdf_type = subject + " " + predicate + " " + obj + " .\n"
+                        rdf_type = subject + " " + predicate + " " + obj + " .\n"
                         for graph in triples_map.subject_map.graph:
                             if graph != None and "defaultGraph" not in graph:
                                 if "{" in graph:
@@ -2074,7 +2074,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             triple = subject + " " + predicate + " " + object + ".\n"
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
 									predicate_object_map.graph[predicate[1:-1]]:
-								if "{" in predicate_object_map.graph[predicate[1:-1]]:
+                                if "{" in predicate_object_map.graph[predicate[1:-1]]:
                                     triple = triple[:-2] + " <" + string_substitution_xml(
                                         predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject",
                                         triples_map.iterator, parent_map, namespace) + ">.\n"
@@ -2082,10 +2082,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                     triple = triple[:-2] + " <" + predicate_object_map.graph[predicate[1:-1]] + ">.\n"
                                 if duplicate == "yes":
                                     if predicate in general_predicates:
-										if dic_table[
+                                        if dic_table[
 											predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
                                             output_file_descriptor.write(triple)
-											g_triples.update({dic_table[
+                                            g_triples.update({dic_table[
                                                                   predicate + "_" + predicate_object_map.object_map.value]: {
                                                 dic_table[subject] + "_" + dic_table[object]: ""}})
                                             i += 1
