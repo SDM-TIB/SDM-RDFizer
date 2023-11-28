@@ -1617,7 +1617,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         dictionary_table_update(subject)
                         dictionary_table_update(obj)
                         dictionary_table_update(predicate + "_" + obj)
-                        rdf_type = subject + " " + predicate + " " + obj + " .\n"
+                        rdf_type = subject + " " + predicate + " " + obj + ".\n"
                         for graph in triples_map.subject_map.graph:
                             if graph != None and "defaultGraph" not in graph:
                                 if "{" in graph:
@@ -1625,13 +1625,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 																							  "subject",
 																							  triples_map.iterator,
 																							  parent_map,
-																							  namespace) + "> .\n"
+																							  namespace) + ">.\n"
                                     dictionary_table_update(
                                         "<" + string_substitution_xml(graph, "{(.+?)}", child, "subject",
                                                                       triples_map.iterator, parent_map,
                                                                       namespace) + ">")
                                 else:
-                                    rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+                                    rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
                                     dictionary_table_update("<" + graph + ">")
                             if duplicate == "yes":
                                 if dic_table[predicate + "_" + obj] not in g_triples:
@@ -2482,12 +2482,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             if "{" in graph:
                                 rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data,
                                                                                            "subject", ignore,
-                                                                                           iterator) + "> .\n"
+                                                                                           iterator) + ">.\n"
                                 dictionary_table_update(
                                     "<" + string_substitution_json(graph, "{(.+?)}", data, "subject", ignore,
                                                                    iterator) + ">")
                             else:
-                                rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+                                rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
                         if duplicate == "yes":
                             if dic_table[predicate + "_" + obj] not in g_triples:
@@ -3336,12 +3336,12 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             if "{" in graph:
                                 rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject",
                                                                                       ignore,
-                                                                                      triples_map.iterator) + "> .\n"
+                                                                                      triples_map.iterator) + ">.\n"
                                 dictionary_table_update(
                                     "<" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
                                                               triples_map.iterator) + ">")
                             else:
-                                rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+                                rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
                     if duplicate == "yes":
                         dictionary_table_update(subject)
@@ -4385,17 +4385,17 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
                 dictionary_table_update(predicate + "_" + obj)
-                rdf_type = subject + " " + predicate + " " + obj + " .\n"
+                rdf_type = subject + " " + predicate + " " + obj + ".\n"
                 for graph in triples_map.subject_map.graph:
                     if graph != None and "defaultGraph" not in graph:
                         if "{" in graph:
                             rdf_type = rdf_type[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject",
                                                                                   ignore,
-                                                                                  triples_map.iterator) + "> .\n"
+                                                                                  triples_map.iterator) + ">.\n"
                             dictionary_table_update("<" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
                                                                               triples_map.iterator) + ">")
                         else:
-                            rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+                            rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
                             dictionary_table_update("<" + graph + ">")
                     if duplicate == "yes":
                         if dic_table[predicate + "_" + obj] not in g_triples:
@@ -5181,18 +5181,18 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
                 dictionary_table_update(predicate + "_" + obj)
-                rdf_type = subject + " " + predicate + " " + obj + " .\n"
+                rdf_type = subject + " " + predicate + " " + obj + ".\n"
                 for graph in triples_map.subject_map.graph:
                     if graph != None and "defaultGraph" not in graph:
                         if "{" in graph:
                             rdf_type = rdf_type[:-2] + " <" + string_substitution_array(graph, "{(.+?)}", row,
                                                                                         row_headers, "subject",
-                                                                                        ignore) + "> .\n"
+                                                                                        ignore) + ">.\n"
                             dictionary_table_update(
                                 "<" + string_substitution_array(graph, "{(.+?)}", row, row_headers, "subject",
                                                                 ignore) + ">")
                         else:
-                            rdf_type = rdf_type[:-2] + " <" + graph + "> .\n"
+                            rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
                             dictionary_table_update("<" + graph + ">")
                     if duplicate == "yes":
                         if dic_table[predicate + "_" + obj] not in g_triples:
