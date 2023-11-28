@@ -6595,7 +6595,7 @@ def semantify(config_path, log_path='error.log'):
                                                                                          config[dataset_i]["password"],
                                                                                          config[dataset_i]["db"],
                                                                                          config[dataset_i]["host"],
-                                                                                         preidcate).result()
+                                                                                         predicate).result()
                                                         data.append(row)
                                                 else:
                                                     for row in data:
