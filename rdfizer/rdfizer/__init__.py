@@ -2227,6 +2227,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
     triples_map_triples = {}
     generated_triples = {}
     object_list = []
+    subject_list = []
     global blank_message
     global host, port, user, password, datab
     i = 0
@@ -2327,20 +2328,26 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                                      iterator)
             if triples_map.subject_map.subject_mapping_type == "template":
                 if triples_map.subject_map.term_type is None:
-                    if triples_map.subject_map.condition == "":
-
-                        try:
-                            subject = "<" + subject_value + ">"
-                        except:
-                            subject = None
-
+                    if isinstance(subject_value,list):
+                        subject_list = []
+                        for subject_val in subject_value:
+                            subject_list.append("<" + subject_val + ">")
+                        subject = None
                     else:
-                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #   if row[field] == condition:
-                        try:
-                            subject = "<" + subject_value + ">"
-                        except:
-                            subject = None
+                        if triples_map.subject_map.condition == "":
+
+                            try:
+                                subject = "<" + subject_value + ">"
+                            except:
+                                subject = None
+
+                        else:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
+                            try:
+                                subject = "<" + subject_value + ">"
+                            except:
+                                subject = None
                 else:
                     if "IRI" in triples_map.subject_map.term_type:
                         if triples_map.subject_map.condition == "":
@@ -2613,7 +2620,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     if object_list:
                         i = 0
                         while i < len(object_list):
-                            if "\\" in object[i][1:-1]:
+                            if "\\" in object_list[i][1:-1]:
                                 object = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object_list[i][1:-1]:
                                 object_list[i] = "\"" + object_list[i][1:-1].replace("'", "\\\\'") + "\""
@@ -3104,6 +3111,137 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 output_file_descriptor.write(triple)
                                 i += 1
                 object_list = []
+            elif predicate != None and subject_list:
+                for subj in subject_list:
+                    dictionary_table_update(subj)
+                    type_predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+                    for rdf_class in triples_map.subject_map.rdf_class:
+                        if rdf_class != None:
+                            for graph in triples_map.subject_map.graph:
+                                obj = "<{}>".format(rdf_class)
+                                dictionary_table_update(obj)
+                                dictionary_table_update(type_predicate + "_" + obj)
+                                rdf_type = subj + " " + type_predicate + " " + obj + ".\n"
+                                if graph != None and "defaultGraph" not in graph:
+                                    if "{" in graph:
+                                        rdf_type = rdf_type[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data,
+                                                                                                   "subject", ignore,
+                                                                                                   iterator) + ">.\n"
+                                        dictionary_table_update(
+                                            "<" + string_substitution_json(graph, "{(.+?)}", data, "subject", ignore,
+                                                                           iterator) + ">")
+                                    else:
+                                        rdf_type = rdf_type[:-2] + " <" + graph + ">.\n"
+                                        dictionary_table_update("<" + graph + ">")
+                                if duplicate == "yes":
+                                    if dic_table[type_predicate + "_" + obj] not in g_triples:
+                                        output_file_descriptor.write(rdf_type)
+                                        g_triples.update(
+                                            {dic_table[type_predicate + "_" + obj]: {dic_table[subj] + "_" + dic_table[obj]: ""}})
+                                        i += 1
+                                    elif dic_table[subj] + "_" + dic_table[obj] not in g_triples[
+                                        dic_table[type_predicate + "_" + obj]]:
+                                        output_file_descriptor.write(rdf_type)
+                                        g_triples[dic_table[type_predicate + "_" + obj]].update(
+                                            {dic_table[subj] + "_" + dic_table[obj]: ""})
+                                        i += 1
+                                else:
+                                    output_file_descriptor.write(rdf_type)
+                                    i += 1
+                    if object != None:
+                        dictionary_table_update(object)
+                        triple = subj + " " + predicate + " " + object + ".\n"
+                        for graph in triples_map.subject_map.graph:
+                            if graph != None and "defaultGraph" not in graph:
+                                if "{" in graph:
+                                    triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",
+                                                                                           ignore, iterator) + ">.\n"
+                                    dictionary_table_update(
+                                        "<" + string_substitution_json(graph, "{(.+?)}", data, "subject", ignore,
+                                                                       iterator) + ">")
+                                else:
+                                    triple = triple[:-2] + " <" + graph + ">.\n"
+                                    dictionary_table_update("<" + graph + ">")
+                            if duplicate == "yes":
+                                if predicate in general_predicates:
+                                    if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                        output_file_descriptor.write(triple)
+                                        g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value]: {
+                                            dic_table[subj] + "_" + dic_table[object]: ""}})
+                                        i += 1
+                                    elif dic_table[subj] + "_" + dic_table[object] not in g_triples[
+                                        dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                        output_file_descriptor.write(triple)
+                                        g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                            {dic_table[subj] + "_" + dic_table[object]: ""})
+                                        i += 1
+                                else:
+                                    if dic_table[predicate] not in g_triples:
+                                        output_file_descriptor.write(triple)
+                                        g_triples.update(
+                                            {dic_table[predicate]: {dic_table[subj] + "_" + dic_table[object]: ""}})
+                                        i += 1
+                                    elif dic_table[subj] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
+                                        output_file_descriptor.write(triple)
+                                        g_triples[dic_table[predicate]].update(
+                                            {dic_table[subj] + "_" + dic_table[object]: ""})
+                                        i += 1
+                            else:
+                                output_file_descriptor.write(triple)
+                                i += 1
+                    elif object_list:
+                        for obj in object_list:
+                            dictionary_table_update(obj)
+                            for graph in triples_map.subject_map.graph:
+                                if predicate_object_map.object_map.term != None:
+                                    if "IRI" in predicate_object_map.object_map.term:
+                                        triple = subj + " " + predicate + " <" + obj[1:-1] + ">.\n"
+                                    else:
+                                        triple = subj + " " + predicate + " " + obj + ".\n"
+                                else:
+                                    triple = subj + " " + predicate + " " + obj + ".\n"
+                                if graph != None and "defaultGraph" not in graph:
+                                    if "{" in graph:
+                                        triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data,
+                                                                                               "subject", ignore,
+                                                                                               iterator) + ">.\n"
+                                        dictionary_table_update(
+                                            "<" + string_substitution_json(graph, "{(.+?)}", data, "subject", ignore,
+                                                                           iterator) + ">")
+                                    else:
+                                        triple = triple[:-2] + " <" + graph + ">.\n"
+                                        dictionary_table_update("<" + graph + ">")
+                                if duplicate == "yes":
+                                    if predicate in general_predicates:
+                                        if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update({dic_table[
+                                                                  predicate + "_" + predicate_object_map.object_map.value]: {
+                                                dic_table[subj] + "_" + dic_table[obj]: ""}})
+                                            i += 1
+                                        elif dic_table[subj] + "_" + dic_table[obj] not in g_triples[
+                                            dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[
+                                                dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                                {dic_table[subj] + "_" + dic_table[obj]: ""})
+                                            i += 1
+                                    else:
+                                        if dic_table[predicate] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update(
+                                                {dic_table[predicate]: {dic_table[subj] + "_" + dic_table[obj]: ""}})
+                                            i += 1
+                                        elif dic_table[subj] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[dic_table[predicate]].update(
+                                                {dic_table[subj] + "_" + dic_table[obj]: ""})
+                                            i += 1
+                                else:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
+                    else:
+                        continue
             else:
                 continue
     return i
