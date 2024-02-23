@@ -975,10 +975,16 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map, na
 						else:
 							return None
 					else:
-						if ".." == level[:-1]:
-							new_level = parent_map[row]
-						else:
-							new_level = row.find(level[:-1])
+						new_level = None
+						for temp_level in level.split("/"):
+							if "" != temp_level:
+								if ".." == temp_level:
+									if new_level == None:
+										new_level = parent_map[row]
+									else:
+										new_level = parent_map[new_level]
+								else:
+									new_level = row.find(temp_level)
 						if new_level.attrib[match] is not None:
 							if re.search("^[\s|\t]*$", new_level.attrib[match]) is None:
 								new_string = new_string[:start + offset_current_substitution] + encode_char(new_level.attrib[match].strip()) + new_string[ end + offset_current_substitution:]

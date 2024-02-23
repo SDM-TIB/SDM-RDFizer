@@ -583,7 +583,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                     if duplicate == "yes":
                         if parent_subject.subject_map.subject_mapping_type == "reference":
                             value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                            parent_subject.iterator, parent_map, namespace)
+                                                            parent_subject.iterator, parent_parent_map, namespace)
                             if value[0] != None:
                                 if "http" in value[0]:
                                     value[0] = "<" + value[0][1:-1] + ">"
@@ -591,7 +591,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                                 hash_table[data.attrib[parent_condition]].update({value[0]: "object"})
                         else:
                             value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                            parent_subject.iterator, parent_map, namespace)
+                                                            parent_subject.iterator, parent_parent_map, namespace)
                             if value != None:
                                 if parent_subject.subject_map.term_type != None:
                                     if "BlankNode" in parent_subject.subject_map.term_type:
@@ -614,14 +614,14 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                     else:
                         if parent_subject.subject_map.subject_mapping_type == "reference":
                             value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                            parent_subject.iterator, parent_map, namespace)
+                                                            parent_subject.iterator, parent_parent_map, namespace)
                             if value[0] != None:
                                 if "http" in value:
                                     value[0] = "<" + value[0][1:-1] + ">"
                             hash_table[data.attrib[parent_condition]].update({value[0]: "object"})
                         else:
                             value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                            parent_subject.iterator, parent_map, namespace)
+                                                            parent_subject.iterator, parent_parent_map, namespace)
                             if value != None:
                                 if parent_subject.subject_map.term_type != None:
                                     if "BlankNode" in parent_subject.subject_map.term_type:
@@ -644,14 +644,14 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                 else:
                     if parent_subject.subject_map.subject_mapping_type == "reference":
                         value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value[0] != None:
                             if "http" in value[0]:
                                 value[0] = "<" + value[0][1:-1] + ">"
                         hash_table.update({data.attrib[parent_condition]: {value[0]: "object"}})
                     else:
                         value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value != None:
                             if parent_subject.subject_map.term_type != None:
                                 if "BlankNode" in parent_subject.subject_map.term_type:
@@ -675,7 +675,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                 if duplicate == "yes":
                     if parent_subject.subject_map.subject_mapping_type == "reference":
                         value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value[0] != None:
                             if "http" in value[0]:
                                 value[0] = "<" + value[0][1:-1] + ">"
@@ -683,7 +683,7 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                             hash_table[data.find(parent_condition).text].update({value[0]: "object"})
                     else:
                         value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value != None:
                             if parent_subject.subject_map.term_type != None:
                                 if "BlankNode" in parent_subject.subject_map.term_type:
@@ -706,14 +706,14 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
                 else:
                     if parent_subject.subject_map.subject_mapping_type == "reference":
                         value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value[0] != None:
                             if "http" in value:
                                 value[0] = "<" + value[0][1:-1] + ">"
                         hash_table[data.find(parent_condition).text].update({value[0]: "object"})
                     else:
                         value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                        parent_subject.iterator, parent_map, namespace)
+                                                        parent_subject.iterator, parent_parent_map, namespace)
                         if value != None:
                             if parent_subject.subject_map.term_type != None:
                                 if "BlankNode" in parent_subject.subject_map.term_type:
@@ -736,14 +736,14 @@ def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namesp
             else:
                 if parent_subject.subject_map.subject_mapping_type == "reference":
                     value = string_substitution_xml(parent_subject.subject_map.value, ".+", row, "object",
-                                                    parent_subject.iterator, parent_map, namespace)
+                                                    parent_subject.iterator, parent_parent_map, namespace)
                     if value[0] != None:
                         if "http" in value[0]:
                             value[0] = "<" + value[0][1:-1] + ">"
                     hash_table.update({data.find(parent_condition).text: {value[0]: "object"}})
                 else:
                     value = string_substitution_xml(parent_subject.subject_map.value, "{(.+?)}", row, "subject",
-                                                    parent_subject.iterator, parent_map, namespace)
+                                                    parent_subject.iterator, parent_parent_parent_map, namespace)
                     if value != None:
                         if parent_subject.subject_map.term_type != None:
                             if "BlankNode" in parent_subject.subject_map.term_type:
