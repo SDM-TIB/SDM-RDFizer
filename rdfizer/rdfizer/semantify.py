@@ -24,6 +24,8 @@ except:
 # Work in the rr:sqlQuery (change mapping parser query, add sqlite3 support, etc)
 # Work in the "when subject is empty" thing (uuid.uuid4(), dependency graph over the )
 
+global new_formulation
+new_formulation = "no"
 global subject_id
 subject_id = 0
 global generated_subjects
@@ -1264,120 +1266,238 @@ def mapping_parser(mapping_file):
         logger.exception('Could not parse {} as a mapping file. Aborting...'.format(mapping_file))
         sys.exit(1)
 
-    mapping_query = """
-		prefix rr: <http://www.w3.org/ns/r2rml#> 
-		prefix rml: <http://semweb.mmlab.be/ns/rml#> 
-		prefix ql: <http://semweb.mmlab.be/ns/ql#> 
-		prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
-		prefix td: <https://www.w3.org/2019/wot/td#>
-		prefix htv: <http://www.w3.org/2011/http#>
-		prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
-		SELECT DISTINCT *
-		WHERE {
+    if new_formulation == "yes":
+        mapping_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        SELECT DISTINCT *
+        WHERE {
 
-	# Subject -------------------------------------------------------------------------
-			?triples_map_id rml:logicalSource ?_source .
-			OPTIONAL{?_source rml:source ?data_source .}
-			OPTIONAL{
-				?_source rml:source ?data_link .
-				?data_link td:hasForm ?form .
-				?form hctl:hasTarget ?url_source .
-			}
-			OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
-			OPTIONAL { ?_source rml:iterator ?iterator . }
-			OPTIONAL { ?_source rr:tableName ?tablename .}
-			OPTIONAL { ?_source rml:query ?query .}
+    # Subject -------------------------------------------------------------------------
+            ?triples_map_id rml:logicalSource ?_source .
+            OPTIONAL{
+                ?_source rml:source ?source_attr .
+                ?source_attr rml:root ?root .
+                ?source_attr rml:path ?data_source
+            }
+            OPTIONAL{
+                ?_source rml:source ?data_link .
+                ?data_link td:hasForm ?form .
+                ?form hctl:hasTarget ?url_source .
+            }
+            OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
+            OPTIONAL { ?_source rml:iterator ?iterator . }
+            OPTIONAL { ?_source rr:tableName ?tablename .}
+            OPTIONAL { ?_source rml:query ?query .}
 
-			?triples_map_id rr:subjectMap ?_subject_map .
-			OPTIONAL {?_subject_map rr:template ?subject_template .}
-			OPTIONAL {?_subject_map rml:reference ?subject_reference .}
-			OPTIONAL {?_subject_map rr:constant ?subject_constant}
-			OPTIONAL { ?_subject_map rr:class ?rdf_class . }
-			OPTIONAL { ?_subject_map rr:termType ?termtype . }
-			OPTIONAL { ?_subject_map rr:graph ?graph . }
-			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
-					   ?_graph_structure rr:constant ?graph . }
-			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
-					   ?_graph_structure rr:template ?graph . }		   
+            ?triples_map_id rml:subjectMap ?_subject_map .
+            OPTIONAL {?_subject_map rml:template ?subject_template .}
+            OPTIONAL {?_subject_map rml:reference ?subject_reference .}
+            OPTIONAL {?_subject_map rml:constant ?subject_constant}
+            OPTIONAL { ?_subject_map rml:class ?rdf_class . }
+            OPTIONAL { ?_subject_map rml:termType ?termtype . }
+            OPTIONAL { ?_subject_map rml:graph ?graph . }
+            OPTIONAL { ?_subject_map rml:graphMap ?_graph_structure .
+                       ?_graph_structure rml:constant ?graph . }
+            OPTIONAL { ?_subject_map rml:graphMap ?_graph_structure .
+                       ?_graph_structure rml:template ?graph . }           
 
-	# Predicate -----------------------------------------------------------------------
-			OPTIONAL {
-			?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
+    # Predicate -----------------------------------------------------------------------
+            OPTIONAL {
+            ?triples_map_id rml:predicateObjectMap ?_predicate_object_map .
 
-			OPTIONAL {
-				?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
-				?_predicate_object_map rr:predicateMap ?_predicate_map .
-				?_predicate_map rr:constant ?predicate_constant .
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:predicateMap ?_predicate_map .
-				?_predicate_map rr:template ?predicate_template .
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:predicateMap ?_predicate_map .
-				?_predicate_map rml:reference ?predicate_reference .
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:predicate ?predicate_constant_shortcut .
-			 }
+            OPTIONAL {
+                ?triples_map_id rml:predicateObjectMap ?_predicate_object_map .
+                ?_predicate_object_map rml:predicateMap ?_predicate_map .
+                ?_predicate_map rml:constant ?predicate_constant .
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:predicateMap ?_predicate_map .
+                ?_predicate_map rml:template ?predicate_template .
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:predicateMap ?_predicate_map .
+                ?_predicate_map rml:reference ?predicate_reference .
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:predicate ?predicate_constant_shortcut .
+             }
 
 
-	# Object --------------------------------------------------------------------------
-			OPTIONAL {
-				?_predicate_object_map rr:objectMap ?_object_map .
-				?_object_map rr:constant ?object_constant .
-				OPTIONAL {
-					?_object_map rr:datatype ?object_datatype .
-				}
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:objectMap ?_object_map .
-				?_object_map rr:template ?object_template .
-				OPTIONAL {?_object_map rr:termType ?term .}
-				OPTIONAL {?_object_map rml:languageMap ?language_map.
-						  ?language_map rml:reference ?language_value.}
-				OPTIONAL {
-					?_object_map rr:datatype ?object_datatype .
-				}
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:objectMap ?_object_map .
-				?_object_map rml:reference ?object_reference .
-				OPTIONAL { ?_object_map rr:language ?language .}
-				OPTIONAL {?_object_map rml:languageMap ?language_map.
-						  ?language_map rml:reference ?language_value.}
-				OPTIONAL {?_object_map rr:termType ?term .}
-				OPTIONAL {
-					?_object_map rr:datatype ?object_datatype .
-				}
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:objectMap ?_object_map .
-				?_object_map rr:parentTriplesMap ?object_parent_triples_map .
-				OPTIONAL {
-					?_object_map rr:joinCondition ?join_condition .
-					?join_condition rr:child ?child_value;
-								 rr:parent ?parent_value.
-					OPTIONAL {?_object_map rr:termType ?term .}
-				}
-			}
-			OPTIONAL {
-				?_predicate_object_map rr:object ?object_constant_shortcut .
-			}
-			OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
-			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
-					   ?_graph_structure rr:constant ?predicate_object_graph  . }
-			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
-					   ?_graph_structure rr:template ?predicate_object_graph  . }	
-			}
-			OPTIONAL {
-				?_source a d2rq:Database;
-  				d2rq:jdbcDSN ?jdbcDSN; 
-  				d2rq:jdbcDriver ?jdbcDriver; 
-			    d2rq:username ?user;
-			    d2rq:password ?password .
-			}
-		} """
+    # Object --------------------------------------------------------------------------
+            OPTIONAL {
+                ?_predicate_object_map rml:objectMap ?_object_map .
+                ?_object_map rml:constant ?object_constant .
+                OPTIONAL {
+                    ?_object_map rml:datatype ?object_datatype .
+                }
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:objectMap ?_object_map .
+                ?_object_map rml:template ?object_template .
+                OPTIONAL {?_object_map rml:termType ?term .}
+                OPTIONAL {?_object_map rml:languageMap ?language_map.
+                          ?language_map rml:reference ?language_value.}
+                OPTIONAL {
+                    ?_object_map rml:datatype ?object_datatype .
+                }
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:objectMap ?_object_map .
+                ?_object_map rml:reference ?object_reference .
+                OPTIONAL { ?_object_map rml:language ?language .}
+                OPTIONAL {?_object_map rml:languageMap ?language_map.
+                          ?language_map rml:reference ?language_value.}
+                OPTIONAL {?_object_map rml:termType ?term .}
+                OPTIONAL {
+                    ?_object_map rml:datatype ?object_datatype .
+                }
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:objectMap ?_object_map .
+                ?_object_map rml:parentTriplesMap ?object_parent_triples_map .
+                OPTIONAL {
+                    ?_object_map rml:joinCondition ?join_condition .
+                    ?join_condition rml:child ?child_value;
+                                 rml:parent ?parent_value.
+                    OPTIONAL {?_object_map rml:termType ?term .}
+                }
+            }
+            OPTIONAL {
+                ?_predicate_object_map rml:object ?object_constant_shortcut .
+            }
+            OPTIONAL {?_predicate_object_map rml:graph ?predicate_object_graph .}
+            OPTIONAL { ?_predicate_object_map  rml:graphMap ?_graph_structure .
+                       ?_graph_structure rml:constant ?predicate_object_graph  . }
+            OPTIONAL { ?_predicate_object_map  rml:graphMap ?_graph_structure .
+                       ?_graph_structure rml:template ?predicate_object_graph  . }  
+            }
+            OPTIONAL {
+                ?_source a d2rq:Database;
+                d2rq:jdbcDSN ?jdbcDSN; 
+                d2rq:jdbcDriver ?jdbcDriver; 
+                d2rq:username ?user;
+                d2rq:password ?password .
+            }
+        } """
+    else:
+        mapping_query = """
+    		prefix rr: <http://www.w3.org/ns/r2rml#> 
+    		prefix rml: <http://semweb.mmlab.be/ns/rml#> 
+    		prefix ql: <http://semweb.mmlab.be/ns/ql#> 
+    		prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+    		prefix td: <https://www.w3.org/2019/wot/td#>
+    		prefix htv: <http://www.w3.org/2011/http#>
+    		prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+    		SELECT DISTINCT *
+    		WHERE {
+
+    	# Subject -------------------------------------------------------------------------
+    			?triples_map_id rml:logicalSource ?_source .
+    			OPTIONAL{?_source rml:source ?data_source .}
+    			OPTIONAL{
+    				?_source rml:source ?data_link .
+    				?data_link td:hasForm ?form .
+    				?form hctl:hasTarget ?url_source .
+    			}
+    			OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
+    			OPTIONAL { ?_source rml:iterator ?iterator . }
+    			OPTIONAL { ?_source rr:tableName ?tablename .}
+    			OPTIONAL { ?_source rml:query ?query .}
+
+    			?triples_map_id rr:subjectMap ?_subject_map .
+    			OPTIONAL {?_subject_map rr:template ?subject_template .}
+    			OPTIONAL {?_subject_map rml:reference ?subject_reference .}
+    			OPTIONAL {?_subject_map rr:constant ?subject_constant}
+    			OPTIONAL { ?_subject_map rr:class ?rdf_class . }
+    			OPTIONAL { ?_subject_map rr:termType ?termtype . }
+    			OPTIONAL { ?_subject_map rr:graph ?graph . }
+    			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
+    					   ?_graph_structure rr:constant ?graph . }
+    			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
+    					   ?_graph_structure rr:template ?graph . }		   
+
+    	# Predicate -----------------------------------------------------------------------
+    			OPTIONAL {
+    			?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
+
+    			OPTIONAL {
+    				?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
+    				?_predicate_object_map rr:predicateMap ?_predicate_map .
+    				?_predicate_map rr:constant ?predicate_constant .
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:predicateMap ?_predicate_map .
+    				?_predicate_map rr:template ?predicate_template .
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:predicateMap ?_predicate_map .
+    				?_predicate_map rml:reference ?predicate_reference .
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:predicate ?predicate_constant_shortcut .
+    			 }
+
+
+    	# Object --------------------------------------------------------------------------
+    			OPTIONAL {
+    				?_predicate_object_map rr:objectMap ?_object_map .
+    				?_object_map rr:constant ?object_constant .
+    				OPTIONAL {
+    					?_object_map rr:datatype ?object_datatype .
+    				}
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:objectMap ?_object_map .
+    				?_object_map rr:template ?object_template .
+    				OPTIONAL {?_object_map rr:termType ?term .}
+    				OPTIONAL {?_object_map rml:languageMap ?language_map.
+    						  ?language_map rml:reference ?language_value.}
+    				OPTIONAL {
+    					?_object_map rr:datatype ?object_datatype .
+    				}
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:objectMap ?_object_map .
+    				?_object_map rml:reference ?object_reference .
+    				OPTIONAL { ?_object_map rr:language ?language .}
+    				OPTIONAL {?_object_map rml:languageMap ?language_map.
+    						  ?language_map rml:reference ?language_value.}
+    				OPTIONAL {?_object_map rr:termType ?term .}
+    				OPTIONAL {
+    					?_object_map rr:datatype ?object_datatype .
+    				}
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:objectMap ?_object_map .
+    				?_object_map rr:parentTriplesMap ?object_parent_triples_map .
+    				OPTIONAL {
+    					?_object_map rr:joinCondition ?join_condition .
+    					?join_condition rr:child ?child_value;
+    								 rr:parent ?parent_value.
+    					OPTIONAL {?_object_map rr:termType ?term .}
+    				}
+    			}
+    			OPTIONAL {
+    				?_predicate_object_map rr:object ?object_constant_shortcut .
+    			}
+    			OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
+    			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+    					   ?_graph_structure rr:constant ?predicate_object_graph  . }
+    			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+    					   ?_graph_structure rr:template ?predicate_object_graph  . }	
+    			}
+    			OPTIONAL {
+    				?_source a d2rq:Database;
+      				d2rq:jdbcDSN ?jdbcDSN; 
+      				d2rq:jdbcDriver ?jdbcDriver; 
+    			    d2rq:username ?user;
+    			    d2rq:password ?password .
+    			}
+    		} """
 
     mapping_query_results = mapping_graph.query(mapping_query)
     triples_map_list = []
@@ -1503,7 +1623,7 @@ def mapping_parser(mapping_file):
                                               result_predicate_object_map.language_value)
                     predicate_object_maps_list += [
                         tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map, predicate_object_graph)]
-
+            
             if result_triples_map.url_source is not None:
                 current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
                                                     str(result_triples_map.url_source), subject_map,
@@ -1534,6 +1654,7 @@ def mapping_parser(mapping_file):
 
 
 def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
+    print("TM: " + triples_map.triples_map_name)
     logger.info("TM: " + triples_map.triples_map_name)
     i = 0
     triples_map_triples = {}
@@ -1718,7 +1839,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             subject = None
 
                 elif "constant" in triples_map.subject_map.subject_mapping_type:
-                    subject = "<" + subject_value + ">"
+                    subject = "<" + triples_map.subject_map.value + ">"
 
                 else:
                     if triples_map.subject_map.condition == "":
@@ -1748,7 +1869,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
             if triples_map.subject_map.rdf_class != [None] and subject != None:
                 predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
                 for rdf_class in triples_map.subject_map.rdf_class:
-                    if rdf_class != None:
+                    if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                         obj = "<{}>".format(rdf_class)
                         dictionary_table_update(subject)
                         dictionary_table_update(obj)
@@ -1784,7 +1905,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             else:
                                 output_file_descriptor.write(rdf_type)
                                 i += 1
-
             for predicate_object_map in triples_map.predicate_object_maps_list:
                 if constant_predicate:
                     if predicate_object_map.predicate_map.mapping_type == "constant" or predicate_object_map.predicate_map.mapping_type == "constant shortcut":
@@ -1895,9 +2015,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         if isinstance(object, list):
                             for i in range(len(object)):
                                 if "\\" in object[i][1:-1]:
-                                    object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
+                                    object = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
                                 if "'" in object[i][1:-1]:
-                                    object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                                    object = "\"" + object[i][1:-1].replace("'", "\\\\'") + "\""
+                                if "\"" in object[i][1:-1]:
+                                    object = "\"" + object[i][1:-1].replace("\"", "\\\"") + "\""
                                 if "\n" in object[i]:
                                     object[i] = object[i].replace("\n", "\\n")
                                 if predicate_object_map.object_map.datatype != None:
@@ -1929,6 +2051,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object[1:-1]:
                                 object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                            if "\"" in object[1:-1]:
+                                object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                             if "\n" in object:
                                 object = object.replace("\n", "\\n")
                             if predicate_object_map.object_map.datatype != None:
@@ -2613,7 +2737,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
-                subject = "<" + subject_value + ">"
+                subject = "<" + triples_map.subject_map.value + ">"
             elif "Literal" in triples_map.subject_map.term_type:
                 subject = None
             else:
@@ -2644,7 +2768,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
         if triples_map.subject_map.rdf_class != [None] and subject != None:
             predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
             for rdf_class in triples_map.subject_map.rdf_class:
-                if rdf_class != None:
+                if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                     for graph in triples_map.subject_map.graph:
                         obj = "<{}>".format(rdf_class)
                         dictionary_table_update(subject)
@@ -2790,6 +2914,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 object = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object_list[i][1:-1]:
                                 object_list[i] = "\"" + object_list[i][1:-1].replace("'", "\\\\'") + "\""
+                            if "\"" in object_list[i][1:-1]:
+                                object_list[i] = "\"" + object_list[i][1:-1].replace("\"", "\\\"") + "\""
                             if "\n" in object_list[i]:
                                 object_list[i] = object_list[i].replace("\n", "\\n")
                             if predicate_object_map.object_map.datatype != None:
@@ -2826,6 +2952,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
                         if "'" in object[1:-1]:
                             object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                        if "\"" in object[1:-1]:
+                            object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                         if "\n" in object:
                             object = object.replace("\n", "\\n")
                         if predicate_object_map.object_map.datatype != None:
@@ -3282,7 +3410,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     dictionary_table_update(subj)
                     type_predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
                     for rdf_class in triples_map.subject_map.rdf_class:
-                        if rdf_class != None:
+                        if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                             for graph in triples_map.subject_map.graph:
                                 obj = "<{}>".format(rdf_class)
                                 dictionary_table_update(obj)
@@ -3602,7 +3730,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
-                subject = "<" + subject_value + ">"
+                subject = "<" + triples_map.subject_map.value + ">"
 
             else:
                 if triples_map.subject_map.condition == "":
@@ -3632,7 +3760,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
         if triples_map.subject_map.rdf_class != [None] and subject != None:
             predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
             for rdf_class in triples_map.subject_map.rdf_class:
-                if rdf_class != None and "str" == type(rdf_class).__name__:
+                if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                     obj = "<{}>".format(rdf_class)
                     rdf_type = subject + " " + predicate + " " + obj + ".\n"
                     for graph in triples_map.subject_map.graph:
@@ -3778,6 +3906,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
                     if "'" in object[1:-1]:
                         object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                    if "\"" in object[1:-1]:
+                        object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                     if "\n" in object:
                         object = object.replace("\n", "\\n")
                     if predicate_object_map.object_map.datatype != None:
@@ -4707,7 +4837,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     subject = None
 
         elif "constant" in triples_map.subject_map.subject_mapping_type:
-            subject = "<" + subject_value + ">"
+            subject = "<" + triples_map.subject_map.value + ">"
 
         else:
             if triples_map.subject_map.condition == "":
@@ -4737,7 +4867,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
     if triples_map.subject_map.rdf_class != [None] and subject != None:
         predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
         for rdf_class in triples_map.subject_map.rdf_class:
-            if rdf_class != None:
+            if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                 obj = "<{}>".format(rdf_class)
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
@@ -4847,6 +4977,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
                 if "'" in object[1:-1]:
                     object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                if "\"" in object[1:-1]:
+                    object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                 if "\n" in object:
                     object = object.replace("\n", "\\n")
                 if predicate_object_map.object_map.datatype != None:
@@ -5503,7 +5635,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     subject = None
 
         elif "constant" in triples_map.subject_map.subject_mapping_type:
-            subject = "<" + subject_value + ">"
+            subject = "<" + triples_map.subject_map.value + ">"
 
         else:
             if triples_map.subject_map.condition == "":
@@ -5533,7 +5665,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
     if triples_map.subject_map.rdf_class != [None] and subject != None:
         predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
         for rdf_class in triples_map.subject_map.rdf_class:
-            if rdf_class != None:
+            if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                 obj = "<{}>".format(rdf_class)
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
@@ -5657,6 +5789,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
                 if "'" in object[1:-1]:
                     object = "\"" + object[1:-1].replace("'", "\\\\'") + "\""
+                if "\"" in object[1:-1]:
+                    object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                 if "\n" in object:
                     object = object.replace("\n", "\\n")
                 if predicate_object_map.object_map.datatype != None:
@@ -6047,6 +6181,12 @@ def semantify(config_path, log_path='error.log'):
 
     global duplicate
     duplicate = config["datasets"]["remove_duplicate"]
+
+    global new_formulation
+    if "new_formulation" in config["datasets"]:
+        new_formulation = config["datasets"]["new_formulation"]
+    else:
+        new_formulation = "no"
 
     global output_format
     if "output_format" in config["datasets"]:

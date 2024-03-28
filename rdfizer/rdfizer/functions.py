@@ -121,7 +121,7 @@ def translate_sql(triples_map):
     if triples_map.tablename != "None":
         temp_query = temp_query + " FROM " + triples_map.tablename 
     else:
-        temp_query = temp_query + " FROM " + triples_map.data_source 
+        temp_query = temp_query + " FROM " + triples_map.iterator
     temp_query += ";"
     query_list.append(temp_query)
 
@@ -203,7 +203,7 @@ def translate_postgressql(triples_map):
 	if triples_map.tablename != "None":
 		temp_query = temp_query + " FROM " + triples_map.tablename 
 	else:
-		temp_query = temp_query + " FROM " + triples_map.data_source 
+		temp_query = temp_query + " FROM " + triples_map.iterator
 	
 	temp_query += ";"
 	query_list.append(temp_query)
@@ -418,7 +418,7 @@ def extract_base(file):
 
 def encode_char(string):
 	encoded = ""
-	valid_char = ["~","#","/",":"]
+	valid_char = ["~","#","/"]#,":"]
 	for s in string:
 		if s in valid_char:
 			encoded += s
@@ -615,11 +615,21 @@ def files_sort(triples_map_list, ordered, config):
 							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""}
 		else:
 			if tp.query == "None":
-				if config["datasets"]["dbType"] == "mysql":
-					database, query_list = translate_sql(tp)
-				elif config["datasets"]["dbType"] == "postgres":
-					database, query_list = translate_postgressql(tp)
-				query = query_list[0]
+				if tp.iterator == "None":
+					if config["datasets"]["dbType"] == "mysql":
+						database, query_list = translate_sql(tp)
+					elif config["datasets"]["dbType"] == "postgres":
+						database, query_list = translate_postgressql(tp)
+					query = query_list[0]
+				else:
+					if "select" in tp.iterator.lower():
+						query = tp.iterator
+					else:
+						if config["datasets"]["dbType"] == "mysql":
+							database, query_list = translate_sql(tp)
+						elif config["datasets"]["dbType"] == "postgres":
+							database, query_list = translate_postgressql(tp)
+						query = query_list[0]
 			else:
 				query = tp.query
 			if config["datasets"]["dbType"] not in sorted_list:
