@@ -1809,7 +1809,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                     if triples_map.subject_map.condition == "":
                         subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject",
                                                                 triples_map.iterator, parent_map, namespace)
-                        subject_value = subject_value[0][1:-1]
                         try:
                             if " " not in subject_value:
                                 if "http" not in subject_value:
@@ -2015,13 +2014,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         if isinstance(object, list):
                             for i in range(len(object)):
                                 if "\\" in object[i][1:-1]:
-                                    object = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
+                                    object[i] = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
                                 if "'" in object[i][1:-1]:
-                                    object = "\"" + object[i][1:-1].replace("'", "\\\\'") + "\""
+                                    object[i] = "\"" + object[i][1:-1].replace("'", "\\\\'") + "\""
                                 if "\"" in object[i][1:-1]:
-                                    object = "\"" + object[i][1:-1].replace("\"", "\\\"") + "\""
+                                    object[i] = "\"" + object[i][1:-1].replace("\"", "\\\"") + "\""
                                 if "\n" in object[i]:
-                                    object[i] = object[i].replace("\n", "\\n")
+                                    object[i] = "\"\"" + object[i] + "\"\""
                                 if predicate_object_map.object_map.datatype != None:
                                     object[i] += "^^<{}>".format(predicate_object_map.object_map.datatype)
                                 elif predicate_object_map.object_map.language != None:
@@ -2054,7 +2053,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if "\"" in object[1:-1]:
                                 object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                             if "\n" in object:
-                                object = object.replace("\n", "\\n")
+                                object = "\"\"" + object + "\"\""
                             if predicate_object_map.object_map.datatype != None:
                                 object += "^^<{}>".format(predicate_object_map.object_map.datatype)
                             elif predicate_object_map.object_map.language != None:
