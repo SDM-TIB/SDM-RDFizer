@@ -1809,6 +1809,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                     if triples_map.subject_map.condition == "":
                         subject_value = string_substitution_xml(triples_map.subject_map.value, ".+", child, "subject",
                                                                 triples_map.iterator, parent_map, namespace)
+                        subject_value = subject_value[0][1:-1]
                         try:
                             if " " not in subject_value:
                                 if "http" not in subject_value:
