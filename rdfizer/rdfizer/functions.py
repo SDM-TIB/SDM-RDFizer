@@ -417,15 +417,7 @@ def extract_base(file):
 	return base
 
 def encode_char(string):
-	encoded = ""
-	valid_char = ["~","#","/"]#,":"]
-	for s in string:
-		if s in valid_char:
-			encoded += s
-		elif s == "/":
-			encoded += "%2F"
-		else:
-			encoded += urllib.parse.quote(s)
+	encoded = urllib.parse.quote(string, safe='_-.~/:@&=+',encoding='utf-8')
 	return encoded
 
 def combine_sublist(sublists, full_list):
