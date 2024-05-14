@@ -5,6 +5,109 @@ import sys
 import xml.etree.ElementTree as ET
 import urllib
 import math
+import rdflib
+
+def generate_rdfjson(graph):
+	json_data = {}
+	for subj, pred, obj in graph:
+		if subj not in json_data:
+			json_data[subj] = {pred:[{"value":obj}]}
+		else:
+			if pred not in json_data[subj]:
+				json_data[subj][pred] = [{"value":obj}]
+			else:
+				json_data[subj][pred].append({"value":obj})
+	return json_data
+
+
+def extract_prefixes_from_ttl(ttl_file):
+    g = rdflib.Graph()
+    g.parse(ttl_file, format="ttl")
+    
+    prefixes = {}
+    for prefix, uri in g.namespaces():
+        prefixes[prefix] = uri
+    
+    return prefixes
+
+def is_repeat_output(current_output,output_list):
+	for source in output_list:
+		if current_output != output_list:
+			if output_list[source] == output_list[current_output]:
+				keys = list(output_list.keys())
+				if keys.index(source) < keys.index(current_output):
+					return source
+				else:
+					return ""
+	return ""
+
+def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
+	if current_output == "":
+		if triples_map_id in output_list:
+			for possible_output in output_list[triples_map_id]:
+				if output_list[triples_map_id][possible_output] == "subject":
+					return False
+				elif po_map.predicate_map.value in output_list[triples_map_id][possible_output]:
+					return False
+				elif po_map.object_map.value in output_list[triples_map_id][possible_output]:
+					return False
+				elif po_map.object_map.datatype != None:
+					if po_map.object_map.value + "_" + po_map.object_map.datatype in output_list[triples_map_id][possible_output]:
+						return False
+				elif po_map.object_map.datatype_map != None:
+					if po_map.object_map.value + "_" + po_map.object_map.datatype_map in output_list[triples_map_id][possible_output]:
+						return False
+				elif po_map.object_map.language != None:
+					if po_map.object_map.value + "_" + po_map.object_map.language in output_list[triples_map_id][possible_output]:
+						return False
+				elif po_map.object_map.language_map != None:
+					if po_map.object_map.value + "_" + po_map.object_map.language_map in output_list[triples_map_id][possible_output]:
+						return False
+			return True
+		else:
+			return True
+	else:
+		if triples_map_id in output_list:
+			if current_output in output_list[triples_map_id]:
+				if output_list[triples_map_id][current_output] == "subject":
+					return True
+				elif po_map.predicate_map.value in output_list[triples_map_id][current_output]:
+					return True
+				elif po_map.object_map.value in  output_list[triples_map_id][current_output]:
+					return True
+				elif po_map.object_map.datatype != None:
+					if po_map.object_map.value + "_" + po_map.object_map.datatype in output_list[triples_map_id][current_output]:
+						return True
+					else:
+						return False
+				elif po_map.object_map.datatype_map != None:
+					if po_map.object_map.value + "_" + po_map.object_map.datatype_map in output_list[triples_map_id][current_output]:
+						return True
+					else:
+						return False
+				elif po_map.object_map.language != None:
+					if po_map.object_map.value + "_" + po_map.object_map.language in output_list[triples_map_id][current_output]:
+						return True
+					else:
+						return False
+				elif po_map.object_map.language_map != None:
+					if po_map.object_map.value + "_" + po_map.object_map.language_map in output_list[triples_map_id][current_output]:
+						return True
+					else:
+						return False
+				else:
+					return False
+			else:
+				return True
+		else:
+			return True
+
+def is_valid_url_syntax(url):
+    try:
+        result = urllib.parse.urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
 
 def extract_subject_values(row,attr_list,format, parent_map = None):
 	subject_attr = ""
@@ -417,15 +520,7 @@ def extract_base(file):
 	return base
 
 def encode_char(string):
-	encoded = ""
-	valid_char = ["~","#","/"]#,":"]
-	for s in string:
-		if s in valid_char:
-			encoded += s
-		elif s == "/":
-			encoded += "%2F"
-		else:
-			encoded += urllib.parse.quote(s)
+	encoded = urllib.parse.quote(string, safe='_-.~/:@&=+',encoding='utf-8')
 	return encoded
 
 def combine_sublist(sublists, full_list):
@@ -614,62 +709,129 @@ def files_sort(triples_map_list, ordered, config):
 						else:
 							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""}
 		else:
-			if tp.query == "None":
-				if tp.iterator == "None":
-					if config["datasets"]["dbType"] == "mysql":
-						database, query_list = translate_sql(tp)
-					elif config["datasets"]["dbType"] == "postgres":
-						database, query_list = translate_postgressql(tp)
-					query = query_list[0]
-				else:
-					if "select" in tp.iterator.lower():
-						query = tp.iterator
+			if "SPARQL" in tp.file_format:
+				if "csv" not in sorted_list:
+					if ".nt" in str(tp.data_source):
+						sorted_list["csv"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
 					else:
+						sorted_list["csv"] = {"endpoint:" + str(tp.data_source) : {tp.triples_map_id : tp}}
+				else:
+					if ".nt" in str(tp.data_source):
+						if str(tp.data_source) in sorted_list["csv"]:
+							sorted_list["csv"][str(tp.data_source)][tp.triples_map_id] = tp
+						else:
+							sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
+					else:
+						if "endpoint:" + str(tp.data_source) in sorted_list["csv"]:
+							sorted_list["csv"]["endpoint:" + str(tp.data_source)][tp.triples_map_id] = tp
+						else:
+							sorted_list["csv"]["endpoint:" + str(tp.data_source)] = {tp.triples_map_id : tp}
+				for po in tp.predicate_object_maps_list:
+					if po.predicate_map.value in general_predicates:
+						predicate = po.predicate_map.value + "_" + po.object_map.value
+						if predicate in predicate_list:
+							predicate_list[predicate] += 1
+						else:
+							predicate_list[predicate] = 1
+					else:
+						if po.predicate_map.value in predicate_list:
+							predicate_list[po.predicate_map.value] += 1
+						else:
+							predicate_list[po.predicate_map.value] = 1
+					if "csv" not in source_predicate:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							if ".nt" in str(tp.data_source):
+								source_predicate["csv"] = {str(tp.data_source) : {predicate : ""}}
+							else:
+								source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {predicate : ""}}
+						else:
+							if ".nt" in str(tp.data_source):
+								source_predicate["csv"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
+							else:
+								source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {po.predicate_map.value : ""}}
+					else:
+						if str(tp.data_source) in source_predicate["csv"]:
+							if po.predicate_map.value in general_predicates:
+								predicate = po.predicate_map.value + "_" + po.object_map.value
+								if ".nt" in str(tp.data_source):
+									source_predicate["csv"][str(tp.data_source)][predicate] = ""
+								else:
+									source_predicate["csv"]["endpoint:" + str(tp.data_source)][predicate] = ""
+							else:
+								if ".nt" in str(tp.data_source):
+									source_predicate["csv"][str(tp.data_source)][po.predicate_map.value] = ""
+								else:
+									source_predicate["csv"]["endpoint:" + str(tp.data_source)][po.predicate_map.value] = ""
+						else:
+							if po.predicate_map.value in general_predicates:
+								predicate = po.predicate_map.value + "_" + po.object_map.value
+								if ".nt" in str(tp.data_source):
+									source_predicate["csv"][str(tp.data_source)] = {predicate : ""}
+								else:
+									source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {predicate : ""}
+							else:
+								if ".nt" in str(tp.data_source):
+									source_predicate["csv"][str(tp.data_source)] = {po.predicate_map.value : ""}
+								else:
+									source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {po.predicate_map.value : ""}
+			else:
+				if tp.query == "None":
+					if tp.iterator == "None":
 						if config["datasets"]["dbType"] == "mysql":
 							database, query_list = translate_sql(tp)
 						elif config["datasets"]["dbType"] == "postgres":
 							database, query_list = translate_postgressql(tp)
 						query = query_list[0]
-			else:
-				query = tp.query
-			if config["datasets"]["dbType"] not in sorted_list:
-				sorted_list[config["datasets"]["dbType"]] = {query: {tp.triples_map_id : tp}}
-			else:
-				if query in sorted_list[config["datasets"]["dbType"]]:
-					sorted_list[config["datasets"]["dbType"]][query][tp.triples_map_id] = tp
-				else:
-					sorted_list[config["datasets"]["dbType"]][query] = {tp.triples_map_id : tp}
-			for po in tp.predicate_object_maps_list:
-				if po.predicate_map.value in general_predicates:
-					predicate = po.predicate_map.value + "_" + po.object_map.value
-					if predicate in predicate_list:
-						predicate_list[predicate] += 1
 					else:
-						predicate_list[predicate] = 1
+						if "select" in tp.iterator.lower():
+							query = tp.iterator
+						else:
+							if config["datasets"]["dbType"] == "mysql":
+								database, query_list = translate_sql(tp)
+							elif config["datasets"]["dbType"] == "postgres":
+								database, query_list = translate_postgressql(tp)
+							query = query_list[0]
 				else:
-					if po.predicate_map.value in predicate_list:
-						predicate_list[po.predicate_map.value] += 1
+					query = tp.query
+				if config["datasets"]["dbType"] not in sorted_list:
+					sorted_list[config["datasets"]["dbType"]] = {query: {tp.triples_map_id : tp}}
+				else:
+					if query in sorted_list[config["datasets"]["dbType"]]:
+						sorted_list[config["datasets"]["dbType"]][query][tp.triples_map_id] = tp
 					else:
-						predicate_list[po.predicate_map.value] = 1
-				if config["datasets"]["dbType"] not in source_predicate:
+						sorted_list[config["datasets"]["dbType"]][query] = {tp.triples_map_id : tp}
+				for po in tp.predicate_object_maps_list:
 					if po.predicate_map.value in general_predicates:
 						predicate = po.predicate_map.value + "_" + po.object_map.value
-						source_predicate[config["datasets"]["dbType"]] = {query : {predicate : ""}}
+						if predicate in predicate_list:
+							predicate_list[predicate] += 1
+						else:
+							predicate_list[predicate] = 1
 					else:
-						source_predicate[config["datasets"]["dbType"]] = {query : {po.predicate_map.value : ""}}
-				else:
-					if query in source_predicate[config["datasets"]["dbType"]]:
+						if po.predicate_map.value in predicate_list:
+							predicate_list[po.predicate_map.value] += 1
+						else:
+							predicate_list[po.predicate_map.value] = 1
+					if config["datasets"]["dbType"] not in source_predicate:
 						if po.predicate_map.value in general_predicates:
 							predicate = po.predicate_map.value + "_" + po.object_map.value
-							source_predicate[config["datasets"]["dbType"]][query][predicate] = ""
+							source_predicate[config["datasets"]["dbType"]] = {query : {predicate : ""}}
 						else:
-							source_predicate[config["datasets"]["dbType"]][query][po.predicate_map.value] = ""
+							source_predicate[config["datasets"]["dbType"]] = {query : {po.predicate_map.value : ""}}
 					else:
-						if po.predicate_map.value in general_predicates:
-							predicate = po.predicate_map.value + "_" + po.object_map.value
-							source_predicate[config["datasets"]["dbType"]][query] = {predicate : ""}
+						if query in source_predicate[config["datasets"]["dbType"]]:
+							if po.predicate_map.value in general_predicates:
+								predicate = po.predicate_map.value + "_" + po.object_map.value
+								source_predicate[config["datasets"]["dbType"]][query][predicate] = ""
+							else:
+								source_predicate[config["datasets"]["dbType"]][query][po.predicate_map.value] = ""
 						else:
-							source_predicate[config["datasets"]["dbType"]][query] = {po.predicate_map.value : ""}
+							if po.predicate_map.value in general_predicates:
+								predicate = po.predicate_map.value + "_" + po.object_map.value
+								source_predicate[config["datasets"]["dbType"]][query] = {predicate : ""}
+							else:
+								source_predicate[config["datasets"]["dbType"]][query] = {po.predicate_map.value : ""}
 		if tp.subject_map.rdf_class is not None:
 			for rdf_type in tp.subject_map.rdf_class:
 				predicate = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" + "_" + "<{}>".format(rdf_type)
@@ -760,6 +922,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				match = reference_match.group(1)
 			else:
 				match = reference_match.group(1).split("[")[0]
+			if match[:2] == "$.":
+				match = match[2:]
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
@@ -871,6 +1035,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if "[*]" in match:
+				if match[:2] == "$.":
+					match = match[2:]
 				child_list = row[match.split("[*]")[0]]
 				match = match.split(".")[1:]
 				object_list = []
@@ -909,6 +1075,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 									new_string = string
 				return object_list
 			else:
+				if match[:2] == "$.":
+					match = match[2:]
 				if "." in match:
 					if match in row:
 						value = row[match]
@@ -1011,7 +1179,15 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map, na
 						else:
 							return None
 					else:
-						return None
+						if match in row.attrib:
+							if row.attrib[match] is not None:
+								if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+									new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(encode_char(row.attrib[match].strip())) - (end - start)
+								else:
+									return None
+						else:
+							return None
 			else:
 				if temp_list:
 					match = reference_match.group(1).split("[")[0]
@@ -1183,6 +1359,8 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map, na
 												offset_current_substitution = offset_current_substitution + len(child.attrib[match]) - (end - start)
 												string_list.append(new_string)
 			else:
+				if "/text()" in match:
+					match = match.replace("/text()","")
 				if match in iterator:
 					if re.search("^[\s|\t]*$", row.text) is None:
 						new_string = new_string[:start + offset_current_substitution] + "\"" + row.text.strip() + "\"" + new_string[ end + offset_current_substitution:]
