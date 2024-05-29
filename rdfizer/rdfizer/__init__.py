@@ -1767,6 +1767,7 @@ def mapping_parser(mapping_file):
                                      rr:parent ?parent_value.
                     }
                 }
+                OPTIONAL {?_object_map fnml:functionValue ?function .}
                 OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
                 OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
                            ?_graph_structure rr:constant ?predicate_object_graph  . }
@@ -1932,15 +1933,15 @@ def mapping_parser(mapping_file):
             function = False
             for result_predicate_object_map in mapping_query_prepared_results:
                 join = True
-                if result_predicate_object_map.predicate_constant != None:
-                    predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "", "None")
-                    predicate_object_graph[
-                        str(result_predicate_object_map.predicate_constant)] = result_triples_map.predicate_object_graph
-                elif result_predicate_object_map.predicate_constant_shortcut != None:
+                if result_predicate_object_map.predicate_constant_shortcut != None:
                     predicate_map = tm.PredicateMap("constant shortcut",
                                                     str(result_predicate_object_map.predicate_constant_shortcut), "", "None")
                     predicate_object_graph[
                         str(result_predicate_object_map.predicate_constant_shortcut)] = result_triples_map.predicate_object_graph
+                elif result_predicate_object_map.predicate_constant != None:
+                    predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "", "None")
+                    predicate_object_graph[
+                        str(result_predicate_object_map.predicate_constant)] = result_triples_map.predicate_object_graph
                 elif result_predicate_object_map.predicate_template != None:
                     template, condition = string_separetion(str(result_predicate_object_map.predicate_template))
                     predicate_map = tm.PredicateMap("template", template, condition, "None")
