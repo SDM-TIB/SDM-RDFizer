@@ -1891,7 +1891,7 @@ def mapping_parser(mapping_file):
                                                 [result_triples_map.graph],func_output)
                 else:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
-                    subject_map = tm.SubjectMap(str(result_triples_map.subject_function), condition, "function","None","None","None","None", 
+                    subject_map = tm.SubjectMap(str(result_triples_map.subject_function), condition, "function","None","None",
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
                                                 [result_triples_map.graph],func_output)
             elif result_triples_map.subject_quoted != None:
