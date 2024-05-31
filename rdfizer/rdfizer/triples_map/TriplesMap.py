@@ -2,7 +2,7 @@ import re
 
 class TriplesMap:
 
-	def __init__(self, triples_map_id, data_source, subject_map, predicate_object_maps_list, ref_form=None, iterator=None, tablename=None, query=None):
+	def __init__(self, triples_map_id, data_source, subject_map, predicate_object_maps_list, ref_form=None, iterator=None, tablename=None, query=None, function=False, func_map_list=None, mappings_type=None):
 
 		"""
 		Constructor of a TriplesMap object
@@ -21,7 +21,6 @@ class TriplesMap:
 			URI containing the data source reference formulation
 
 		"""
-
 		self.triples_map_id = triples_map_id
 		self.triples_map_name = re.compile("((.*?))$").search(str(self.triples_map_id)).group(0)
 		self.data_source = data_source[7:] if data_source[:7] == "file://" else data_source
@@ -29,7 +28,12 @@ class TriplesMap:
 		if self.reference_formulation != "None" and re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)) != None:
 			self.file_format = re.compile("(#[A-Za-z]+)$").search(str(self.reference_formulation)).group(0)[1:]
 		else:
-			self.file_format = None
+			if "http://w3id.org/rml/" in self.reference_formulation:
+				self.file_format = self.reference_formulation.split("/")[len(self.reference_formulation.split("/"))-1]
+			elif "http://www.w3.org/ns/formats/" in self.reference_formulation:
+				self.file_format = self.reference_formulation.split("/")[len(self.reference_formulation.split("/"))-1]
+			else:
+				self.file_format = None
 		self.iterator = iterator
 		self.tablename = tablename
 		self.query = query
@@ -42,6 +46,9 @@ class TriplesMap:
 			exit(1)
 
 		self.predicate_object_maps_list = predicate_object_maps_list
+		self.function = function
+		self.func_map_list = func_map_list
+		self.mappings_type = mappings_type if mappings_type != None else "None"
 
 
 	def __repr__(self):
@@ -70,7 +77,7 @@ class TriplesMap:
 
 class SubjectMap:
 	
-	def __init__(self, subject_value, condition, subject_mapping_type, rdf_class=None, term_type=None, graph=None):
+	def __init__(self, subject_value, condition, subject_mapping_type, parent, child, rdf_class=None, term_type=None, graph=None,func_result=None):
 
 		"""
 		Constructor of a SubjectMap object
@@ -90,6 +97,9 @@ class SubjectMap:
 		self.term_type = term_type
 		self.subject_mapping_type = subject_mapping_type
 		self.graph = graph
+		self.func_result = func_result if func_result != "None" else None
+		self.child = str(child) if "None" != child else None
+		self.parent = str(parent) if "None" != parent else None
 
 class PredicateObjectMap:
 	
@@ -113,7 +123,7 @@ class PredicateObjectMap:
 
 class PredicateMap:
 
-	def __init__(self, predicate_mapping_type, predicate_value, predicate_condition):
+	def __init__(self, predicate_mapping_type, predicate_value, predicate_condition, func_result):
 
 		"""
 		Constructor of a PredicateMap object
@@ -131,10 +141,11 @@ class PredicateMap:
 		self.value = predicate_value
 		self.mapping_type = predicate_mapping_type
 		self.condition = predicate_condition
+		self.func_result = func_result if func_result != "None" else None
 
 class ObjectMap:
 
-	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language, language_map):
+	def __init__(self, object_mapping_type, object_value, object_datatype, object_child, object_parent, term, language, language_map, datatype_map, func_result):
 
 		"""
 		Constructor of ObjectMap object
@@ -156,3 +167,14 @@ class ObjectMap:
 		self.term = term if term != "None" else None
 		self.language = language if language != "None" else None
 		self.language_map = language_map if language_map != "None" else None
+		self.datatype_map = datatype_map if datatype_map != "None" else None
+		self.func_result = func_result if func_result != "None" else None
+
+
+class FunctionMap:
+
+	def __init__(self, func_map_id, func_name, parameters):
+
+		self.func_map_id = func_map_id
+		self.name = func_name
+		self.parameters = parameters
