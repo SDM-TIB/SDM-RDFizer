@@ -1715,6 +1715,7 @@ def mapping_parser(mapping_file):
     				OPTIONAL {
     					?_object_map rr:datatype ?object_datatype .
     				}
+                    OPTIONAL { ?_object_map rr:language ?language .}
     			}
     			OPTIONAL {
     				?_object_map rr:template ?object_template .
@@ -2618,6 +2619,21 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                elif predicate_object_map.object_map.language != None:
+                    if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                        object += "@es"
+                    elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                        object += "@en"
+                    elif len(predicate_object_map.object_map.language) == 2:
+                        object += "@" + predicate_object_map.object_map.language
+                    else:
+                        object = None
+                elif predicate_object_map.object_map.language_map != None:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                                               ignore, triples_map.iterator)
+                    if lang != None:
+                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                                                            "object", ignore, triples_map.iterator)[1:-1]
             elif predicate_object_map.object_map.mapping_type == "template":
                 object = string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object",
                                                  triples_map.iterator, parent_map, namespace)
@@ -3592,6 +3608,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                elif predicate_object_map.object_map.language != None:
+                    if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                        object += "@es"
+                    elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                        object += "@en"
+                    elif len(predicate_object_map.object_map.language) == 2:
+                        object += "@" + predicate_object_map.object_map.language
+                    else:
+                        object = None
+                elif predicate_object_map.object_map.language_map != None:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                                               ignore, triples_map.iterator)
+                    if lang != None:
+                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                                                            "object", ignore, triples_map.iterator)[1:-1]
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
                     object = string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",
@@ -4784,7 +4815,22 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                elif predicate_object_map.object_map.language != None:
+                    if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                        object += "@es"
+                    elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                        object += "@en"
+                    elif len(predicate_object_map.object_map.language) == 2:
+                        object += "@" + predicate_object_map.object_map.language
+                    else:
+                        object = None
+                elif predicate_object_map.object_map.language_map != None:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                                               ignore, triples_map.iterator)
+                    if lang != None:
+                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                                                            "object", ignore, triples_map.iterator)[1:-1]
 
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
@@ -6363,13 +6409,28 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                 object = "\"" + predicate_object_map.object_map.value + "\""
             if predicate_object_map.object_map.datatype != None:
                 object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
-            if predicate_object_map.object_map.datatype_map != None:
+            elif predicate_object_map.object_map.datatype_map != None:
                 datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
                                                        row_headers, "object", ignore)
                 if "http" in datatype_value:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                 else:
-                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+            elif predicate_object_map.object_map.language != None:
+                if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                    object += "@es"
+                elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                    object += "@en"
+                elif len(predicate_object_map.object_map.language) == 2:
+                    object += "@" + predicate_object_map.object_map.language
+                else:
+                    object = None
+            elif predicate_object_map.object_map.language_map != None:
+                lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                                           ignore, triples_map.iterator)
+                if lang != None:
+                    object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                                                        "object", ignore, triples_map.iterator)[1:-1] 
         elif predicate_object_map.object_map.mapping_type == "template":
             try:
                 if predicate_object_map.object_map.term is None:
@@ -7245,6 +7306,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                 else:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+            elif predicate_object_map.object_map.language != None:
+                if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                    object += "@es"
+                elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                    object += "@en"
+                elif len(predicate_object_map.object_map.language) == 2:
+                    object += "@" + predicate_object_map.object_map.language
+                else:
+                    object = None
+            elif predicate_object_map.object_map.language_map != None:
+                lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                                           ignore, triples_map.iterator)
+                if lang != None:
+                    object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                                                        "object", ignore, triples_map.iterator)[1:-1]
         elif predicate_object_map.object_map.mapping_type == "template":
             try:
                 if predicate_object_map.object_map.term is None:
