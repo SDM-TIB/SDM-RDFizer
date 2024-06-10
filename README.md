@@ -99,7 +99,28 @@ This work is licensed under Apache 2.0
 # Papers
 [1. Conference paper published as a resource at CIKM2020](https://dl.acm.org/doi/abs/10.1145/3340531.3412881)
 
-[2. Journal paper to be published](https://www.semantic-web-journal.net/system/files/swj3580.pdf)
+[2. Journal paper in Semantic Web Journal](https://content.iospress.com/articles/semantic-web/sw243580)
+
+# Papers that Reference SDM-RDFizer
+[Google Scholar Entry](https://scholar.google.co.ve/citations?view_op=view_citation&hl=en&user=vDyk0JgAAAAJ&citation_for_view=vDyk0JgAAAAJ:-6RzNnnwWf8C)
+
+[What are the parameters that affect the construction of a knowledge graph?](https://www.researchgate.net/profile/David-Chaves-Fraga/publication/336220947_What_are_the_Parameters_that_Affect_the_Construction_of_a_Knowledge_Graph/links/5d9cc359a6fdccfd0e84033b/What-are-the-Parameters-that-Affect-the-Construction-of-a-Knowledge-Graph.pdf)
+
+[Knowledge4COVID-19: A semantic-based approach for constructing a COVID-19 related knowledge graph from various sources and analyzing treatments’ toxicities](https://www.sciencedirect.com/science/article/pii/S1570826822000440)
+
+[FunMap: Efficient Execution of Functional Mappings for Knowledge Graph Creation](https://link.springer.com/chapter/10.1007/978-3-030-62419-4_16)
+
+[Scaling up knowledge graph creation to large and heterogeneous data sources](https://www.sciencedirect.com/science/article/pii/S1570826822000397)
+
+[EABlock: a declarative entity alignment block for knowledge graph creation pipelines](https://dl.acm.org/doi/abs/10.1145/3477314.3507132)
+
+[InterpretME: A tool for interpretations of machine learning models over knowledge graphs](https://content.iospress.com/articles/semantic-web/sw233511)
+
+[FlexRML: A Flexible and Memory Efficient Knowledge Graph Materializer](https://link.springer.com/chapter/10.1007/978-3-031-60635-9_3)
+
+[RMLStreamer-SISO: An RDF Stream Generator from Streaming Heterogeneous Data](https://link.springer.com/chapter/10.1007/978-3-031-19433-7_40)
+
+[Morph-KGC: Scalable knowledge graph materialization with mapping partitions](https://content.iospress.com/articles/semantic-web/sw223135)
 
 # Authors
 The SDM-RDFizer has been developed by members of the Scientific Data Management Group at TIB, as an ongoing research effort. The development is coordinated and supervised by Maria-Esther Vidal (maria.vidal@tib.eu). We strongly encourage you to please report any issues you have with the SDM-RDFizer. You can do that over our contact email or creating a new issue here on GitHub. The SDM-RDFizer has been implemented by Enrique Iglesias (current version, iglesias@l3s.de) and Guillermo Betancourt (version 0.1, guillermojbetancourt@gmail.com) under the supervision of Samaneh Jozashoori (samaneh.jozashoori@tib.eu), David Chaves-Fraga (dchaves@fi.upm.es), and Kemele Endris (kemele.endris@tib.eu)
