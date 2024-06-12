@@ -8690,8 +8690,8 @@ def semantify(config_path, log_path='error.log'):
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
                                                 data = reader.to_dict(orient='records')
-                                                if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
-                                                    for triples_map in sorted_sources[source_type][source]:
+                                                for triples_map in sorted_sources[source_type][source]:
+                                                    if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
                                                         if (len(sorted_sources[source_type][source][
                                                                     triples_map].predicate_object_maps_list) > 0 and
                                                             sorted_sources[source_type][source][
