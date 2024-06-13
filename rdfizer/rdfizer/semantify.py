@@ -2191,8 +2191,8 @@ def mapping_parser(mapping_file):
         else:
             for triples_map in triples_map_list:
                 if str(triples_map.triples_map_id) == str(result_triples_map.triples_map_id):
-                    if result_triples_map.rdf_class not in triples_map.subject_map.rdf_class:
-                        triples_map.subject_map.rdf_class.append(result_triples_map.rdf_class)
+                    if str(result_triples_map.rdf_class) not in triples_map.subject_map.rdf_class:
+                        triples_map.subject_map.rdf_class.append(str(result_triples_map.rdf_class))
                     if result_triples_map.graph not in triples_map.subject_map.graph:
                         triples_map.graph.append(result_triples_map.graph)
 
@@ -8783,8 +8783,8 @@ def semantify(config_path, log_path='error.log'):
                                                                     sorted_sources[source_type][source][triples_map],
                                                                     generated_subjects)
                                             else:
-                                                if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
-                                                    for triples_map in sorted_sources[source_type][source]:
+                                                for triples_map in sorted_sources[source_type][source]:
+                                                    if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
                                                         if (len(sorted_sources[source_type][source][
                                                                     triples_map].predicate_object_maps_list) > 0 and
                                                             sorted_sources[source_type][source][
