@@ -1842,7 +1842,6 @@ def mapping_parser(mapping_file):
 
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
-        print(result_triples_map)
         triples_map_exists = False
         for triples_map in triples_map_list:
             triples_map_exists = triples_map_exists or (
