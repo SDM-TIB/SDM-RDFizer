@@ -1630,7 +1630,8 @@ def mapping_parser(mapping_file):
                         ?obj_dump void:dataDump ?object_dump.}  
             }
             OPTIONAL {
-                ?_source a d2rq:Database;
+                ?_source rml:source ?db .
+                ?db a d2rq:Database;
                 d2rq:jdbcDSN ?jdbcDSN; 
                 d2rq:jdbcDriver ?jdbcDriver; 
                 d2rq:username ?user;
@@ -1751,7 +1752,7 @@ def mapping_parser(mapping_file):
                     OPTIONAL {
                         ?_object_map rr:joinCondition ?join_condition .
                         ?join_condition rr:child ?child_value;
-                                     rr:parent ?parent_value;
+                                     rr:parent ?parent_value.
                     }
                 }
     			OPTIONAL {
@@ -1776,7 +1777,8 @@ def mapping_parser(mapping_file):
     					   ?_graph_structure rr:template ?predicate_object_graph  . }	
     			}
     			OPTIONAL {
-    				?_source a d2rq:Database;
+                    ?_source rml:source ?db .
+    				?db a d2rq:Database;
       				d2rq:jdbcDSN ?jdbcDSN; 
       				d2rq:jdbcDriver ?jdbcDriver; 
     			    d2rq:username ?user;
@@ -1840,6 +1842,7 @@ def mapping_parser(mapping_file):
 
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
+        print(result_triples_map)
         triples_map_exists = False
         for triples_map in triples_map_list:
             triples_map_exists = triples_map_exists or (
@@ -1995,7 +1998,7 @@ def mapping_parser(mapping_file):
                                               result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_parent_triples_map != None:
                     if predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map) not in join_predicate:
-                        if (result_predicate_object_map.child_function is None) and (result_predicate_object_map.parent_function is not None):
+                        if (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
                                 "predicate":predicate_map, 
@@ -2009,7 +2012,7 @@ def mapping_parser(mapping_file):
                                 "childs":[str(result_predicate_object_map.child_function)], 
                                 "parents":[str(result_predicate_object_map.parent_value)], 
                                 "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
-                        elif (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
+                        elif (result_predicate_object_map.child_function is None) and (result_predicate_object_map.parent_function is not None):
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
                                 "predicate":predicate_map, 

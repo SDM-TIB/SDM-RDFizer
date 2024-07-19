@@ -709,72 +709,73 @@ def files_sort(triples_map_list, ordered, config):
 						else:
 							source_predicate["XPath"][str(tp.data_source)] = {po.predicate_map.value : ""}
 		else:
-			if "SPARQL" in tp.file_format:
-				if "csv" not in sorted_list:
-					if ".nt" in str(tp.data_source):
-						sorted_list["csv"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
+			if tp.file_format != None:
+				if "SPARQL" in tp.file_format:
+					if "csv" not in sorted_list:
+						if ".nt" in str(tp.data_source):
+							sorted_list["csv"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
+						else:
+							sorted_list["csv"] = {"endpoint:" + str(tp.data_source) : {tp.triples_map_id : tp}}
 					else:
-						sorted_list["csv"] = {"endpoint:" + str(tp.data_source) : {tp.triples_map_id : tp}}
-				else:
-					if ".nt" in str(tp.data_source):
-						if str(tp.data_source) in sorted_list["csv"]:
-							sorted_list["csv"][str(tp.data_source)][tp.triples_map_id] = tp
+						if ".nt" in str(tp.data_source):
+							if str(tp.data_source) in sorted_list["csv"]:
+								sorted_list["csv"][str(tp.data_source)][tp.triples_map_id] = tp
+							else:
+								sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
 						else:
-							sorted_list["csv"][str(tp.data_source)] = {tp.triples_map_id : tp}
-					else:
-						if "endpoint:" + str(tp.data_source) in sorted_list["csv"]:
-							sorted_list["csv"]["endpoint:" + str(tp.data_source)][tp.triples_map_id] = tp
-						else:
-							sorted_list["csv"]["endpoint:" + str(tp.data_source)] = {tp.triples_map_id : tp}
-				for po in tp.predicate_object_maps_list:
-					if po.predicate_map.value in general_predicates:
-						predicate = po.predicate_map.value + "_" + po.object_map.value
-						if predicate in predicate_list:
-							predicate_list[predicate] += 1
-						else:
-							predicate_list[predicate] = 1
-					else:
-						if po.predicate_map.value in predicate_list:
-							predicate_list[po.predicate_map.value] += 1
-						else:
-							predicate_list[po.predicate_map.value] = 1
-					if "csv" not in source_predicate:
+							if "endpoint:" + str(tp.data_source) in sorted_list["csv"]:
+								sorted_list["csv"]["endpoint:" + str(tp.data_source)][tp.triples_map_id] = tp
+							else:
+								sorted_list["csv"]["endpoint:" + str(tp.data_source)] = {tp.triples_map_id : tp}
+					for po in tp.predicate_object_maps_list:
 						if po.predicate_map.value in general_predicates:
 							predicate = po.predicate_map.value + "_" + po.object_map.value
-							if ".nt" in str(tp.data_source):
-								source_predicate["csv"] = {str(tp.data_source) : {predicate : ""}}
+							if predicate in predicate_list:
+								predicate_list[predicate] += 1
 							else:
-								source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {predicate : ""}}
+								predicate_list[predicate] = 1
 						else:
-							if ".nt" in str(tp.data_source):
-								source_predicate["csv"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
+							if po.predicate_map.value in predicate_list:
+								predicate_list[po.predicate_map.value] += 1
 							else:
-								source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {po.predicate_map.value : ""}}
-					else:
-						if str(tp.data_source) in source_predicate["csv"]:
+								predicate_list[po.predicate_map.value] = 1
+						if "csv" not in source_predicate:
 							if po.predicate_map.value in general_predicates:
 								predicate = po.predicate_map.value + "_" + po.object_map.value
 								if ".nt" in str(tp.data_source):
-									source_predicate["csv"][str(tp.data_source)][predicate] = ""
+									source_predicate["csv"] = {str(tp.data_source) : {predicate : ""}}
 								else:
-									source_predicate["csv"]["endpoint:" + str(tp.data_source)][predicate] = ""
+									source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {predicate : ""}}
 							else:
 								if ".nt" in str(tp.data_source):
-									source_predicate["csv"][str(tp.data_source)][po.predicate_map.value] = ""
+									source_predicate["csv"] = {str(tp.data_source) : {po.predicate_map.value : ""}}
 								else:
-									source_predicate["csv"]["endpoint:" + str(tp.data_source)][po.predicate_map.value] = ""
+									source_predicate["csv"] = {"endpoint:" + str(tp.data_source) : {po.predicate_map.value : ""}}
 						else:
-							if po.predicate_map.value in general_predicates:
-								predicate = po.predicate_map.value + "_" + po.object_map.value
-								if ".nt" in str(tp.data_source):
-									source_predicate["csv"][str(tp.data_source)] = {predicate : ""}
+							if str(tp.data_source) in source_predicate["csv"]:
+								if po.predicate_map.value in general_predicates:
+									predicate = po.predicate_map.value + "_" + po.object_map.value
+									if ".nt" in str(tp.data_source):
+										source_predicate["csv"][str(tp.data_source)][predicate] = ""
+									else:
+										source_predicate["csv"]["endpoint:" + str(tp.data_source)][predicate] = ""
 								else:
-									source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {predicate : ""}
+									if ".nt" in str(tp.data_source):
+										source_predicate["csv"][str(tp.data_source)][po.predicate_map.value] = ""
+									else:
+										source_predicate["csv"]["endpoint:" + str(tp.data_source)][po.predicate_map.value] = ""
 							else:
-								if ".nt" in str(tp.data_source):
-									source_predicate["csv"][str(tp.data_source)] = {po.predicate_map.value : ""}
+								if po.predicate_map.value in general_predicates:
+									predicate = po.predicate_map.value + "_" + po.object_map.value
+									if ".nt" in str(tp.data_source):
+										source_predicate["csv"][str(tp.data_source)] = {predicate : ""}
+									else:
+										source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {predicate : ""}
 								else:
-									source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {po.predicate_map.value : ""}
+									if ".nt" in str(tp.data_source):
+										source_predicate["csv"][str(tp.data_source)] = {po.predicate_map.value : ""}
+									else:
+										source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {po.predicate_map.value : ""}
 			else:
 				if tp.query == "None":
 					if tp.iterator == "None":
