@@ -6,3 +6,5 @@ six>=1.11.0
 mysql-connector-python>=8.0.22
 psycopg2-binary
 pandas
+requests
+sparqlwrapper
