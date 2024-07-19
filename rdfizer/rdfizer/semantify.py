@@ -5016,13 +5016,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                 hash_maker_xml(child_root, triples_map_element,
                                                                predicate_object_map.object_map, parent_map, namespace)
                                         else:
-                                            database, query_list = translate_sql(triples_map_element)
                                             db = connector.connect(host=host, port=int(port), user=user,
                                                                    password=password)
                                             cursor = db.cursor(buffered=True)
                                             cursor.execute("use " + datab)
-                                            for query in query_list:
-                                                cursor.execute(query)
+                                            if triples_map_element.query != "None":
+                                                cursor.execute(triples_map_element.query)
+                                            else:
+                                                database, query_list = translate_sql(triples_map_element)
+                                                for query in query_list:
+                                                    cursor.execute(query)
                                             hash_maker_array(cursor, triples_map_element,
                                                              predicate_object_map.object_map)
 
@@ -5156,13 +5159,16 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                 hash_maker_xml(child_root, triples_map_element,
                                                                predicate_object_map.object_map, parent_map, namespace)
                                         else:
-                                            database, query_list = translate_sql(triples_map_element)
                                             db = connector.connect(host=host, port=int(port), user=user,
                                                                    password=password)
                                             cursor = db.cursor(buffered=True)
                                             cursor.execute("use " + datab)
-                                            for query in query_list:
-                                                cursor.execute(query)
+                                            if triples_map_element.query != "None":
+                                                cursor.execute(triples_map_element.query)
+                                            else:
+                                                database, query_list = translate_sql(triples_map_element)
+                                                for query in query_list:
+                                                    cursor.execute(query)
                                             hash_maker_array(cursor, triples_map_element,
                                                              predicate_object_map.object_map)
                                     if sublist(predicate_object_map.object_map.child, row.keys()):
