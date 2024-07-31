@@ -941,19 +941,22 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				if "[*]" in match:
 					if match.split("[*]")[0] in row:
 						child_list = row[match.split("[*]")[0]]
-						match = match.split(".")[1:]
 						object_list = []
 						for child in child_list:
-							if len(match) > 1:
-								value = child[match[0]]
-								for element in match:
-									if element in value:
-										value = value[element]
-							else:
-								if match[0] in child:
+							if "." in match:
+								match = match.split(".")[1:]
+								if len(match) > 1:
 									value = child[match[0]]
+									for element in match:
+										if element in value:
+											value = value[element]
 								else:
-									value = None
+									if match[0] in child:
+										value = child[match[0]]
+									else:
+										value = None
+							else:
+								value = child
 							if value is not None:
 								if (type(value).__name__) != "str":
 									if (type(value).__name__) != "float":
@@ -1039,19 +1042,22 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 				if match[:2] == "$.":
 					match = match[2:]
 				child_list = row[match.split("[*]")[0]]
-				match = match.split(".")[1:]
 				object_list = []
 				for child in child_list:
-					if len(match) > 1:
-						value = child[match[0]]
-						for element in match:
-							if element in value:
-								value = value[element]
-					else:
-						if match[0] in child:
+					if "." in match
+						match = match.split(".")[1:]
+						if len(match) > 1:
 							value = child[match[0]]
+							for element in match:
+								if element in value:
+									value = value[element]
 						else:
-							value = None
+							if match[0] in child:
+								value = child[match[0]]
+							else:
+								value = None
+					else:
+						value = child
 
 					if match is not None:
 						if (type(value).__name__) == "int":
