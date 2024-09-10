@@ -2153,6 +2153,7 @@ def mapping_parser(mapping_file):
                                               result_predicate_object_map.datatype_value, "None")
                     predicate_object_maps_list += [
                         tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map, predicate_object_graph)]
+            predicate_object_maps_list = remove_duplicate_po(predicate_object_maps_list)
             if result_triples_map.url_source is not None:
                 if result_triples_map.delimiter is not None:
                     url_source = str(result_triples_map.url_source)[7:] if str(result_triples_map.url_source)[:7] == "file://" else str(result_triples_map.url_source)
@@ -2608,7 +2609,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                     predicate = None
 
             if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-                if "/" in predicate_object_map.object_map.value:
+                if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
                     object = "\"" + predicate_object_map.object_map.value + "\""
@@ -3597,7 +3598,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                 predicate = None
 
             if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-                if "/" in predicate_object_map.object_map.value:
+                if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
                     object = "\"" + predicate_object_map.object_map.value + "\""
@@ -4801,7 +4802,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     predicate = None
 
             if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-                if "/" in predicate_object_map.object_map.value:
+                if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
                     object = "\"" + predicate_object_map.object_map.value + "\""
@@ -6411,7 +6412,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
             predicate = None
 
         if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-            if "/" in predicate_object_map.object_map.value:
+            if "http" in predicate_object_map.object_map.value:
                 object = "<" + predicate_object_map.object_map.value + ">"
             else:
                 object = "\"" + predicate_object_map.object_map.value + "\""
@@ -7301,7 +7302,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                 predicate = None
 
         if predicate_object_map.object_map.mapping_type == "constant" or predicate_object_map.object_map.mapping_type == "constant shortcut":
-            if "/" in predicate_object_map.object_map.value:
+            if "http" in predicate_object_map.object_map.value:
                 object = "<" + predicate_object_map.object_map.value + ">"
             else:
                 object = "\"" + predicate_object_map.object_map.value + "\""

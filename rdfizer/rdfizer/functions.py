@@ -1904,3 +1904,16 @@ def condition_separetor(string):
 	field = condition_field[1][:len(condition_field[1])-1].split("=")[0]
 	value = condition_field[1][:len(condition_field[1])-1].split("=")[1]
 	return field, value
+
+def remove_duplicate_po(po_list):
+	unique_list = []
+	for po in po_list:
+		if unique_list == []:
+			unique_list.append(po)
+		else:
+			for po_unique in unique_list:
+				if po.predicate_map.value == po_unique.predicate_map.value and po.object_map.value == po_unique.object_map.value:
+					break
+			else:
+				unique_list.append(po)
+	return unique_list
