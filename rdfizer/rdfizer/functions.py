@@ -1030,6 +1030,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 									object_list.append(new_string)
 									new_string = string
 									offset_current_substitution = 0
+						return object_list
 					else:
 						return None
 			
