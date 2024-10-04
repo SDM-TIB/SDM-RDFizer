@@ -1212,6 +1212,24 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map, na
 
 						else:
 							return None
+					elif namespace != {}:
+						if row.find("{"+namespace[""]+"}"+match) is not None:
+							if re.search("^[\s|\t]*$", row.find("{"+namespace[""]+"}"+match).text) is None:
+								new_string = new_string[:start + offset_current_substitution] + encode_char(row.find("{"+namespace[""]+"}"+match).text.strip()) + new_string[ end + offset_current_substitution:]
+								offset_current_substitution = offset_current_substitution + len(encode_char(row.find("{"+namespace[""]+"}"+match).text.strip())) - (end - start)
+
+							else:
+								return None
+						else:
+							if match in row.attrib:
+								if row.attrib[match] is not None:
+									if re.search("^[\s|\t]*$", row.attrib[match]) is None:
+										new_string = new_string[:start + offset_current_substitution] + encode_char(row.attrib[match].strip()) + new_string[end + offset_current_substitution:]
+										offset_current_substitution = offset_current_substitution + len(encode_char(row.attrib[match].strip())) - (end - start)
+									else:
+										return None
+							else:
+								return None
 					else:
 						if match in row.attrib:
 							if row.attrib[match] is not None:
@@ -1272,12 +1290,20 @@ def string_substitution_xml(string, pattern, row, term, iterator, parent_map, na
 								temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
 								i += 1
 						else:
-							for child in row.findall(match, namespace):
-								if re.search("^[\s|\t]*$", child.text) is None:
-									new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
-									offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(child.text.strip())) - (end - start)
-									temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
-									i += 1
+							if namespace != {}:
+								for child in row.findall("{"+namespace[""]+"}"+match, namespace):
+									if re.search("^[\s|\t]*$", child.text) is None:
+										new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+										offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(child.text.strip())) - (end - start)
+										temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+										i += 1
+							else:
+								for child in row.findall(match, namespace):
+									if re.search("^[\s|\t]*$", child.text) is None:
+										new_string = temp_list[i]["string"][:start + temp_list[i]["offset_current_substitution"]] + encode_char(child.text.strip()) + temp_list[i]["string"][ end + temp_list[i]["offset_current_substitution"]:]
+										offset_current_substitution = temp_list[i]["offset_current_substitution"] + len(encode_char(child.text.strip())) - (end - start)
+										temp_list[i] = {"string":new_string,"offset_current_substitution":offset_current_substitution}
+										i += 1
 				else:
 					match = reference_match.group(1).split("[")[0]
 					if "@" in match:

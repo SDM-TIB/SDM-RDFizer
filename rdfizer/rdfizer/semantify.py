@@ -2333,7 +2333,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
     for child in root.iterfind(level, namespace):
         create_subject = True
         global generated_subjects
-
         if mapping_partitions == "yes":
             if "_" in triples_map.triples_map_id:
                 componets = triples_map.triples_map_id.split("_")[:-1]
