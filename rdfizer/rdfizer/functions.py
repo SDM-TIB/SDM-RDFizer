@@ -1002,35 +1002,38 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					value = row[match]	
 				else:
 					if "[*]" in match:
-						object_list = []
-						child_list = row[match.split("[*]")[0]]
-						for value in child_list:
-							if value is not None:
-								if (type(value).__name__) != "str":
-									if (type(value).__name__) != "float":
-										value = str(value)
+						if match.split("[*]")[0] in row:
+							object_list = []
+							child_list = row[match.split("[*]")[0]]
+							for value in child_list:
+								if value is not None:
+									if (type(value).__name__) != "str":
+										if (type(value).__name__) != "float":
+											value = str(value)
+										else:
+											value = str(math.ceil(value))
 									else:
-										value = str(math.ceil(value))
-								else:
-									if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
-										value = str(math.ceil(float(value))) 
-								if re.search("^[\s|\t]*$", value) is None:
-									if "http" not in value:
-										value = encode_char(value)
-									new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
-									offset_current_substitution = offset_current_substitution + len(value) - (end - start)
-									if "\\" in new_string:
-										new_string = new_string.replace("\\", "")
-										count = new_string.count("}")
-										i = 0
-										new_string = " " + new_string
-										while i < count:
-											new_string = "{" + new_string
-											i += 1
-									object_list.append(new_string)
-									new_string = string
-									offset_current_substitution = 0
-						return object_list
+										if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+											value = str(math.ceil(float(value))) 
+									if re.search("^[\s|\t]*$", value) is None:
+										if "http" not in value:
+											value = encode_char(value)
+										new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+										offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+										if "\\" in new_string:
+											new_string = new_string.replace("\\", "")
+											count = new_string.count("}")
+											i = 0
+											new_string = " " + new_string
+											while i < count:
+												new_string = "{" + new_string
+												i += 1
+										object_list.append(new_string)
+										new_string = string
+										offset_current_substitution = 0
+							return object_list
+						else:
+							return None
 					else:
 						return None
 			
@@ -1078,6 +1081,14 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							for element in match:
 								if element in value:
 									value = value[element]
+						else:
+							if match[0] in child:
+								value = child[match[0]]
+							else:
+								value = None
+					if isinstance(match, list):
+						if len(match) > 1:
+							pass
 						else:
 							if match[0] in child:
 								value = child[match[0]]

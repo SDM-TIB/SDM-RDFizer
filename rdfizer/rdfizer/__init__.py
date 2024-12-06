@@ -1272,21 +1272,21 @@ def mappings_expansion(triples_map_list):
                                 if str(triples_map.file_format).lower() == "csv" or triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
                                     if triples_map.data_source == triples_map_element.data_source:
                                         if po.object_map.child[0] == po.object_map.parent[0]:
-                                            """if triples_map_element.subject_map.subject_mapping_type == "template":
-                                                    object_map = tm.ObjectMap("template",
-                                                                              triples_map_element.subject_map.value, "None",
-                                                                              "None", "None",
-                                                                              triples_map_element.subject_map.term_type,
-                                                                              "None", "None")
-                                                else:
-                                                    object_map = tm.ObjectMap("reference",
-                                                                              triples_map_element.subject_map.value, "None",
-                                                                              "None", "None",
-                                                                              triples_map_element.subject_map.term_type,
-                                                                              "None", "None")
-                                                pom_list.append(
-                                                    tm.PredicateObjectMap(po.predicate_map, object_map, po.graph))"""
-                                            pom_list.append(po)
+                                            if triples_map_element.subject_map.subject_mapping_type == "template":
+                                                object_map = tm.ObjectMap("template",
+                                                                          triples_map_element.subject_map.value, "None",
+                                                                          "None", "None",
+                                                                          triples_map_element.subject_map.term_type,
+                                                                          "None", "None","None", "None")
+                                            else:
+                                                object_map = tm.ObjectMap("reference",
+                                                                          triples_map_element.subject_map.value, "None",
+                                                                          "None", "None",
+                                                                          triples_map_element.subject_map.term_type,
+                                                                          "None", "None","None", "None")
+                                            pom_list.append(
+                                                tm.PredicateObjectMap(po.predicate_map, object_map, po.graph))
+                                            #pom_list.append(po)
                                         else:
                                             pom_list.append(po)
                                     else:
@@ -3250,11 +3250,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
         for tp in temp_keys:
             new_iterator += tp + "."
             if "$" != tp and "" != tp:
+                print(tp)
                 if "[*][*]" in tp:
                     if tp.split("[*][*]")[0] in row:
                         row = row[tp.split("[*][*]")[0]]
                     else:
                         row = []
+                elif tp == "[*]":
+                    print(iterator.replace(new_iterator[:-1], ""))
+                    if isinstance(row, list):
+                        for sub_row in row:
+                            i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, sub_row,
+                                                "$" + iterator.replace(new_iterator[:-1], ""))
+                    else:
+                        i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, row,
+                                            "$" + iterator.replace(new_iterator[:-1], ""))
                 elif "[*]" in tp:
                     if tp.split("[*]")[0] in row:
                         row = row[tp.split("[*]")[0]]
@@ -4974,7 +4984,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                           "r") as input_file_descriptor:
                                                     if str(triples_map_element.file_format).lower() == "csv":
                                                         reader = pd.read_csv(str(triples_map_element.data_source),
-                                                                             dtype=str, encoding="latin-1")
+                                                                             dtype=str, encoding="utf-8")
                                                         reader = reader.where(pd.notnull(reader), None)
                                                         reader = reader.drop_duplicates(keep='first')
                                                         data = reader.to_dict(orient='records')
@@ -5072,7 +5082,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                             if str(triples_map_element.file_format).lower() == "csv":
                                                                 reader = pd.read_csv(
                                                                     str(triples_map_element.data_source), dtype=str,
-                                                                    encoding="latin-1")
+                                                                    encoding="utf-8")
                                                                 reader = reader.where(pd.notnull(reader), None)
                                                                 reader = reader.drop_duplicates(keep='first')
                                                                 data = reader.to_dict(orient='records')
@@ -8059,11 +8069,11 @@ def semantify(config_path, log_path='error.log'):
                                             if enrichment == "yes":
                                                 if ".csv" in source:
                                                     if source in delimiter:
-                                                        reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="latin-1")
+                                                        reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
                                                     else:
-                                                        reader = pd.read_csv(source, dtype=str, encoding="latin-1")
+                                                        reader = pd.read_csv(source, dtype=str, encoding="utf-8")
                                                 else:
-                                                    reader = pd.read_csv(source, dtype=str, sep='\t', encoding="latin-1")
+                                                    reader = pd.read_csv(source, dtype=str, sep='\t', encoding="utf-8")
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
@@ -8170,7 +8180,7 @@ def semantify(config_path, log_path='error.log'):
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
                                                                     triples_map].subject_map.rdf_class != [None]:
-                                                            with open(source, "r", encoding="latin-1") as input_file_descriptor:
+                                                            with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 if ".csv" in source:
                                                                     if source in delimiter:
                                                                         data = csv.DictReader(input_file_descriptor, delimiter=delimiter[source])
@@ -8688,12 +8698,12 @@ def semantify(config_path, log_path='error.log'):
                                             if enrichment == "yes":
                                                 if ".csv" in source:
                                                     if source in delimiter:
-                                                        reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="latin-1")
+                                                        reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
                                                     else:
-                                                        reader = pd.read_csv(source, dtype=str, encoding="latin-1")  # latin-1
+                                                        reader = pd.read_csv(source, dtype=str, encoding="utf-8")  # utf-8
                                                 else:
                                                     reader = pd.read_csv(source, dtype=str, sep="\t", header=0,
-                                                                         encoding="latin-1")
+                                                                         encoding="utf-8")
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
@@ -8801,7 +8811,7 @@ def semantify(config_path, log_path='error.log'):
                                                                 sorted_sources[source_type][source][
                                                                     triples_map].subject_map.rdf_class != [None]:
                                                             blank_message = True
-                                                            with open(source, "r", encoding="latin-1") as input_file_descriptor:
+                                                            with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 if ".csv" in source:
                                                                     if source in delimiter:
                                                                         data = csv.DictReader(input_file_descriptor, delimiter=delimiter[source])
@@ -9997,7 +10007,7 @@ def semantify(config_path, log_path='error.log'):
                                                             generated_subjects)
                                         else:
                                             if enrichment == "yes":
-                                                reader = pd.read_csv(source, encoding="latin-1")
+                                                reader = pd.read_csv(source, encoding="utf-8")
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
@@ -10105,7 +10115,7 @@ def semantify(config_path, log_path='error.log'):
                                                                 sorted_sources[source_type][source][
                                                                     triples_map].subject_map.rdf_class != [None]:
                                                             blank_message = True
-                                                            with open(source, "r", encoding="latin-1") as input_file_descriptor:
+                                                            with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 data = csv.DictReader(input_file_descriptor, delimiter=',')
                                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10615,7 +10625,7 @@ def semantify(config_path, log_path='error.log'):
                                                             generated_subjects)
                                         else:
                                             if enrichment == "yes":
-                                                reader = pd.read_csv(source, encoding="latin-1")
+                                                reader = pd.read_csv(source, encoding="utf-8")
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
@@ -10713,7 +10723,7 @@ def semantify(config_path, log_path='error.log'):
                                                                     sorted_sources[source_type][source][triples_map],
                                                                     generated_subjects)
                                             else:
-                                                with open(source, "r", encoding="latin-1") as input_file_descriptor:
+                                                with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                     data = csv.DictReader(input_file_descriptor, delimiter=',')
                                                     for triples_map in sorted_sources[source_type][source]:
                                                         if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
