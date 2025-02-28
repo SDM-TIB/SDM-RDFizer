@@ -3686,7 +3686,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             i += 1
                     else:
                         if predicate_object_map.object_map.term is None:
-                            object = "<" + object + ">"
+                            if object is not None:
+                                object = "<" + object.replace(" ","%20") + ">"
                         elif "IRI" in predicate_object_map.object_map.term:
                             object = "<" + object + ">"
                         elif "BlankNode" in predicate_object_map.object_map.term:
@@ -3738,7 +3739,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         i = 0
                         while i < len(object_list):
                             if "\\" in object_list[i][1:-1]:
-                                object = "\"" + object[i][1:-1].replace("\\", "\\\\") + "\""
+                                object_list[i] = "\"" + object_list[i][1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object_list[i][1:-1]:
                                 object_list[i] = "\"" + object_list[i][1:-1].replace("'", "\\\\'") + "\""
                             if "\"" in object_list[i][1:-1]:
@@ -3752,9 +3753,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
                                                                     "object", ignore, iterator)
                                 if "http" in datatype_value:
-                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
+                                   object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
-                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                   object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
                             elif predicate_object_map.object_map.language != None:
                                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                     object_list[i] += "@es"
@@ -3776,10 +3777,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     else:
                                         object_list[i] = None
                             i += 1
+
                         if None in object_list:
                             temp = []
-                            for obj in object_list:
-                                temp.append(obj)
+                            for object_element in object_list:
+                                if object_element != None:
+                                    temp.append(object_element)
                             object_list = temp
 
                 else:
@@ -3792,6 +3795,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                         if "\n" in object:
                             object = object.replace("\n", "\\n")
+                            object = object.replace("\r", "")
                         if predicate_object_map.object_map.datatype != None:
                             object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                 predicate_object_map.object_map.datatype)
