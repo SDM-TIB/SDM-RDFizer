@@ -8316,7 +8316,7 @@ def semantify(config_path, log_path='error.log'):
                                                         response = urlopen(file_source)
                                                         data = json.loads(response.read())
                                                 else:
-                                                    data = json.load(open(source))
+                                                    data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10245,7 +10245,7 @@ def semantify(config_path, log_path='error.log'):
                                                         data = json.loads(response.read())
                                                 else:
                                                     data = json.load(
-                                                        sorted_sources[source_type][source][triples_map].data_source)
+                                                        open(sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
