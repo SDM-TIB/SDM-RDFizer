@@ -351,23 +351,54 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
     for row in parent_data:
         if quoted == "":
             if child_object.parent[0] in row.keys():
-                if row[child_object.parent[0]] in hash_table and row[child_object.parent[0]] != "" and row[child_object.parent[0]] != None:
-                    if duplicate == "yes":
-                        if parent_subject.subject_map.subject_mapping_type == "reference":
-                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                        parent_subject.iterator)
-                            if value != None:
+                if row[child_object.parent[0]] != "" and row[child_object.parent[0]] != None:
+                    if row[child_object.parent[0]] in hash_table:
+                        if duplicate == "yes":
+                            if parent_subject.subject_map.subject_mapping_type == "reference":
+                                value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                if value not in hash_table[row[child_object.parent[0]]]:
+                                    hash_table[row[child_object.parent[0]]].update({value: "object"})
+                            else:
+                                if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                       parent_subject.iterator) != None:
+                                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                                ignore, parent_subject.iterator)
+                                    if value != None:
+                                        if parent_subject.subject_map.term_type != None:
+                                            if "BlankNode" in parent_subject.subject_map.term_type:
+                                                if "/" in value:
+                                                    value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                    if "." in value:
+                                                        value = value.replace(".", "2E")
+                                                    if blank_message:
+                                                        logger.warning(
+                                                            "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                        blank_message = False
+                                                else:
+                                                    value = "_:" + encode_char(value).replace("%", "")
+                                                    if "." in value:
+                                                        value = value.replace(".", "2E")
+                                        else:
+                                            value = "<" + value + ">"
+                                        hash_table[row[child_object.parent[0]]].update({value: "object"})
+                        else:
+                            if parent_subject.subject_map.subject_mapping_type == "reference":
+                                value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                            parent_subject.iterator)
                                 if "http" in value and "<" not in value:
                                     value = "<" + value[1:-1] + ">"
                                 elif "http" in value and "<" in value:
                                     value = value[1:-1]
-                            if value not in hash_table[row[child_object.parent[0]]]:
                                 hash_table[row[child_object.parent[0]]].update({value: "object"})
-                        else:
-                            if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                   parent_subject.iterator) != None:
-                                value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
-                                                            ignore, parent_subject.iterator)
+                            else:
+                                value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                            parent_subject.iterator)
                                 if value != None:
                                     if parent_subject.subject_map.term_type != None:
                                         if "BlankNode" in parent_subject.subject_map.term_type:
@@ -386,15 +417,17 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                     else:
                                         value = "<" + value + ">"
                                     hash_table[row[child_object.parent[0]]].update({value: "object"})
+
                     else:
                         if parent_subject.subject_map.subject_mapping_type == "reference":
                             value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
                                                         parent_subject.iterator)
-                            if "http" in value and "<" not in value:
-                                value = "<" + value[1:-1] + ">"
-                            elif "http" in value and "<" in value:
-                                value = value[1:-1]
-                            hash_table[row[child_object.parent[0]]].update({value: "object"})
+                            if value != None:
+                                if "http" in value and "<" not in value:
+                                    value = "<" + value[1:-1] + ">"
+                                elif "http" in value and "<" in value:
+                                    value = value[1:-1]
+                            hash_table.update({row[child_object.parent[0]]: {value: "object"}})
                         else:
                             value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
                                                         parent_subject.iterator)
@@ -415,39 +448,7 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                                 value = value.replace(".", "2E")
                                 else:
                                     value = "<" + value + ">"
-                                hash_table[row[child_object.parent[0]]].update({value: "object"})
-
-                else:
-                    if parent_subject.subject_map.subject_mapping_type == "reference":
-                        value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                    parent_subject.iterator)
-                        if value != None:
-                            if "http" in value and "<" not in value:
-                                value = "<" + value[1:-1] + ">"
-                            elif "http" in value and "<" in value:
-                                value = value[1:-1]
-                        hash_table.update({row[child_object.parent[0]]: {value: "object"}})
-                    else:
-                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                    parent_subject.iterator)
-                        if value != None:
-                            if parent_subject.subject_map.term_type != None:
-                                if "BlankNode" in parent_subject.subject_map.term_type:
-                                    if "/" in value:
-                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                                        if blank_message:
-                                            logger.warning(
-                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                            blank_message = False
-                                    else:
-                                        value = "_:" + encode_char(value).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                            else:
-                                value = "<" + value + ">"
-                            hash_table.update({row[child_object.parent[0]]: {value: "object"}})
+                                hash_table.update({row[child_object.parent[0]]: {value: "object"}})
         else:
             for triples in inner_semantify_file(parent_subject, triples_map_list, ",", row, base):
                 if triples != None:
@@ -474,8 +475,73 @@ def hash_maker_list(parent_data, parent_subject, child_object):
     global blank_message
     for row in parent_data:
         if sublist(child_object.parent, row.keys()):
-            if child_list_value(child_object.parent, row) in hash_table:
-                if duplicate == "yes":
+            if child_list_value(child_object.parent, row) != "" and child_list_value(child_object.parent, row) != None:
+                if child_list_value(child_object.parent, row) in hash_table:
+                    if duplicate == "yes":
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                        parent_subject.iterator)
+                            if value != None:
+                                if "http" in value and "<" not in value:
+                                    value = "<" + value[1:-1] + ">"
+                                elif "http" in value and "<" in value:
+                                    value = value[1:-1]
+                            hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
+                        else:
+                            value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                        parent_subject.iterator)
+                            if value != None:
+                                if parent_subject.subject_map.term_type != None:
+                                    if "BlankNode" in parent_subject.subject_map.term_type:
+                                        if "/" in value:
+                                            value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                            if "." in value:
+                                                value = value.replace(".", "2E")
+                                            if blank_message:
+                                                logger.warning(
+                                                    "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                blank_message = False
+                                        else:
+                                            value = "_:" + encode_char(value).replace("%", "")
+                                            if "." in value:
+                                                value = value.replace(".", "2E")
+                                else:
+                                    value = "<" + value + ">"
+                                hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
+
+
+                    else:
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                        parent_subject.iterator)
+                            if "http" in value and "<" not in value:
+                                value = "<" + value[1:-1] + ">"
+                            elif "http" in value and "<" in value:
+                                value = value[1:-1]
+                            hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
+                        else:
+                            value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                        parent_subject.iterator)
+                            if value != None:
+                                if parent_subject.subject_map.term_type != None:
+                                    if "BlankNode" in parent_subject.subject_map.term_type:
+                                        if "/" in value:
+                                            value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                            if "." in value:
+                                                value = value.replace(".", "2E")
+                                            if blank_message:
+                                                logger.warning(
+                                                    "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                blank_message = False
+                                        else:
+                                            value = "_:" + encode_char(value).replace("%", "")
+                                            if "." in value:
+                                                value = value.replace(".", "2E")
+                                else:
+                                    value = "<" + value + ">"
+                                hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
+
+                else:
                     if parent_subject.subject_map.subject_mapping_type == "reference":
                         value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
                                                     parent_subject.iterator)
@@ -484,92 +550,28 @@ def hash_maker_list(parent_data, parent_subject, child_object):
                                 value = "<" + value[1:-1] + ">"
                             elif "http" in value and "<" in value:
                                 value = value[1:-1]
-                        hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
-                    else:
-                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                    parent_subject.iterator)
-                        if value != None:
-                            if parent_subject.subject_map.term_type != None:
-                                if "BlankNode" in parent_subject.subject_map.term_type:
-                                    if "/" in value:
-                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                                        if blank_message:
-                                            logger.warning(
-                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                            blank_message = False
-                                    else:
-                                        value = "_:" + encode_char(value).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                            else:
-                                value = "<" + value + ">"
-                            hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
-
-
-                else:
-                    if parent_subject.subject_map.subject_mapping_type == "reference":
-                        value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                    parent_subject.iterator)
-                        if "http" in value and "<" not in value:
-                            value = "<" + value[1:-1] + ">"
-                        elif "http" in value and "<" in value:
-                            value = value[1:-1]
-                        hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
-                    else:
-                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                    parent_subject.iterator)
-                        if value != None:
-                            if parent_subject.subject_map.term_type != None:
-                                if "BlankNode" in parent_subject.subject_map.term_type:
-                                    if "/" in value:
-                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                                        if blank_message:
-                                            logger.warning(
-                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                            blank_message = False
-                                    else:
-                                        value = "_:" + encode_char(value).replace("%", "")
-                                        if "." in value:
-                                            value = value.replace(".", "2E")
-                            else:
-                                value = "<" + value + ">"
-                            hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
-
-            else:
-                if parent_subject.subject_map.subject_mapping_type == "reference":
-                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                parent_subject.iterator)
-                    if value != None:
-                        if "http" in value and "<" not in value:
-                            value = "<" + value[1:-1] + ">"
-                        elif "http" in value and "<" in value:
-                            value = value[1:-1]
-                    hash_table.update({child_list_value(child_object.parent, row): {value: "object"}})
-                else:
-                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                parent_subject.iterator)
-                    if value != None:
-                        if parent_subject.subject_map.term_type != None:
-                            if "BlankNode" in parent_subject.subject_map.term_type:
-                                if "/" in value:
-                                    value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                    if "." in value:
-                                        value = value.replace(".", "2E")
-                                    if blank_message:
-                                        logger.warning(
-                                            "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                        blank_message = False
-                                else:
-                                    value = "_:" + encode_char(value).replace("%", "")
-                                    if "." in value:
-                                        value = value.replace(".", "2E")
-                        else:
-                            value = "<" + value + ">"
                         hash_table.update({child_list_value(child_object.parent, row): {value: "object"}})
+                    else:
+                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                    parent_subject.iterator)
+                        if value != None:
+                            if parent_subject.subject_map.term_type != None:
+                                if "BlankNode" in parent_subject.subject_map.term_type:
+                                    if "/" in value:
+                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                        if "." in value:
+                                            value = value.replace(".", "2E")
+                                        if blank_message:
+                                            logger.warning(
+                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                            blank_message = False
+                                    else:
+                                        value = "_:" + encode_char(value).replace("%", "")
+                                        if "." in value:
+                                            value = value.replace(".", "2E")
+                            else:
+                                value = "<" + value + ">"
+                            hash_table.update({child_list_value(child_object.parent, row): {value: "object"}})
     join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child): hash_table})
 
 
