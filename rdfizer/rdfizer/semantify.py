@@ -351,7 +351,7 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
     for row in parent_data:
         if quoted == "":
             if child_object.parent[0] in row.keys():
-                if row[child_object.parent[0]] in hash_table:
+                if row[child_object.parent[0]] in hash_table and row[child_object.parent[0]] != "" and row[child_object.parent[0]] != None:
                     if duplicate == "yes":
                         if parent_subject.subject_map.subject_mapping_type == "reference":
                             value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
