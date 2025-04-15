@@ -1301,13 +1301,13 @@ def mappings_expansion(triples_map_list):
                                             object_map = tm.ObjectMap("template", triples_map_element.subject_map.value,
                                                                       "None", "None", "None",
                                                                       triples_map_element.subject_map.term_type, "None",
-                                                                      "None")
+                                                                      "None","None","None")
                                         else:
                                             object_map = tm.ObjectMap("reference",
                                                                       triples_map_element.subject_map.value, "None",
                                                                       "None", "None",
                                                                       triples_map_element.subject_map.term_type, "None",
-                                                                      "None")
+                                                                      "None","None","None")
                                         pom_list.append(tm.PredicateObjectMap(po.predicate_map, object_map, po.graph))
                                     else:
                                         pom_list.append(po)
@@ -1317,11 +1317,11 @@ def mappings_expansion(triples_map_list):
                                 if triples_map_element.subject_map.subject_mapping_type == "template":
                                     object_map = tm.ObjectMap("template", triples_map_element.subject_map.value, "None",
                                                               "None", "None", triples_map_element.subject_map.term_type,
-                                                              "None", "None")
+                                                              "None", "None","None","None")
                                 else:
                                     object_map = tm.ObjectMap("reference", triples_map_element.subject_map.value,
                                                               "None", "None", "None",
-                                                              triples_map_element.subject_map.term_type, "None", "None")
+                                                              triples_map_element.subject_map.term_type, "None", "None","None","None")
                                 pom_list.append(tm.PredicateObjectMap(po.predicate_map, object_map, po.graph))
                 else:
                     pom_list.append(po)
