@@ -42,6 +42,8 @@ global generated_subjects
 generated_subjects = {}
 global id_number
 id_number = 0
+global gather_id
+gather_id = 0
 global g_triples
 g_triples = {}
 global number_triple
@@ -78,6 +80,8 @@ global delimiter
 delimiter = {}
 global logical_dump
 logical_dump = {}
+global gather_map_list
+gather_map_list = {}
 global current_logical_dump
 current_logical_dump = ""
 global general_predicates
@@ -1619,6 +1623,16 @@ def mapping_parser(mapping_file):
                 OPTIONAL {?_object_map rml:termType ?term .}
                 
             }
+            OPTIONAL {
+                ?_predicate_object_map rml:objectMap ?_object_map .
+                OPTIONAL {
+                ?_object_map rml:template ?gather_value .
+                }
+                ?_object_map rml:gather ?gather_list .
+                ?gather_list rdf:rest*/rdf:first ?item .
+                ?item rml:reference ?gather_list_element .
+                ?_object_map rml:gatherAs ?gather_type .
+            }
             OPTIONAL {?_predicate_object_map rml:graph ?predicate_object_graph .}
             OPTIONAL { ?_predicate_object_map  rml:graphMap ?_graph_structure .
                        OPTIONAL {?_graph_structure rml:template ?predicate_object_graph  .}
@@ -1790,6 +1804,7 @@ def mapping_parser(mapping_file):
 
     triples_map_list = []
     func_map_list = []
+    global gather_map_list
     if new_formulation == "yes":
         mapping_query_results = mapping_graph.query(function_query)
         for result_triples_map in mapping_query_results:
@@ -2084,7 +2099,26 @@ def mapping_parser(mapping_file):
                                               result_predicate_object_map.language_value,
                                               result_predicate_object_map.datatype_value, "None")
                 else:
-                    object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
+                    if new_formulation == "yes":
+                        if result_predicate_object_map.gather_list != None:
+                            global gather_id
+                            gather_value = "gather_object_" + str(gather_id)
+                            gather_id += 1
+                            mapping_query_gather = prepareQuery(mapping_query)
+
+                            mapping_query_gather_results = mapping_graph.query(mapping_query_prepared, initBindings={
+                                                                        'gather_list': result_predicate_object_map.gather_list})
+                            gather_list_elements = []
+                            for gather_element in mapping_query_gather_results:
+                                gather_list_elements.append(gather_element.gather_list_element)
+                            gather_map_list[gather_value] = tm.GatherMap(gather_value, str(result_predicate_object_map.gather_value), 
+                                                                         str(result_predicate_object_map.gather_type), gather_list_elements)
+                            object_map = tm.ObjectMap("gather map", gather_value, "None", "None",
+                                              "None", "None","None","None", "None", "None")   
+                        else:
+                            object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
+                    else:
+                        object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
 
                 if new_formulation == "yes":
                     output_file = ""
@@ -3241,6 +3275,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
     subject_list = []
     global blank_message
     global host, port, user, password, datab
+    global base
     i = 0
     if iterator == "$[*]":
         iterator = "$.[*]"
@@ -3252,14 +3287,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
         for tp in temp_keys:
             new_iterator += tp + "."
             if "$" != tp and "" != tp:
-                print(tp)
                 if "[*][*]" in tp:
                     if tp.split("[*][*]")[0] in row:
                         row = row[tp.split("[*][*]")[0]]
                     else:
                         row = []
                 elif tp == "[*]":
-                    print(iterator.replace(new_iterator[:-1], ""))
                     if isinstance(row, list):
                         for sub_row in row:
                             i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, sub_row,
@@ -3362,7 +3395,19 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         if triples_map.subject_map.condition == "":
 
                             try:
-                                subject = "<" + subject_value + ">"
+                                if "http" not in subject_value:
+                                    if base != "":
+                                        subject = "<" + base + subject_value + ">"
+                                    else:
+                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                else:
+                                    if is_valid_url_syntax(subject_value):
+                                        subject = "<" + subject_value + ">"
+                                    else:
+                                        if base != "":
+                                            subject = "<" + base + subject_value + ">"
+                                        else:
+                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                             except:
                                 subject = None
 
@@ -3370,7 +3415,19 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             #	field, condition = condition_separetor(triples_map.subject_map.condition)
                             #	if row[field] == condition:
                             try:
-                                subject = "<" + subject_value + ">"
+                                if "http" not in subject_value:
+                                    if base != "":
+                                        subject = "<" + base + subject_value + ">"
+                                    else:
+                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                else:
+                                    if is_valid_url_syntax(subject_value):
+                                        subject = "<" + subject_value + ">"
+                                    else:
+                                        if base != "":
+                                            subject = "<" + base + subject_value + ">"
+                                        else:
+                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                             except:
                                 subject = None
                 else:
@@ -4065,6 +4122,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             continue
                 else:
                     object = None
+            elif predicate_object_map.object_map.mapping_type == "gather map":
+                if subject != None and predicate != None:
+                    sp = subject + " " + predicate
+                    gather_triples_generation(data,sp,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator)
+                object = None
             else:
                 object = None
             if is_current_output_valid(triples_map.triples_map_id,predicate_object_map,current_logical_dump,logical_dump):
@@ -4913,11 +4975,19 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = object.replace("\n", "\\n")
                     if predicate_object_map.object_map.datatype != None:
                         if output_format.lower() == "n-triples":
-                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
-                                predicate_object_map.object_map.datatype)
+                            if "dateTime" not in predicate_object_map.object_map.datatype:
+                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
+                                    predicate_object_map.object_map.datatype)
+                            else:
+                                object = "\"" + object[1:-1].replace(" ","T") + "\"" + "^^<{}>".format(
+                                    predicate_object_map.object_map.datatype)
                         else:
-                            object = "\"" + object[1:-1] + "\"" + "^^{}".format(
-                                determine_prefix(predicate_object_map.object_map.datatype))
+                            if "dateTime" not in predicate_object_map.object_map.datatype:
+                                object = "\"" + object[1:-1] + "\"" + "^^{}".format(
+                                    determine_prefix(predicate_object_map.object_map.datatype))
+                            else:
+                                object = "\"" + object[1:-1].replace(" ","T") + "\"" + "^^{}".format(
+                                    determine_prefix(predicate_object_map.object_map.datatype))
                     elif predicate_object_map.object_map.datatype_map != None:
                         datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
                                                                "object", ignore, triples_map.iterator)
