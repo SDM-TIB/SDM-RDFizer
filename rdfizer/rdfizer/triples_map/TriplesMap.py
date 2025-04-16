@@ -178,3 +178,12 @@ class FunctionMap:
 		self.func_map_id = func_map_id
 		self.name = func_name
 		self.parameters = parameters
+
+class GatherMap:
+
+	def __init__(self, gather_id, value, type, gather_list):
+
+		self.gather_id = gather_id
+		self.value = value
+		self.type = type
+		self.gather_list = gather_list
