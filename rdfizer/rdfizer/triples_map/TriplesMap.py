@@ -181,9 +181,21 @@ class FunctionMap:
 
 class GatherMap:
 
-	def __init__(self, gather_id, value, type, gather_list):
+	def __init__(self, gather_id, value, value_type, type, gather_list, empty, strategy):
 
 		self.gather_id = gather_id
 		self.value = value
+		self.value_type = value_type
 		self.type = type
 		self.gather_list = gather_list
+		self.empty = empty
+		self.strategy = strategy
+
+class ViewSource:
+
+	def __init__(self, source, ref_form, iterator, attr_list):
+
+		self.source = source
+		self.ref_form = ref_form
+		self.iterator = iterator
+		self.attr_list = attr_list
