@@ -1,5 +1,5 @@
 Flask
-isodate==0.6.0
+isodate>=0.6.0
 pyparsing>=2.2.0
 rdflib
 six>=1.11.0
@@ -8,3 +8,4 @@ psycopg2-binary
 pandas
 requests
 sparqlwrapper
+pyodbc
