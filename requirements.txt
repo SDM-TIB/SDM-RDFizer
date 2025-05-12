@@ -9,3 +9,4 @@ pandas
 requests
 sparqlwrapper
 pyodbc
+jsonpath-ng
