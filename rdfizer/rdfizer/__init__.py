@@ -24,7 +24,11 @@ from .functions import *
 from .fnml_functions import *
 from .mapping_functions import *
 from .inner_functions import *
+from .lv_functions import *
+from .cc_functions import *
 import logging
+from uuid import uuid4
+import pyodbc
 
 try:
     from triples_map import TriplesMap as tm
@@ -82,6 +86,14 @@ global logical_dump
 logical_dump = {}
 global gather_map_list
 gather_map_list = {}
+global gather_object_values 
+gather_object_values = []
+global gather_list_values
+gather_list_values = {}
+global view_sources
+view_sources = {}
+global inner_view
+inner_view = {}
 global current_logical_dump
 current_logical_dump = ""
 global general_predicates
@@ -104,6 +116,47 @@ def get_logger(log_path='error.log'):
     logger_.addHandler(file_handler)
     logger_.addHandler(logging.StreamHandler())  # directly print to the console
     return logger_
+
+def inner_rml_view(id,query_results):
+    global inner_view
+    view = []
+    for result in query_results:
+        if result.field_name is not None:
+            iter_row = {}
+            if result.iterable_constant_field_value is not None:
+                iter_row["type"] = "constant"
+                iter_row["value"] = str(result.iterable_constant_field_value)
+            elif result.iterable_reference_field_value is not None:
+                iter_row["type"] = "reference"
+                iter_row["value"] = str(result.iterable_reference_field_value)
+            elif result.iterable_template_field_value is not None:
+                iter_row["type"] = "template"
+                iter_row["value"] = str(result.iterable_template_field_value)
+            elif result.iterable_iterable_field is not None:
+                iter_row["type"] = "iterable"
+                iter_row["value"] = str(result.iterable_iterable_field)
+
+            iter_row["name"] = str(result.iterable_field_name)
+            view.append(iter_row)
+
+    temp_dict = {}
+    for result in query_results:
+        if result.field_name is not None:
+            iter_row = {}
+            if result.field_iterator is not None:
+                if str(result.field_name) not in temp_dict:
+                    iter_row["type"] = "iterable"
+                    iter_row["name"] = str(result.field_name)
+                    iter_row["iterator"] = str(result.field_iterator)
+                    iter_row["attr_list"] = [str(result.iterable_field_name)]
+                    temp_dict[str(result.field_name)] = iter_row
+                else:
+                    if str(result.iterable_field_name) not in temp_dict[str(result.field_name)]["attr_list"]:
+                        temp_dict[str(result.field_name)]["attr_list"].append(str(result.iterable_field_name))
+            
+    for name in temp_dict:
+        view.append(temp_dict[name])
+    inner_view[id] = view
 
 
 def prefix_extraction(original):
@@ -1394,6 +1447,220 @@ def mapping_parser(mapping_file):
         }
 
         """
+        inner_gather_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        prefix dcat: <http://www.w3.org/ns/dcat#>
+        prefix void: <http://rdfs.org/ns/void#>
+        prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        SELECT DISTINCT *
+        WHERE {
+                {OPTIONAL {
+                    ?_object_map rml:template ?gather_value .
+                }
+                OPTIONAL {
+                    ?_object_map rml:reference ?gather_value_reference .
+                }
+                OPTIONAL { ?_object_map rml:termType ?termtype . }
+                OPTIONAL{
+                    ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
+                }
+                ?_object_map rml:gather ?gather_list .
+                ?gather_list rdf:rest*/rdf:first ?item .
+                OPTIONAL {
+                    ?item rml:reference ?reference_gather_list_element .
+                }
+                OPTIONAL {
+                    ?item rml:gather ?gather_gather_list_element .
+                }
+                OPTIONAL {
+                    ?item rml:parentTriplesMap ?join_gather_list_element .
+                    OPTIONAL {
+                        ?item rml:joinCondition ?gather_join .
+                        ?gather_join rml:child ?gather_child .
+                        ?gather_join rml:parent ?gather_parent .  
+                    }
+                }
+                ?_object_map rml:gatherAs ?gather_type .
+                OPTIONAL{
+                    ?_object_map rml:strategy ?strategy
+                }}
+                UNION
+                {?_object_map rml:gather ?gather_list .
+                ?gather_list rdf:rest*/rdf:first ?item .
+                OPTIONAL {
+                    ?item rml:reference ?reference_gather_list_element .
+                }
+                OPTIONAL {
+                    ?item rml:gather ?gather_gather_list_element .
+                    ?gather_gather_list_element_list rdf:rest*/rdf:first ?inner_item .
+                    ?item rml:gatherAs ?inner_gather_type .
+                }
+                OPTIONAL {
+                    ?item rml:parentTriplesMap ?join_gather_list_element .
+                    OPTIONAL {
+                        ?item rml:joinCondition ?gather_join .
+                        ?gather_join rml:child ?gather_child .
+                        ?gather_join rml:parent ?gather_parent .  
+                    }
+                }
+                ?_object_map rml:gatherAs ?gather_type .
+                OPTIONAL{
+                    ?_object_map rml:strategy ?strategy .
+                }}
+        }
+
+        """
+        gather_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        prefix dcat: <http://www.w3.org/ns/dcat#>
+        prefix void: <http://rdfs.org/ns/void#>
+        prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        SELECT DISTINCT *
+        WHERE {
+            OPTIONAL {
+                ?_object_map rml:template ?gather_value .
+            }
+            OPTIONAL {
+                ?_object_map rml:reference ?gather_value_reference .
+            }
+            OPTIONAL { ?_object_map rml:termType ?termtype . }
+            OPTIONAL{
+                ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
+            }
+            ?_object_map rml:gather ?gather_list .
+            ?gather_list rdf:rest*/rdf:first ?item .
+            OPTIONAL {
+                ?item rml:reference ?reference_gather_list_element .
+            }
+            OPTIONAL {
+                ?item rml:gather ?gather_gather_list_element .
+            }
+            OPTIONAL {
+                ?item rml:parentTriplesMap ?join_gather_list_element .
+                OPTIONAL {
+                    ?item rml:joinCondition ?gather_join .
+                    ?gather_join rml:child ?gather_child .
+                    ?gather_join rml:parent ?gather_parent .  
+                }
+            }
+            ?_object_map rml:gatherAs ?gather_type .
+            OPTIONAL{
+                ?_object_map rml:strategy ?strategy .
+            }
+        }
+
+        """
+        view_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        prefix dcat: <http://www.w3.org/ns/dcat#>
+        prefix void: <http://rdfs.org/ns/void#>
+        prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        SELECT DISTINCT *
+        WHERE {
+            OPTIONAL {?_source rml:viewOn ?data_view .}
+            OPTIONAL {
+                ?data_view rml:source ?view_source .
+                OPTIONAL {?view_source rml:root ?root .}
+                ?view_source rml:path ?data_source .
+                OPTIONAL {?data_view rml:referenceFormulation ?ref_form .}
+                OPTIONAL {?data_view rml:iterator ?iterator . }
+            }
+            OPTIONAL {
+                ?data_view rml:viewOn ?data_view_view .
+            }
+            OPTIONAL {
+                ?_source rml:field ?field .
+                ?field rml:fieldName ?field_name .
+                OPTIONAL {
+                    ?field rml:reference ?reference_field_value .
+                    OPTIONAL {
+                        ?field rml:field ?inner_field .
+                        ?inner_field rml:referenceFormulation ?inner_ref_form .
+                        OPTIONAL{?inner_field rml:iterator ?inner_iterator .}
+                        ?inner_field rml:fieldName ?inner_field_name .
+                    }
+                }
+                OPTIONAL {?field rml:constant ?constant_field_value .}
+                OPTIONAL {?field rml:template ?template_field_value .}
+                OPTIONAL {
+                    ?field rml:iterator ?field_iterator.
+                    ?field rml:field ?iterable_field .
+                    ?iterable_field rml:fieldName ?iterable_field_name .
+                    OPTIONAL {?iterable_field rml:reference ?iterable_reference_field_value .}
+                    OPTIONAL {?iterable_field rml:constant ?iterable_constant_field_value .}
+                    OPTIONAL {?iterable_field rml:template ?iterable_template_field_value .}
+                    OPTIONAL {?iterable_field rml:field ?iterable_iterable_field}
+                }
+            }
+        }
+        """
+        inner_view_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        prefix dcat: <http://www.w3.org/ns/dcat#>
+        prefix void: <http://rdfs.org/ns/void#>
+        prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        SELECT DISTINCT *
+        WHERE {
+            ?field rml:fieldName ?field_name .
+            ?field rml:iterator ?field_iterator.
+            ?field rml:field ?iterable_field .
+            ?iterable_field rml:fieldName ?iterable_field_name .
+            OPTIONAL {?iterable_field rml:reference ?iterable_reference_field_value .}
+            OPTIONAL {?iterable_field rml:constant ?iterable_constant_field_value .}
+            OPTIONAL {?iterable_field rml:template ?iterable_template_field_value .}
+            OPTIONAL {?iterable_field rml:field ?iterable_iterable_field}
+        }
+        """
+        join_view_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://w3id.org/rml/> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+        prefix dcat: <http://www.w3.org/ns/dcat#>
+        prefix void: <http://rdfs.org/ns/void#>
+        prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        SELECT DISTINCT *
+        WHERE {
+            {
+                ?_source rml:leftJoin ?left_join .
+                ?left_join rml:parentLogicalView ?left_join_parent .
+                ?left_join rml:joinCondition ?left_join_condition .
+                ?left_join_condition rml:parent ?left_parent .
+                ?left_join_condition rml:child ?left_child .
+                ?left_join rml:field ?left_join_field .
+                ?left_join_field rml:fieldName ?left_join_name .
+                ?left_join_field rml:reference ?left_join_value .
+            }
+            UNION
+            {
+                ?_source rml:innerJoin ?inner_join .
+                ?inner_join rml:parentLogicalView ?inner_join_parent .
+                ?inner_join rml:joinCondition ?inner_join_condition .
+                ?inner_join_condition rml:parent ?inner_parent .
+                ?inner_join_condition rml:child ?inner_child .
+                ?inner_join rml:field ?inner_join_field .
+                ?inner_join_field rml:fieldName ?inner_join_name .
+                ?inner_join_field rml:reference ?inner_join_value .
+            }
+        }
+        """
         mapping_query = """
         prefix rr: <http://www.w3.org/ns/r2rml#> 
         prefix rml: <http://w3id.org/rml/> 
@@ -1403,6 +1670,7 @@ def mapping_parser(mapping_file):
         prefix dcat: <http://www.w3.org/ns/dcat#>
         prefix void: <http://rdfs.org/ns/void#>
         prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+        prefix csvw: <http://www.w3.org/ns/csvw#> 
         SELECT DISTINCT *
         WHERE {
     # Subject -------------------------------------------------------------------------
@@ -1423,9 +1691,9 @@ def mapping_parser(mapping_file):
             }
             OPTIONAL{
                 ?_source rml:source ?data_link .
-                ?data_link dcat:url ?url_source .
-                ?data_link dcat:dialect ?dialect .
-                ?dialect dcat:delimiter ?delimiter . 
+                ?data_link csvw:url ?url_source .
+                ?data_link csvw:dialect ?dialect .
+                ?dialect csvw:delimiter ?delimiter . 
             }
             OPTIONAL{
                 ?_source rml:source ?data_link .
@@ -1436,6 +1704,10 @@ def mapping_parser(mapping_file):
             OPTIONAL{
                 ?_source rml:source ?data_link .
                 ?data_link sd:endpoint ?url_source . 
+            }
+            OPTIONAL{
+                ?_source rml:viewOn ?data_view .
+                OPTIONAL {?data_view rml:source ?view_source .} 
             }
             OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
             OPTIONAL { ?_source rml:iterator ?iterator . }
@@ -1474,6 +1746,18 @@ def mapping_parser(mapping_file):
                             ?output_map rml:constant ?subject_output .        
                             }
                     }
+            OPTIONAL {
+                    OPTIONAL {
+                    ?_subject_map rml:template ?subject_gather_value .
+                    }
+                    OPTIONAL{
+                    ?_subject_map rml:allowEmptyListAndContainer ?subject_empty_allow .
+                    }
+                    ?_subject_map rml:gather ?subject_gather_list .
+                    ?subject_gather_list rdf:rest*/rdf:first ?subject_item .
+                    ?subject_item rml:reference ?subject_gather_list_element .
+                    ?_subject_map rml:gatherAs ?subject_gather_type .
+                }
             OPTIONAL {?_subject_map rml:logicalTarget ?output.
                       ?output rml:target ?dump.
                       ?dump void:dataDump ?subject_dump.
@@ -1625,13 +1909,7 @@ def mapping_parser(mapping_file):
             }
             OPTIONAL {
                 ?_predicate_object_map rml:objectMap ?_object_map .
-                OPTIONAL {
-                ?_object_map rml:template ?gather_value .
-                }
                 ?_object_map rml:gather ?gather_list .
-                ?gather_list rdf:rest*/rdf:first ?item .
-                ?item rml:reference ?gather_list_element .
-                ?_object_map rml:gatherAs ?gather_type .
             }
             OPTIONAL {?_predicate_object_map rml:graph ?predicate_object_graph .}
             OPTIONAL { ?_predicate_object_map  rml:graphMap ?_graph_structure .
@@ -1804,7 +2082,10 @@ def mapping_parser(mapping_file):
 
     triples_map_list = []
     func_map_list = []
+    gather_map_seen = []
     global gather_map_list
+    global gather_id
+    global view_sources
     if new_formulation == "yes":
         mapping_query_results = mapping_graph.query(function_query)
         for result_triples_map in mapping_query_results:
@@ -1856,6 +2137,173 @@ def mapping_parser(mapping_file):
                                         func_map.parameters[str(result_triples_map.param)] = {
                                                 "value":str(result_triples_map.param_func), 
                                                 "type":"function"}
+        mapping_query_results = mapping_graph.query(gather_query)
+        gather_map_seen = []
+        inner_gather = True
+        for result_triples_map in mapping_query_results:
+            inner_gather = False
+        if inner_gather:
+           mapping_query_results = mapping_graph.query(inner_gather_query) 
+        for result_triples_map in mapping_query_results:
+            if str(result_triples_map.gather_list) not in gather_map_list:
+                if result_triples_map.empty_allow != None:
+                    if str(result_triples_map.empty_allow).lower() == "true":
+                        gather_empty = True
+                    elif str(result_triples_map.empty_allow).lower() == "false":
+                        gather_empty = False
+                    else:
+                        gather_empty = None
+                else:
+                    gather_empty = None
+
+                mapping_query_gather = prepareQuery(inner_gather_query)
+
+                mapping_query_gather_results = mapping_graph.query(mapping_query_gather, initBindings={
+                                                                    'gather_list': result_triples_map.gather_list})
+                gather_list_elements = []
+                element_seen = []
+                for gather_element in mapping_query_gather_results:
+                    gather_element_attr = {}
+                    if gather_element.reference_gather_list_element != None:
+                        if str(gather_element.reference_gather_list_element) not in element_seen:
+                            gather_element_attr["type"] = "reference"
+                            gather_element_attr["value"] = str(gather_element.reference_gather_list_element)
+                            element_seen.append(str(gather_element.reference_gather_list_element))
+                    elif gather_element.gather_gather_list_element != None:
+                        if str(gather_element.gather_gather_list_element) not in element_seen:
+                            gather_element_attr["type"] = "gather map"
+                            gather_element_attr["value"] = str(gather_element.gather_gather_list_element)
+                            element_seen.append(str(gather_element.gather_gather_list_element))
+                    elif gather_element.join_gather_list_element != None:
+                        gather_element_attr["type"] = "join"
+                        gather_element_attr["value"] = str(gather_element.join_gather_list_element)
+                        gather_element_attr["child"] = str(gather_element.gather_child)
+                        gather_element_attr["parent"] = str(gather_element.gather_parent)
+                    if gather_element_attr != {}:
+                        gather_list_elements.append(gather_element_attr)
+
+                if result_triples_map.termtype != None:
+                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), "None","blank", 
+                                 str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                 str(result_triples_map.strategy))
+                elif result_triples_map.gather_value != None:
+                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value),"template", 
+                                 str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                 str(result_triples_map.strategy))
+                elif result_triples_map.gather_value_reference != None:
+                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value),"reference", 
+                                 str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                 str(result_triples_map.strategy))
+                else:
+                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), "None","blank", 
+                                 str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                 str(result_triples_map.strategy))
+
+        mapping_query_results = mapping_graph.query(view_query)
+        for result_triples_map in mapping_query_results:
+            mapping_view_results = prepareQuery(view_query)
+            mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
+            attr_list = []
+            seen_view = []
+            for attr_view in mapping_query_view_results:
+                attr_row = {}
+                if attr_view.constant_field_value is not None:
+                    attr_row["type"] = "constant"
+                    attr_row["value"] = str(attr_view.constant_field_value)
+                elif attr_view.reference_field_value is not None:
+                    attr_row["type"] = "reference"
+                    attr_row["value"] = str(attr_view.reference_field_value)
+                    if attr_view.inner_ref_form is not None:
+                        attr_row["ref_form"] = str(attr_view.inner_ref_form)
+                        if attr_view.inner_iterator is not None:
+                            attr_row["iterator"] = str(attr_view.inner_iterator)
+                        attr_row["inner_name"] = str(attr_view.inner_field_name)
+                elif attr_view.template_field_value is not None:
+                    attr_row["type"] = "template"
+                    attr_row["value"] = str(attr_view.template_field_value)
+                elif attr_view.field_iterator is not None:
+                    attr_row["type"] = "iterable"
+                    attr_row["iterator"] = str(attr_view.field_iterator)
+                    mapping_iterable_results = prepareQuery(view_query)
+                    mapping_query_iterable_results = mapping_graph.query(mapping_iterable_results, initBindings={'field_iterator': attr_view.field_iterator})
+                    global inner_view
+                    if inner_view == {}:
+                        mapping_inner_iterable_results = prepareQuery(inner_view_query)
+                        mapping_query_inner_iterable_results = mapping_graph.query(mapping_inner_iterable_results)
+                        inner_rml_view(str(result_triples_map._source),mapping_query_inner_iterable_results)
+                    iterable_fields = []
+                    seen_field = []
+                    for attr_iter in mapping_query_iterable_results:
+                        if attr_iter.iterable_field_name is not None:
+                            iter_row = {}
+                            if attr_iter.iterable_constant_field_value is not None:
+                                iter_row["type"] = "constant"
+                                iter_row["value"] = str(attr_iter.iterable_constant_field_value)
+                            elif attr_iter.iterable_reference_field_value is not None:
+                                iter_row["type"] = "reference"
+                                iter_row["value"] = str(attr_iter.iterable_reference_field_value)
+                            elif attr_iter.iterable_template_field_value is not None:
+                                iter_row["type"] = "template"
+                                iter_row["value"] = str(attr_iter.iterable_template_field_value)
+                            elif attr_iter.iterable_iterable_field is not None:
+                                iter_row["type"] = "iterable"
+                                for value in inner_view[str(result_triples_map._source)]:
+                                    if "value" in value:
+                                        if str(attr_iter.iterable_iterable_field) == value["value"] and value["name"] not in seen_field:
+                                            field_name = value["name"]
+                                for value in inner_view[str(result_triples_map._source)]:
+                                    if value["name"] == field_name and "attr_list" in value:
+                                        iter_row["attr_list"] = value["attr_list"]
+                                        iter_row["iterator"] = value["iterator"]
+                                        
+                            iter_row["name"] = str(attr_iter.iterable_field_name)
+                            if iter_row["name"] not in seen_field:
+                                iterable_fields.append(iter_row)
+                                seen_field.append(iter_row["name"])
+                        
+                    attr_row["attr_list"] = iterable_fields
+
+                attr_row["name"] = str(attr_view.field_name)
+
+                if attr_row["name"] not in seen_view:
+                    attr_list.append(attr_row)
+                    seen_view.append(attr_row["name"])
+
+            mapping_view_results = prepareQuery(join_view_query)
+            mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
+            for attr_view in mapping_query_view_results:
+                print(attr_view)
+                attr_row = {}
+                if attr_view.inner_join is not None:
+                    attr_row["type"] = "inner_join"
+                    attr_row["value"] = str(attr_view.inner_join_value)
+                    attr_row["parent_view"] = str(attr_view.inner_join_parent)
+                    attr_row["parent_condition"] = str(attr_view.inner_parent)
+                    attr_row["child_condition"] = str(attr_view.inner_child)
+                    attr_row["name"] = str(attr_view.inner_join_name)
+                elif attr_view.left_join is not None:
+                    attr_row["type"] = "left_join"
+                    attr_row["value"] = str(attr_view.left_join_value)
+                    attr_row["parent_view"] = str(attr_view.left_join_parent)
+                    attr_row["parent_condition"] = str(attr_view.left_parent)
+                    attr_row["child_condition"] = str(attr_view.left_child)
+                    attr_row["name"] = str(attr_view.left_join_name)
+
+                if attr_row != {}:
+                    if attr_row["name"] not in seen_view:
+                        attr_list.append(attr_row)
+                        seen_view.append(attr_row["name"])
+                    
+            if result_triples_map.data_view_view is not None:
+                view = tm.ViewSource(str(result_triples_map.data_view_view),"RMLView",
+                                        str(result_triples_map.iterator),attr_list)                                    
+            else:
+                view = tm.ViewSource(str(result_triples_map.data_source),str(result_triples_map.ref_form),
+                                        str(result_triples_map.iterator),attr_list)
+                                    
+            if str(result_triples_map._source) not in view_sources:
+                view_sources[str(result_triples_map._source)] = view
+            
 
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
@@ -1864,18 +2312,70 @@ def mapping_parser(mapping_file):
             triples_map_exists = triples_map_exists or (
                         str(triples_map.triples_map_id) == str(result_triples_map.triples_map_id))
         if not triples_map_exists:
+            gather = True
             if result_triples_map.subject_template != None:
-                if result_triples_map.rdf_class is None:
-                    reference, condition = string_separetion(str(result_triples_map.subject_template))
-                    subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
-                                                [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                gather = False
+                if new_formulation == "yes":
+                    if result_triples_map.subject_gather_list != None:
+                        if result_triples_map.subject_gather_list not in gather_map_seen:
+                            gather_value = "gather_subject_" + str(gather_id)
+                            gather_id += 1
+                            mapping_query_gather = prepareQuery(mapping_query)
+
+                            mapping_query_gather_results = mapping_graph.query(mapping_query_prepared, initBindings={
+                                                                        'subject_gather_list': result_triples_map.subject_gather_list})
+                            if result_triples_map.empty_allow != None:
+                                if str(result_triples_map.subject_empty_allow).lower() == "true":
+                                    gather_empty = True
+                                elif str(result_triples_map.subject_empty_allow).lower() == "false":
+                                    gather_empty = False
+                                else:
+                                    gather_empty = None
+                            else:
+                                gather_empty = None
+                            gather_list_elements = []
+                            for gather_element in mapping_query_gather_results:
+                                if gather_element not in gather_list_elements:
+                                    gather_list_elements.append(gather_element.subject_gather_list_element)
+                            if result_triples_map.termtype != None:
+                                if "BlankNode" not in result_triples_map.termtype:
+                                    gather_map_list[gather_value] = tm.GatherMap(gather_value, str(result_triples_map.subject_gather_value), "template",
+                                                                                 str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
+                                else:
+                                    gather_map_list[gather_value] = tm.GatherMap(gather_value, "None", "blank",
+                                                                                 str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
+
+                            else:
+                                gather_map_list[gather_value] = tm.GatherMap(gather_value, str(result_triples_map.subject_gather_value), 
+                                                                             str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
+                            subject_map = tm.SubjectMap(gather_value, "None", "gather map","None","None",
+                                                            [result_triples_map.rdf_class], result_triples_map.termtype,
+                                                            [result_triples_map.graph],"None")
+                            gather_map_seen.append(result_triples_map.subject_gather_list)
+                    else:
+                        if result_triples_map.rdf_class is None:
+                            reference, condition = string_separetion(str(result_triples_map.subject_template))
+                            subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
+                                                        [result_triples_map.rdf_class], result_triples_map.termtype,
+                                                        [result_triples_map.graph],"None")
+                        else:
+                            reference, condition = string_separetion(str(result_triples_map.subject_template))
+                            subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
+                                                        [str(result_triples_map.rdf_class)], result_triples_map.termtype,
+                                                        [result_triples_map.graph],"None")
                 else:
-                    reference, condition = string_separetion(str(result_triples_map.subject_template))
-                    subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
-                                                [str(result_triples_map.rdf_class)], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                    if result_triples_map.rdf_class is None:
+                        reference, condition = string_separetion(str(result_triples_map.subject_template))
+                        subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
+                                                    [result_triples_map.rdf_class], result_triples_map.termtype,
+                                                    [result_triples_map.graph],"None")
+                    else:
+                        reference, condition = string_separetion(str(result_triples_map.subject_template))
+                        subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
+                                                    [str(result_triples_map.rdf_class)], result_triples_map.termtype,
+                                                    [result_triples_map.graph],"None")
             elif result_triples_map.subject_reference != None:
+                gather = False
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_reference))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference","None","None",
@@ -1887,6 +2387,7 @@ def mapping_parser(mapping_file):
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype,
                                                 [result_triples_map.graph],"None")
             elif result_triples_map.subject_constant != None:
+                gather = False
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant","None","None",
@@ -1898,6 +2399,7 @@ def mapping_parser(mapping_file):
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype,
                                                 [result_triples_map.graph],"None")
             elif result_triples_map.subject_function != None:
+                gather = False
                 func_output = "None"
                 if result_triples_map.subject_output != None:
                     if "#" in result_triples_map.subject_output:
@@ -1915,6 +2417,7 @@ def mapping_parser(mapping_file):
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
                                                 [result_triples_map.graph],func_output)
             elif result_triples_map.subject_quoted != None:
+                gather = False
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_quoted))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_quoted), condition, "quoted triples map", 
@@ -1927,6 +2430,34 @@ def mapping_parser(mapping_file):
                                                 result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
                                                 [result_triples_map.graph],"None")
+            if gather:
+                if result_triples_map.subject_gather_list != None:
+                    if result_triples_map.subject_gather_list not in gather_map_seen:
+                        gather_value = "gather_subject_" + str(gather_id)
+                        gather_id += 1
+                        mapping_query_gather = prepareQuery(mapping_query)
+
+                        mapping_query_gather_results = mapping_graph.query(mapping_query_gather, initBindings={
+                                                                    'subject_gather_list': result_triples_map.subject_gather_list})
+                        if result_triples_map.empty_allow != None:
+                            if str(result_triples_map.subject_empty_allow).lower() == "true":
+                                gather_empty = True
+                            elif str(result_triples_map.subject_empty_allow).lower() == "false":
+                                gather_empty = False
+                            else:
+                                gather_empty = None
+                        else:
+                            gather_empty = None
+                        gather_list_elements = []
+                        for gather_element in mapping_query_gather_results:
+                            if gather_element not in gather_list_elements:
+                                gather_list_elements.append(gather_element.subject_gather_list_element)
+                        gather_map_list[gather_value] = tm.GatherMap(gather_value, str(result_triples_map.subject_gather_value),"blank",
+                                                                     str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
+                        subject_map = tm.SubjectMap(gather_value, "None", "gather map","None","None",
+                                                            [result_triples_map.rdf_class], result_triples_map.termtype,
+                                                            [result_triples_map.graph],"None")
+                        gather_map_seen.append(result_triples_map.subject_gather_list)
 
             if new_formulation == "yes":
                 output_file = ""
@@ -2001,17 +2532,49 @@ def mapping_parser(mapping_file):
                                               result_predicate_object_map.language_value,
                                               result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_template != None:
-                    object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template),
-                                              str(result_predicate_object_map.object_datatype), "None", "None",
-                                              result_predicate_object_map.term, result_predicate_object_map.language,
-                                              result_predicate_object_map.language_value,
-                                              result_predicate_object_map.datatype_value, "None")
+                    if new_formulation == "yes":
+                        if result_predicate_object_map.gather_list != None:
+                            if result_predicate_object_map.gather_list not in gather_map_seen:
+                                object_map = tm.ObjectMap("gather map", str(result_predicate_object_map.gather_list), "None", "None",
+                                                  "None", "None","None","None", "None", "None") 
+                                gather_map_seen.append(result_predicate_object_map.gather_list)  
+                        else:
+                            object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template),
+                                                  str(result_predicate_object_map.object_datatype), "None", "None",
+                                                  result_predicate_object_map.term, result_predicate_object_map.language,
+                                                  result_predicate_object_map.language_value,
+                                                  result_predicate_object_map.datatype_value, "None")
+                    else:
+                        object_map = tm.ObjectMap("template", str(result_predicate_object_map.object_template),
+                                                  str(result_predicate_object_map.object_datatype), "None", "None",
+                                                  result_predicate_object_map.term, result_predicate_object_map.language,
+                                                  result_predicate_object_map.language_value,
+                                                  result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_reference != None:
-                    object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference),
-                                              str(result_predicate_object_map.object_datatype), "None", "None",
-                                              result_predicate_object_map.term, result_predicate_object_map.language,
-                                              result_predicate_object_map.language_value,
-                                              result_predicate_object_map.datatype_value, "None")
+                    if new_formulation == "yes":
+                        if result_predicate_object_map.gather_list != None:
+                            if result_predicate_object_map.gather_list not in gather_map_seen:
+                                object_map = tm.ObjectMap("gather map", str(result_predicate_object_map.gather_list), "None", "None",
+                                                  "None", "None","None","None", "None", "None") 
+                                gather_map_seen.append(result_predicate_object_map.gather_list)  
+                            else:
+                                object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference),
+                                                      str(result_predicate_object_map.object_datatype), "None", "None",
+                                                      result_predicate_object_map.term, result_predicate_object_map.language,
+                                                      result_predicate_object_map.language_value,
+                                                      result_predicate_object_map.datatype_value, "None")
+                        else:
+                            object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference),
+                                                      str(result_predicate_object_map.object_datatype), "None", "None",
+                                                      result_predicate_object_map.term, result_predicate_object_map.language,
+                                                      result_predicate_object_map.language_value,
+                                                          result_predicate_object_map.datatype_value, "None")
+                    else:
+                        object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference),
+                                                      str(result_predicate_object_map.object_datatype), "None", "None",
+                                                      result_predicate_object_map.term, result_predicate_object_map.language,
+                                                      result_predicate_object_map.language_value,
+                                                          result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_parent_triples_map != None:
                     if predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map) not in join_predicate:
                         if (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
@@ -2101,20 +2664,10 @@ def mapping_parser(mapping_file):
                 else:
                     if new_formulation == "yes":
                         if result_predicate_object_map.gather_list != None:
-                            global gather_id
-                            gather_value = "gather_object_" + str(gather_id)
-                            gather_id += 1
-                            mapping_query_gather = prepareQuery(mapping_query)
-
-                            mapping_query_gather_results = mapping_graph.query(mapping_query_prepared, initBindings={
-                                                                        'gather_list': result_predicate_object_map.gather_list})
-                            gather_list_elements = []
-                            for gather_element in mapping_query_gather_results:
-                                gather_list_elements.append(gather_element.gather_list_element)
-                            gather_map_list[gather_value] = tm.GatherMap(gather_value, str(result_predicate_object_map.gather_value), 
-                                                                         str(result_predicate_object_map.gather_type), gather_list_elements)
-                            object_map = tm.ObjectMap("gather map", gather_value, "None", "None",
-                                              "None", "None","None","None", "None", "None")   
+                            if result_predicate_object_map.gather_list not in gather_map_seen:
+                                object_map = tm.ObjectMap("gather map", str(result_predicate_object_map.gather_list), "None", "None",
+                                                  "None", "None","None","None", "None", "None")
+                                gather_map_seen.append(result_predicate_object_map.gather_list)   
                         else:
                             object_map = tm.ObjectMap("None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
                     else:
@@ -2215,15 +2768,37 @@ def mapping_parser(mapping_file):
                                                         function=function,func_map_list=func_map_list, 
                                                         mappings_type=str(result_triples_map.mappings_type))
             else:
-                current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
-                                                    str(result_triples_map.data_source), subject_map,
-                                                    predicate_object_maps_list,
-                                                    ref_form=str(result_triples_map.ref_form),
-                                                    iterator=str(result_triples_map.iterator),
-                                                    tablename=str(result_triples_map.tablename),
-                                                    query=str(result_triples_map.query),
-                                                    function=function,func_map_list=func_map_list, 
-                                                    mappings_type=str(result_triples_map.mappings_type))
+                if new_formulation == "yes":
+                    if result_triples_map.data_view is not None:
+                        current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                                str(result_triples_map._source), subject_map,
+                                                                predicate_object_maps_list,
+                                                                ref_form="http://w3id.org/rml/RMLView",
+                                                                iterator=str(result_triples_map.iterator),
+                                                                tablename=str(result_triples_map.tablename),
+                                                                query=str(result_triples_map.query),
+                                                                function=function,func_map_list=func_map_list, 
+                                                                mappings_type=str(result_triples_map.mappings_type))
+                    else:
+                        current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                        str(result_triples_map.data_source), subject_map,
+                                                        predicate_object_maps_list,
+                                                        ref_form=str(result_triples_map.ref_form),
+                                                        iterator=str(result_triples_map.iterator),
+                                                        tablename=str(result_triples_map.tablename),
+                                                        query=str(result_triples_map.query),
+                                                        function=function,func_map_list=func_map_list, 
+                                                        mappings_type=str(result_triples_map.mappings_type))
+                else:
+                    current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                        str(result_triples_map.data_source), subject_map,
+                                                        predicate_object_maps_list,
+                                                        ref_form=str(result_triples_map.ref_form),
+                                                        iterator=str(result_triples_map.iterator),
+                                                        tablename=str(result_triples_map.tablename),
+                                                        query=str(result_triples_map.query),
+                                                        function=function,func_map_list=func_map_list, 
+                                                        mappings_type=str(result_triples_map.mappings_type))
 
             triples_map_list += [current_triples_map]
 
@@ -3276,6 +3851,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
     global blank_message
     global host, port, user, password, datab
     global base
+    global gather_object_values
+    global gather_list_values
     i = 0
     if iterator == "$[*]":
         iterator = "$.[*]"
@@ -3382,8 +3959,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         create_subject = False
 
         if create_subject:
-            subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject", ignore,
-                                                     iterator)
+            if triples_map.subject_map.subject_mapping_type != "gather map":
+                subject_value = string_substitution_json(triples_map.subject_map.value, "{(.+?)}", data, "subject", ignore,
+                                                         iterator)
+
             if triples_map.subject_map.subject_mapping_type == "template":
                 if triples_map.subject_map.term_type is None:
                     if isinstance(subject_value,list):
@@ -3566,8 +4145,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
                 subject = "<" + triples_map.subject_map.value + ">"
-            elif "Literal" in triples_map.subject_map.term_type:
+            elif "Literal" in triples_map.subject_map.subject_mapping_type:
                 subject = None
+            elif triples_map.subject_map.subject_mapping_type == "gather map":
+                if gather_map_list[triples_map.subject_map.value].value != "None":
+                    subject = "<" + string_substitution_json(gather_map_list[triples_map.subject_map.value].value, "{(.+?)}", data, "subject", ignore, iterator) + ">"
+                else:
+                    subject = "_:" + str(uuid4())
+                gather_subject(data, subject, gather_map_list[triples_map.subject_map.value], output_file_descriptor, iterator)
             else:
                 if triples_map.subject_map.condition == "":
 
@@ -3593,10 +4178,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                 else:
                     generated_subjects[triples_map_id] = {subject_attr: subject}
 
-        if triples_map.subject_map.rdf_class != [None] and subject != None:
+        if triples_map.subject_map.rdf_class != [None] and triples_map.subject_map.rdf_class != ["None"] and subject != None:
             predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
             for rdf_class in triples_map.subject_map.rdf_class:
-                if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
+                if rdf_class != None and rdf_class != "None"  and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                     for graph in triples_map.subject_map.graph:
                         obj = "<{}>".format(rdf_class)
                         dictionary_table_update(subject)
@@ -4125,7 +4710,36 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
             elif predicate_object_map.object_map.mapping_type == "gather map":
                 if subject != None and predicate != None:
                     sp = subject + " " + predicate
-                    gather_triples_generation(data,sp,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator)
+                    graph = ""
+                    if gather_map_list[predicate_object_map.object_map.value].value != "None" and \
+                        ("#List" in gather_map_list[predicate_object_map.object_map.value].type or "#Bag" in gather_map_list[predicate_object_map.object_map.value].type):
+                        if gather_map_list[predicate_object_map.object_map.value].value_type == "template": 
+                            object = string_substitution_json(gather_map_list[predicate_object_map.object_map.value].value, "{(.+?)}", data, "subject", "yes", iterator)
+                        else:
+                            object = string_substitution_json(gather_map_list[predicate_object_map.object_map.value].value, ".+", data, "object", "yes", iterator)
+                        if object not in gather_object_values:
+                            print(predicate_object_map.graph)
+                            if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+                                if "{" in predicate_object_map.graph[predicate[1:-1]]:
+                                    graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
+                                    if "http" in graph:
+                                        graph = "<" + graph + ">"
+                                    else:
+                                        graph = "<" + base + graph + ">"
+                            gather_object_values.append(object)
+                            if gather_list_values == {}:
+                                gather_list_values = grouping_values_json(gather_map_list[predicate_object_map.object_map.value].value,triples_map.data_source,triples_map.iterator)
+                            gather_triples_generation(gather_list_values[object],sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator,triples_map_list,gather_map_list,graph)
+                    else:
+                        print(data)
+                        if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+                            if "{" in predicate_object_map.graph[predicate[1:-1]]:
+                                graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
+                                if "http" in graph:
+                                    graph = "<" + graph + ">"
+                                else:
+                                    graph = "<" + base + graph + ">"
+                        gather_triples_generation(data,sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator,triples_map_list,gather_map_list,graph)
                 object = None
             else:
                 object = None
@@ -5399,6 +6013,15 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         else:
                             object_list = inner_semantify_file(triples_map_element, triples_map_list, delimiter, row, base)
                         object = None
+            elif predicate_object_map.object_map.mapping_type == "gather map":
+                if subject != None and predicate != None:
+                    sp = subject + " " + predicate
+                    graph = ""
+                    if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
+                        if "{" in predicate_object_map.graph[predicate[1:-1]]:
+                            graph = "<" + string_substitution(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator) + ">"
+                    gather_triples_generation(row,sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,"",triples_map_list,gather_map_list,graph)
+                object = None
             else:
                 object = None
 
@@ -7903,6 +8526,7 @@ def semantify(config_path, log_path='error.log'):
     global user, password, port, host, datab
     global current_logical_dump
     global g_triples
+    global inner_view
     start = time.time()
     if config["datasets"]["all_in_one_file"] == "no":
 
@@ -7946,7 +8570,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     results = g.query(sorted_sources[source_type][source][triples_map].iterator)
                                                     data = []
                                                     for row in results:
@@ -8048,7 +8674,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     sparql = SPARQLWrapper(source.replace("endpoint:",""))
                                                     sparql.setQuery(sorted_sources[source_type][source][triples_map].iterator)
                                                     sparql.setReturnFormat(JSON)
@@ -8162,7 +8790,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                 for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -8255,7 +8885,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "  ":
                                                             with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 if ".csv" in source:
                                                                     if source in delimiter:
@@ -8356,7 +8988,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 if "http" in sorted_sources[source_type][source][
                                                     triples_map].data_source:
                                                     file_source = sorted_sources[source_type][source][triples_map].data_source
@@ -8388,7 +9022,28 @@ def semantify(config_path, log_path='error.log'):
                                                         response = urlopen(file_source)
                                                         data = json.loads(response.read())
                                                 else:
-                                                    data = json.load(open(sorted_sources[source_type][source][triples_map].data_source))
+                                                    file_source = sorted_sources[source_type][source][triples_map].data_source
+                                                    file = sorted_sources[source_type][source][triples_map].data_source
+                                                    if "gz" in file_source or "zip" in file_source or "tar.xz" in file_source or "tar.gz" in file_source:
+                                                        if "zip" in file_source:
+                                                            with zipfile.ZipFile(file, 'r') as zip_ref:
+                                                                zip_ref.extractall()
+                                                            data = json.load(open(file.replace(".zip","")))
+                                                        elif "tar.xz" in file_source or "tar.gz" in file_source:
+                                                            with tarfile.open(file, "r") as tar:
+                                                                tar.extractall()
+                                                            if "tar.xz" in file_source:
+                                                                data = json.load(open(file.replace(".tar.xz","")))
+                                                            else:
+                                                                data = json.load(open(file.replace(".tar.gz","")))
+                                                        elif "gz" in file_source:
+                                                            with open(file, "rb") as gz_file:
+                                                                with open(file.replace(".gz",""), "wb") as txt_file:
+                                                                    shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
+                                                            data = json.load(open(file.replace(".gz","")))
+                                                    else:
+                                                        data = json.load(open(
+                                                        sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -8481,7 +9136,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -8561,6 +9218,106 @@ def semantify(config_path, log_path='error.log'):
                                                     generated_subjects = release_subjects(
                                                         sorted_sources[source_type][source][triples_map],
                                                         generated_subjects)
+                                elif source_type == "RMLView":
+                                    for source in order_list[source_type]:
+                                        for triples_map in sorted_sources[source_type][source]:
+                                            if (len(sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list) > 0 and
+                                                sorted_sources[source_type][source][
+                                                    triples_map].predicate_object_maps_list[
+                                                    0].predicate_map.value != "None") or \
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                blank_message = True
+                                                if sorted_sources[source_type][source][triples_map].data_source in inner_view:
+                                                    data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],
+                                                                            view_sources,inner_view[sorted_sources[source_type][source][triples_map].data_source])
+                                                else:
+                                                    data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],view_sources,[])
+                                                if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                    for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                        repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                        if repeat_output == "":
+                                                            temp_generated = g_triples
+                                                            g_triples = {}
+                                                            with open(dump_output, "w") as logical_output_descriptor:
+                                                                current_logical_dump = dump_output
+                                                                number_triple += executor.submit(semantify_file,
+                                                                                                 sorted_sources[source_type][
+                                                                                                     source][triples_map],
+                                                                                                 triples_map_list, ",",
+                                                                                                 logical_output_descriptor,
+                                                                                                 data, True).result()
+                                                                current_logical_dump = ""
+                                                            g_triples = temp_generated
+                                                            temp_generated = {}
+                                                            if "jsonld" in dump_output:
+                                                                context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                g = rdflib.Graph()
+                                                                g.parse(dump_output, format="nt")
+                                                                jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                with open(dump_output, "w") as f:
+                                                                    f.write(jsonld_data)
+                                                            elif "n3" in dump_output:
+                                                                g = rdflib.Graph()
+                                                                g.parse(dump_output, format="nt")
+                                                                n3_data = g.serialize(format="n3")
+                                                                with open(dump_output, "w") as f:
+                                                                    f.write(n3_data)
+                                                            elif "rdfjson" in dump_output:
+                                                                g = rdflib.Graph()
+                                                                g.parse(dump_output, format="nt")
+                                                                json_data = generate_rdfjson(g)
+                                                                with open(dump_output, "w") as f:
+                                                                    json.dump(json_data,f)
+                                                            elif "rdfxml" in dump_output:
+                                                                g = rdflib.Graph()
+                                                                g.parse(dump_output, format="nt")
+                                                                xml_data = g.serialize(format="xml")
+                                                                with open(dump_output, "w") as f:
+                                                                    f.write(xml_data)
+                                                            elif "ttl" in dump_output:
+                                                                g = rdflib.Graph()
+                                                                g.parse(dump_output, format="nt")
+                                                                ttl_data = g.serialize(format="ttl")
+                                                                with open(dump_output, "w") as f:
+                                                                    f.write(ttl_data)
+                                                            elif "tar.gz" in dump_output:
+                                                                os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                with tarfile.open(dump_output, "w:gz") as tar:
+                                                                    tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                            elif "tar.xz" in dump_output:
+                                                                os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                with tarfile.open(dump_output, "w:xz") as tar:
+                                                                    tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                            elif ".gz" in dump_output:
+                                                                os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                    with gzip.open(dump_output, 'wb') as f_out:
+                                                                        f_out.writelines(f_in)
+                                                            elif ".zip" in dump_output:
+                                                                os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                zip.close()
+                                                        else:
+                                                            os.system("cp " + repeat_output + " " + dump_output)
+                                                number_triple += executor.submit(semantify_file,
+                                                                                 sorted_sources[source_type][
+                                                                                     source][triples_map],
+                                                                                 triples_map_list, ",",
+                                                                                 output_file_descriptor,
+                                                                                 data, True).result()
+                                                if duplicate == "yes":
+                                                    predicate_list = release_PTT(
+                                                        sorted_sources[source_type][source][triples_map],
+                                                        predicate_list)
+                                                if mapping_partitions == "yes":
+                                                    generated_subjects = release_subjects(
+                                                        sorted_sources[source_type][source][triples_map],
+                                                        generated_subjects)
                         else:
                             for source_type in sorted_sources:
                                 if source_type == "csv":
@@ -8575,7 +9332,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     results = g.query(sorted_sources[source_type][source][triples_map].iterator)
                                                     data = []
                                                     for row in results:
@@ -8677,7 +9436,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     sparql = SPARQLWrapper(source.replace("endpoint:",""))
                                                     sparql.setQuery(sorted_sources[source_type][source][triples_map].iterator)
                                                     sparql.setReturnFormat(JSON)
@@ -8792,7 +9553,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                 for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -8885,7 +9648,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 if ".csv" in source:
@@ -8986,7 +9751,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 if "http" in sorted_sources[source_type][source][
                                                     triples_map].data_source:
                                                     file_source = sorted_sources[source_type][source][triples_map].data_source
@@ -9018,7 +9785,28 @@ def semantify(config_path, log_path='error.log'):
                                                         response = urlopen(file_source)
                                                         data = json.loads(response.read())
                                                 else:
-                                                    data = json.load(open(
+                                                    file_source = sorted_sources[source_type][source][triples_map].data_source
+                                                    file = sorted_sources[source_type][source][triples_map].data_source
+                                                    if "gz" in file_source or "zip" in file_source or "tar.xz" in file_source or "tar.gz" in file_source:
+                                                        if "zip" in file_source:
+                                                            print(file)
+                                                            with zipfile.ZipFile(file, 'r') as zip_ref:
+                                                                zip_ref.extractall()
+                                                            data = json.load(open(file.replace(".zip","")))
+                                                        elif "tar.xz" in file_source or "tar.gz" in file_source:
+                                                            with tarfile.open(file, "r") as tar:
+                                                                tar.extractall()
+                                                            if "tar.xz" in file_source:
+                                                                data = json.load(open(file.replace(".tar.xz","")))
+                                                            else:
+                                                                data = json.load(open(file.replace(".tar.gz","")))
+                                                        elif "gz" in file_source:
+                                                            with open(file, "rb") as gz_file:
+                                                                with open(file.replace(".gz",""), "wb") as txt_file:
+                                                                    shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
+                                                            data = json.load(open(file.replace(".gz","")))
+                                                    else:
+                                                        data = json.load(open(
                                                         sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
@@ -9112,7 +9900,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -9192,22 +9982,136 @@ def semantify(config_path, log_path='error.log'):
                                                     generated_subjects = release_subjects(
                                                         sorted_sources[source_type][source][triples_map],
                                                         generated_subjects)
+                                elif source_type == "RMLView":
+                                    for source in sorted_sources[source_type]:
+                                        for triples_map in sorted_sources[source_type][source]:
+                                            if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    blank_message = True
+                                                    if sorted_sources[source_type][source][triples_map].data_source in inner_view:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],
+                                                                                view_sources,inner_view[sorted_sources[source_type][source][triples_map].data_source])
+                                                    else:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],view_sources,[])
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                                 sorted_sources[source_type][
+                                                                                                     source][triples_map],
+                                                                                                 triples_map_list, ",",
+                                                                                                 logical_output_descriptor,
+                                                                                                 data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                if "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
                     if predicate_list:
                         for source_type in sorted_sources:
                             blank_message = True
                             if str(source_type).lower() != "csv" and source_type != "JSONPath" and source_type != "XPath":
-                                if source_type == "mysql":
+                                if source_type == "mysql" or source_type == "sqlserver":
                                     for source in sorted_sources[source_type]:
-                                        db = connector.connect(host=config[dataset_i]["host"],
-                                                               port=int(config[dataset_i]["port"]),
-                                                               user=config[dataset_i]["user"],
-                                                               password=config[dataset_i]["password"])
-                                        cursor = db.cursor(buffered=True)
-                                        if config[dataset_i]["db"].lower() != "none":
-                                            cursor.execute("use " + config[dataset_i]["db"])
-                                        else:
-                                            if database != "None":
-                                                cursor.execute("use " + database)
+                                        if source_type == "mysql":
+                                            db = connector.connect(host=config[dataset_i]["host"],
+                                                                   port=int(config[dataset_i]["port"]),
+                                                                   user=config[dataset_i]["user"],
+                                                                   password=config[dataset_i]["password"])
+                                            cursor = db.cursor(buffered=True)
+                                            if config[dataset_i]["db"].lower() != "none":
+                                                cursor.execute("use " + config[dataset_i]["db"])
+                                            else:
+                                                if database != "None":
+                                                    cursor.execute("use " + database)
+                                        elif source_type == "sqlserver":
+                                            if len(pyodbc.drivers()) != 0:
+                                                driver = "{" + pyodbc.drivers()[0] + "}"
+                                            else:
+                                                driver = "{}"
+                                            conn = pyodbc.connect("DRIVER=" + driver
+                                                                    + ";SERVER=" + config[dataset_i]["host"] + "," + config[dataset_i]["port"]
+                                                                    + ";DATABASE=" + config[dataset_i]["database"]
+                                                                    + ";UID=" + config[dataset_i]["user"]
+                                                                    + ";PWD=" + config[dataset_i]["password"]
+                                                                    + ";trustServerCertificate=yes")
+                                            cursor = conn.cursor()
                                         cursor.execute(source)
                                         row_headers = [x[0] for x in cursor.description]
                                         data = []
@@ -9218,7 +10122,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 logger.info("TM: " + sorted_sources[source_type][source][
                                                     triples_map].triples_map_name)
                                                 if mapping_partitions == "yes":
@@ -9642,7 +10548,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 logger.info("TM: " + sorted_sources[source_type][source][
                                                     triples_map].triples_map_name)
                                                 if mapping_partitions == "yes":
@@ -9886,7 +10794,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     results = g.query(sorted_sources[source_type][source][triples_map].iterator)
                                                     data = []
                                                     for row in results:
@@ -9988,7 +10898,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     sparql = SPARQLWrapper(source.replace("endpoint:",""))
                                                     sparql.setQuery(sorted_sources[source_type][source][triples_map].iterator)
                                                     sparql.setReturnFormat(JSON)
@@ -10096,7 +11008,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                 for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10189,7 +11103,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                                sorted_sources[source_type][source][
+                                                                    triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 data = csv.DictReader(input_file_descriptor, delimiter=',')
@@ -10284,7 +11200,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 if "http" in sorted_sources[source_type][source][
                                                     triples_map].data_source:
                                                     file_source = sorted_sources[source_type][source][triples_map].data_source
@@ -10316,8 +11234,28 @@ def semantify(config_path, log_path='error.log'):
                                                         response = urlopen(file_source)
                                                         data = json.loads(response.read())
                                                 else:
-                                                    data = json.load(
-                                                        open(sorted_sources[source_type][source][triples_map].data_source))
+                                                    file_source = sorted_sources[source_type][source][triples_map].data_source
+                                                    file = sorted_sources[source_type][source][triples_map].data_source
+                                                    if "gz" in file_source or "zip" in file_source or "tar.xz" in file_source or "tar.gz" in file_source:
+                                                        if "zip" in file_source:
+                                                            with zipfile.ZipFile(file, 'r') as zip_ref:
+                                                                zip_ref.extractall()
+                                                            data = json.load(open(file.replace(".zip","")))
+                                                        elif "tar.xz" in file_source or "tar.gz" in file_source:
+                                                            with tarfile.open(file, "r") as tar:
+                                                                tar.extractall()
+                                                            if "tar.xz" in file_source:
+                                                                data = json.load(open(file.replace(".tar.xz","")))
+                                                            else:
+                                                                data = json.load(open(file.replace(".tar.gz","")))
+                                                        elif "gz" in file_source:
+                                                            with open(file, "rb") as gz_file:
+                                                                with open(file.replace(".gz",""), "wb") as txt_file:
+                                                                    shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
+                                                            data = json.load(open(file.replace(".gz","")))
+                                                    else:
+                                                        data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10410,7 +11348,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10490,6 +11430,108 @@ def semantify(config_path, log_path='error.log'):
                                                     generated_subjects = release_subjects(
                                                         sorted_sources[source_type][source][triples_map],
                                                         generated_subjects)
+
+                                elif source_type == "RMLView":
+                                    for source in order_list[source_type]:
+                                        for triples_map in sorted_sources[source_type][source]:
+                                            if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    blank_message = True
+                                                    if sorted_sources[source_type][source][triples_map].data_source in inner_view:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],
+                                                                                view_sources,inner_view[sorted_sources[source_type][source][triples_map].data_source])
+                                                    else:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],view_sources,[])
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                                 sorted_sources[source_type][
+                                                                                                     source][triples_map],
+                                                                                                 triples_map_list, ",",
+                                                                                                 logical_output_descriptor,
+                                                                                                 data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                if "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
                         else:
                             for source_type in sorted_sources:
                                 if source_type == "csv":
@@ -10504,7 +11546,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     results = g.query(sorted_sources[source_type][source][triples_map].iterator)
                                                     data = []
                                                     for row in results:
@@ -10606,7 +11650,9 @@ def semantify(config_path, log_path='error.log'):
                                                         triples_map].predicate_object_maps_list[
                                                         0].predicate_map.value != "None") or \
                                                         sorted_sources[source_type][source][
-                                                            triples_map].subject_map.rdf_class != [None]:
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                     sparql = SPARQLWrapper(source.replace("endpoint:",""))
                                                     sparql.setQuery(sorted_sources[source_type][source][triples_map].iterator)
                                                     sparql.setReturnFormat(JSON)
@@ -10714,7 +11760,9 @@ def semantify(config_path, log_path='error.log'):
                                                                 triples_map].predicate_object_maps_list[
                                                                 0].predicate_map.value != "None") or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.rdf_class != [None]:
+                                                                    triples_map].subject_map.rdf_class != [None] or \
+                                                            sorted_sources[source_type][source][
+                                                                triples_map].subject_map.subject_mapping_type == "gather map":
                                                             blank_message = True
                                                             if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                 for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10809,7 +11857,9 @@ def semantify(config_path, log_path='error.log'):
                                                                     triples_map].predicate_object_maps_list[
                                                                     0].predicate_map.value != "None") or \
                                                                     sorted_sources[source_type][source][
-                                                                        triples_map].subject_map.rdf_class != [None]:
+                                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                                    sorted_sources[source_type][source][
+                                                                        triples_map].subject_map.subject_mapping_type == "gather map":
                                                                 blank_message = True
                                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -10902,7 +11952,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 if "http" in sorted_sources[source_type][source][
                                                     triples_map].data_source:
                                                     file_source = sorted_sources[source_type][source][triples_map].data_source
@@ -10934,7 +11986,27 @@ def semantify(config_path, log_path='error.log'):
                                                         response = urlopen(file_source)
                                                         data = json.loads(response.read())
                                                 else:
-                                                    data = json.load(open(
+                                                    file_source = sorted_sources[source_type][source][triples_map].data_source
+                                                    file = sorted_sources[source_type][source][triples_map].data_source
+                                                    if "gz" in file_source or "zip" in file_source or "tar.xz" in file_source or "tar.gz" in file_source:
+                                                        if "zip" in file_source:
+                                                            with zipfile.ZipFile(file, 'r') as zip_ref:
+                                                                zip_ref.extractall()
+                                                            data = json.load(open(file.replace(".zip","")))
+                                                        elif "tar.xz" in file_source or "tar.gz" in file_source:
+                                                            with tarfile.open(file, "r") as tar:
+                                                                tar.extractall()
+                                                            if "tar.xz" in file_source:
+                                                                data = json.load(open(file.replace(".tar.xz","")))
+                                                            else:
+                                                                data = json.load(open(file.replace(".tar.gz","")))
+                                                        elif "gz" in file_source:
+                                                            with open(file, "rb") as gz_file:
+                                                                with open(file.replace(".gz",""), "wb") as txt_file:
+                                                                    shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
+                                                            data = json.load(open(file.replace(".gz","")))
+                                                    else:
+                                                        data = json.load(open(
                                                         sorted_sources[source_type][source][triples_map].data_source))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
@@ -11028,7 +12100,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -11108,23 +12182,137 @@ def semantify(config_path, log_path='error.log'):
                                                     generated_subjects = release_subjects(
                                                         sorted_sources[source_type][source][triples_map],
                                                         generated_subjects)
+                                elif source_type == "RMLView":
+                                    for source in sorted_sources[source_type]:
+                                        for triples_map in sorted_sources[source_type][source]:
+                                            if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    blank_message = True
+                                                    if sorted_sources[source_type][source][triples_map].data_source in inner_view:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],
+                                                                                view_sources,inner_view[sorted_sources[source_type][source][triples_map].data_source])
+                                                    else:
+                                                        data = view_projection(view_sources[sorted_sources[source_type][source][triples_map].data_source],view_sources,[])
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                                 sorted_sources[source_type][
+                                                                                                     source][triples_map],
+                                                                                                 triples_map_list, ",",
+                                                                                                 logical_output_descriptor,
+                                                                                                 data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                if "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
 
                     if predicate_list:
                         for source_type in sorted_sources:
                             blank_message = True
                             if str(source_type).lower() != "csv" and source_type != "JSONPath" and source_type != "XPath":
-                                if source_type == "mysql":
+                                if source_type == "mysql" or source_type == "sqlserver":
                                     for source in sorted_sources[source_type]:
-                                        db = connector.connect(host=config[dataset_i]["host"],
-                                                               port=int(config[dataset_i]["port"]),
-                                                               user=config[dataset_i]["user"],
-                                                               password=config[dataset_i]["password"])
-                                        cursor = db.cursor(buffered=True)
-                                        if config[dataset_i]["db"].lower() != "none":
-                                            cursor.execute("use " + config[dataset_i]["db"])
-                                        else:
-                                            if database != "None":
-                                                cursor.execute("use " + database)
+                                        if source_type == "mysql":
+                                            db = connector.connect(host=config[dataset_i]["host"],
+                                                                   port=int(config[dataset_i]["port"]),
+                                                                   user=config[dataset_i]["user"],
+                                                                   password=config[dataset_i]["password"])
+                                            cursor = db.cursor(buffered=True)
+                                            if config[dataset_i]["db"].lower() != "none":
+                                                cursor.execute("use " + config[dataset_i]["db"])
+                                            else:
+                                                if database != "None":
+                                                    cursor.execute("use " + database)
+                                        elif source_type == "sqlserver":
+                                            if len(pyodbc.drivers()) != 0:
+                                                driver = "{" + pyodbc.drivers()[0] + "}"
+                                            else:
+                                                driver = "{}"
+                                            conn = pyodbc.connect("DRIVER=" + driver
+                                                                    + ";SERVER=" + config[dataset_i]["host"] + "," + config[dataset_i]["port"]
+                                                                    + ";DATABASE=" + config[dataset_i]["database"]
+                                                                    + ";UID=" + config[dataset_i]["user"]
+                                                                    + ";PWD=" + config[dataset_i]["password"]
+                                                                    + ";trustServerCertificate=yes")
+                                            cursor = conn.cursor()
                                         cursor.execute(source)
                                         row_headers = [x[0] for x in cursor.description]
                                         data = []
@@ -11135,7 +12323,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 logger.info("TM: " + sorted_sources[source_type][source][
                                                     triples_map].triples_map_id)
                                                 if mapping_partitions == "yes":
@@ -11435,7 +12625,9 @@ def semantify(config_path, log_path='error.log'):
                                                     triples_map].predicate_object_maps_list[
                                                     0].predicate_map.value != "None") or \
                                                     sorted_sources[source_type][source][
-                                                        triples_map].subject_map.rdf_class != [None]:
+                                                        triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
                                                 logger.info("TM: " + sorted_sources[source_type][source][
                                                     triples_map].triples_map_id)
                                                 if mapping_partitions == "yes":

@@ -2551,6 +2551,7 @@ def mapping_parser(mapping_file):
                                                   result_predicate_object_map.language_value,
                                                   result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_reference != None:
+                    if new_formulation == "yes":
                         if result_predicate_object_map.gather_list != None:
                             if result_predicate_object_map.gather_list not in gather_map_seen:
                                 object_map = tm.ObjectMap("gather map", str(result_predicate_object_map.gather_list), "None", "None",
@@ -2567,7 +2568,13 @@ def mapping_parser(mapping_file):
                                                       str(result_predicate_object_map.object_datatype), "None", "None",
                                                       result_predicate_object_map.term, result_predicate_object_map.language,
                                                       result_predicate_object_map.language_value,
-                                                      result_predicate_object_map.datatype_value, "None")
+                                                          result_predicate_object_map.datatype_value, "None")
+                    else:
+                        object_map = tm.ObjectMap("reference", str(result_predicate_object_map.object_reference),
+                                                      str(result_predicate_object_map.object_datatype), "None", "None",
+                                                      result_predicate_object_map.term, result_predicate_object_map.language,
+                                                      result_predicate_object_map.language_value,
+                                                          result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_parent_triples_map != None:
                     if predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map) not in join_predicate:
                         if (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
@@ -2760,26 +2767,38 @@ def mapping_parser(mapping_file):
                                                         query=str(result_triples_map.query),
                                                         function=function,func_map_list=func_map_list, 
                                                         mappings_type=str(result_triples_map.mappings_type))
-            elif result_triples_map.data_view is not None:
-                current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
-                                                        str(result_triples_map._source), subject_map,
+            else:
+                if new_formulation == "yes":
+                    if result_triples_map.data_view is not None:
+                        current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                                str(result_triples_map._source), subject_map,
+                                                                predicate_object_maps_list,
+                                                                ref_form="http://w3id.org/rml/RMLView",
+                                                                iterator=str(result_triples_map.iterator),
+                                                                tablename=str(result_triples_map.tablename),
+                                                                query=str(result_triples_map.query),
+                                                                function=function,func_map_list=func_map_list, 
+                                                                mappings_type=str(result_triples_map.mappings_type))
+                    else:
+                        current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                        str(result_triples_map.data_source), subject_map,
                                                         predicate_object_maps_list,
-                                                        ref_form="http://w3id.org/rml/RMLView",
+                                                        ref_form=str(result_triples_map.ref_form),
                                                         iterator=str(result_triples_map.iterator),
                                                         tablename=str(result_triples_map.tablename),
                                                         query=str(result_triples_map.query),
                                                         function=function,func_map_list=func_map_list, 
                                                         mappings_type=str(result_triples_map.mappings_type))
-            else:
-                current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
-                                                    str(result_triples_map.data_source), subject_map,
-                                                    predicate_object_maps_list,
-                                                    ref_form=str(result_triples_map.ref_form),
-                                                    iterator=str(result_triples_map.iterator),
-                                                    tablename=str(result_triples_map.tablename),
-                                                    query=str(result_triples_map.query),
-                                                    function=function,func_map_list=func_map_list, 
-                                                    mappings_type=str(result_triples_map.mappings_type))
+                else:
+                    current_triples_map = tm.TriplesMap(str(result_triples_map.triples_map_id),
+                                                        str(result_triples_map.data_source), subject_map,
+                                                        predicate_object_maps_list,
+                                                        ref_form=str(result_triples_map.ref_form),
+                                                        iterator=str(result_triples_map.iterator),
+                                                        tablename=str(result_triples_map.tablename),
+                                                        query=str(result_triples_map.query),
+                                                        function=function,func_map_list=func_map_list, 
+                                                        mappings_type=str(result_triples_map.mappings_type))
 
             triples_map_list += [current_triples_map]
 

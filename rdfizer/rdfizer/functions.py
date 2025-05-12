@@ -595,7 +595,6 @@ def files_sort(triples_map_list, ordered, config):
 						"http://www.w3.org/2000/01/rdf-schema#seeAlso":"",
 						"http://www.w3.org/2000/01/rdf-schema#subPropertyOf":""}
 	for tp in triples_map_list:
-		print(tp.file_format)
 		if str(tp.file_format).lower() == "csv":
 			if "csv" not in sorted_list:
 				sorted_list["csv"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
