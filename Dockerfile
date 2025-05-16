@@ -7,6 +7,15 @@ WORKDIR /app
 # Copy the requirements.txt alone to re-install packages only if it has changed
 ADD requirements.txt /app
 
+RUN apt-get update && apt-get install -y \
+    unixodbc-dev \
+    gcc \
+    g++ \
+    gnupg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Install any needed packages specified in requirements.txt
 RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
 
