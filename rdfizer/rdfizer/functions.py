@@ -961,11 +961,15 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						row = row[list(row.keys())[0]]
 	for reference_match in template_references:
 		start, end = reference_match.span()[0], reference_match.span()[1]
+
 		if pattern == "{(.+?)}":
 			if "[*]" not in reference_match.group(1):
 				match = reference_match.group(1)
 			else:
-				match = reference_match.group(1).split("[")[0]
+				if "." not in reference_match.group(1) and "[*]" not in reference_match.group(1):
+					match = reference_match.group(1).split("[")[0]
+				else:
+					match = reference_match.group(1)
 			if match[:2] == "$.":
 				match = match[2:]
 			if "\\" in match:
@@ -981,7 +985,6 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 					sys.exit(1)
 			elif "." in match:
 				if "[*]" in match:
-					print(match)
 					if match.split("[*]")[0] in row:
 						child_list = row[match.split("[*]")[0]]
 						match = match.split(".")[1:]
@@ -1043,7 +1046,37 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						return None						
 			else:
 				if match in row:
-					value = row[match]	
+					if not isinstance(row[match],list):
+						value = row[match]
+					else:
+						object_list = []
+						for value in row[match]:
+							if value is not None:
+								if (type(value).__name__) != "str":
+									if (type(value).__name__) != "float":
+										value = str(value)
+									else:
+										value = str(math.ceil(value))
+								else:
+									if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+										value = str(math.ceil(float(value))) 
+								if re.search("^[\s|\t]*$", value) is None:
+									if "http" not in value:
+										value = encode_char(value)
+									new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+									offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+									if "\\" in new_string:
+										new_string = new_string.replace("\\", "")
+										count = new_string.count("}")
+										i = 0
+										new_string = " " + new_string
+										while i < count:
+											new_string = "{" + new_string
+											i += 1
+									object_list.append(new_string)
+									new_string = string
+									offset_current_substitution = 0
+						return object_list	
 				else:
 					if "[*]" in match:
 						if match.split("[*]")[0] in row:
