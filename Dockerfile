@@ -1,20 +1,34 @@
 # Use an official Python runtime as a parent image
-FROM python:3.5
+FROM python:3.8
 
-# Set the working directory to /app
-WORKDIR /data
+# Set the working directory to /app for installing rdfizer
+WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-ADD . /app
+# Copy the requirements.txt alone to re-install packages only if it has changed
+ADD requirements.txt /app
 
 # Install any needed packages specified in requirements.txt
-RUN cd /app && pip3 install --trusted-host pypi.python.org -r requirements.txt && cd /data
+RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
 
-# Make port 80 available to the world outside this container
-EXPOSE 4000
+# Add all the source code
+ADD . /app
 
-# Define environment variable
-ENV NAME RDFizer
+# Fix issue with symlinks not being copied in the docker image:
+ADD README.md VERSION requirements.txt /app/rdfizer/
 
-# Run app.py when the container launches
-CMD ["python3", "/app/app.py"]
+# Install the rdfizer package
+RUN pip install ./rdfizer
+
+# Set the working directory to /data
+WORKDIR /data
+
+# Use the rdfizer package as entrypoint
+ENTRYPOINT [ "rdfizer" ]
+
+# Default args passed to the entrypoint
+# Run config.ini in workdir /data by default
+CMD ["-c", "config.ini"]
+
+## Usage:
+# docker build -t rdfizer:latest -f Dockerfile.cli .
+# docker run -it --rm -v $(pwd)/example:/data rdfizer:latest -c config.ini
