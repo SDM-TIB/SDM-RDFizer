@@ -5590,10 +5590,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                     if "\n" in object:
                         object = object.replace("\n", "\\n")
-                    if predicate_object_map.object_map.value == "#" or "#" in predicate_object_map.object_map.value:
-                        object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                    if is_convertible_to_int(object[1:-1]) and predicate_object_map.object_map.datatype == None:
-                        object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                    if predicate_object_map.object_map.datatype == None:
+                        if predicate_object_map.object_map.value == "#" or "#" in predicate_object_map.object_map.value:
+                            object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                        elif is_convertible_to_int(object[1:-1]):
+                            object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
                     if predicate_object_map.object_map.datatype != None:
                         if output_format.lower() == "n-triples":
                             if "dateTime" not in predicate_object_map.object_map.datatype:
