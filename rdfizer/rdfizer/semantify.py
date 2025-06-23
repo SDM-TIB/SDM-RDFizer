@@ -2272,7 +2272,6 @@ def mapping_parser(mapping_file):
             mapping_view_results = prepareQuery(join_view_query)
             mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
             for attr_view in mapping_query_view_results:
-                print(attr_view)
                 attr_row = {}
                 if attr_view.inner_join is not None:
                     attr_row["type"] = "inner_join"
@@ -2294,9 +2293,13 @@ def mapping_parser(mapping_file):
                         attr_list.append(attr_row)
                         seen_view.append(attr_row["name"])
                     
-            if result_triples_map.data_view_view is not None:
-                view = tm.ViewSource(str(result_triples_map.data_view_view),"RMLView",
-                                        str(result_triples_map.iterator),attr_list)                                    
+            if result_triples_map.data_view is not None:
+                if result_triples_map.ref_form is None:
+                    view = tm.ViewSource(str(result_triples_map.data_view),"RMLView",
+                                            str(result_triples_map.iterator),attr_list)
+                else:
+                    view = tm.ViewSource(str(result_triples_map.data_source),str(result_triples_map.ref_form),
+                                        str(result_triples_map.iterator),attr_list)                              
             else:
                 view = tm.ViewSource(str(result_triples_map.data_source),str(result_triples_map.ref_form),
                                         str(result_triples_map.iterator),attr_list)
@@ -5587,6 +5590,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = "\"" + object[1:-1].replace("\"", "\\\"") + "\""
                     if "\n" in object:
                         object = object.replace("\n", "\\n")
+                    if predicate_object_map.object_map.value == "#" or "#" in predicate_object_map.object_map.value:
+                        object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                    if is_convertible_to_int(object[1:-1]) and predicate_object_map.object_map.datatype == None:
+                        object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
                     if predicate_object_map.object_map.datatype != None:
                         if output_format.lower() == "n-triples":
                             if "dateTime" not in predicate_object_map.object_map.datatype:
@@ -9789,7 +9796,6 @@ def semantify(config_path, log_path='error.log'):
                                                     file = sorted_sources[source_type][source][triples_map].data_source
                                                     if "gz" in file_source or "zip" in file_source or "tar.xz" in file_source or "tar.gz" in file_source:
                                                         if "zip" in file_source:
-                                                            print(file)
                                                             with zipfile.ZipFile(file, 'r') as zip_ref:
                                                                 zip_ref.extractall()
                                                             data = json.load(open(file.replace(".zip","")))

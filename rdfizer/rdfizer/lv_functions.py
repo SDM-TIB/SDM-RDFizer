@@ -250,6 +250,9 @@ def view_projection(view_map, view_map_list, internal_maps):
 										new_row[attr["name"]] = None
 				if inner_join_success:
 					view_source.append(new_row)
+				else:
+					view_source.append({})
+				inner_join_success = True
 			i = 0
 			for row in view_source:
 				row["#"] = str(i)
@@ -321,6 +324,9 @@ def view_projection(view_map, view_map_list, internal_maps):
 										new_row[attr["name"]] = None
 				if inner_join_success:
 					view_source.append(new_row)
+				else:
+					view_source.append({})
+				inner_join_success = True
 			i = 0
 			for row in view_source:
 				row["#"] = str(i)
@@ -331,11 +337,10 @@ def view_projection(view_map, view_map_list, internal_maps):
 				view_source = flatten_nested_json(view_source)
 				if has_nested_dict(view_source):
 					view_source = flatten_inner_dict(view_source)
-			print(view_source)
 	elif "XPath" in view_map.ref_form:
 		pass
 	elif "RMLView" in view_map.ref_form:
-		data = view_projection(view_map_list[view_map.source],view_map_list)
+		data = view_projection(view_map_list[view_map.source],view_map_list, internal_maps)
 		for row in data:
 			new_row = {}
 			for attr in view_map.attr_list:
