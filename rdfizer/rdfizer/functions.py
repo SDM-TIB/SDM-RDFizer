@@ -530,7 +530,7 @@ def extract_base(file):
 			return base
 
 def encode_char(string):
-	encoded = urllib.parse.quote(string, safe='_-.~/:@&=+',encoding='utf-8')
+	encoded = urllib.parse.quote(string, safe='_-.~:@&=+%',encoding='utf-8')
 	return encoded
 
 def combine_sublist(sublists, full_list):
@@ -917,8 +917,12 @@ def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
 
 def sublist(part_list, full_list):
 	for part in part_list:
-		if part not in full_list:
-			return False
+		if "$." in part:
+			if part[2:] not in full_list:
+				return False
+		else:
+			if part not in full_list:
+				return False
 	return True
 
 def child_list(childs):
@@ -933,9 +937,14 @@ def child_list_value(childs,row):
 	v = []
 	for child in childs:
 		if child not in v:
-			if row[child] != None:
-				value += str(row[child]) + "_"
-				v.append(child)
+			if "$." in child:
+				if row[child[2:]] != None:
+					value += str(row[child[2:]]) + "_"
+					v.append(child[2:])
+			else:
+				if row[child] != None:
+					value += str(row[child]) + "_"
+					v.append(child)
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):
@@ -970,9 +979,22 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 
 		if pattern == "{(.+?)}":
 			if "[*]" not in reference_match.group(1):
-				match = reference_match.group(1)
+				if "$." == reference_match.group(1)[:2]:
+					if "[" in reference_match.group(1)[2:]:
+						temp_match = reference_match.group(1)[2:] 
+						match = temp_match[2:-2]
+					else:
+						match = reference_match.group(1)[2:]
+				else:
+					match = reference_match.group(1)
 			else:
-				if "." not in reference_match.group(1) and "[*]" not in reference_match.group(1):
+				if "$." == reference_match.group(1)[:2]:
+					if "[" in reference_match.group(1)[2:]:
+						print(reference_match.group(1)[2:])
+						match = reference_match.group(1)[2:]
+					else:
+						match = reference_match.group(1)[2:]
+				elif "." not in reference_match.group(1) and "[*]" not in reference_match.group(1):
 					match = reference_match.group(1).split("[")[0]
 				else:
 					match = reference_match.group(1)
@@ -981,6 +1003,12 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 			if "\\" in match:
 				temp = match.split("{")
 				match = temp[len(temp)-1]
+				if "$." == match[:2]:
+					if "[" in match[2:]:
+						temp_match = match[2:] 
+						match = temp_match[2:-2]
+					else:
+						match = reference_match.group(1)[2:]
 				if match in row.keys():
 					value = row[match]
 				else:
