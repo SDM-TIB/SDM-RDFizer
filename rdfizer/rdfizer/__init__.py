@@ -1865,9 +1865,9 @@ def mapping_parser(mapping_file):
         SELECT DISTINCT *
         WHERE {
     # Subject -------------------------------------------------------------------------
+            ?triples_map_id rml:logicalSource ?_source .
             OPTIONAL{?triples_map_id a ?mappings_type .}
             OPTIONAL{?triples_map_id rml:baseIRI ?baseIRI .}
-            ?triples_map_id rml:logicalSource ?_source .
             OPTIONAL{
                 ?_source rml:source ?source_attr .
                 OPTIONAL {?source_attr rml:root ?root .}
@@ -1926,13 +1926,17 @@ def mapping_parser(mapping_file):
                                  ?output rml:target ?dump.
                                  ?dump void:dataDump ?subject_graph_dump.}
                 }
+            OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
+                       ?subject_graph_structure rml:constant ?graph . 
+                       OPTIONAL {?subject_graph_structure rml:logicalTarget ?output .
+                                 ?output rml:target ?dump.
+                                 ?dump void:dataDump ?subject_graph_dump.}
+                }
             OPTIONAL { ?_subject_map rml:graphMap ?subj_graph_structure .
-                       ?subj_graph_structure rml:template ?graph . 
-                       OPTIONAL {?subj_graph_structure rml:logicalTarget ?subj_output .
-                                 ?subj_output rml:target ?subj_dump.
-                                 ?subj_dump void:dataDump ?subject_graph_dump.}
+                       ?subj_graph_structure rml:functionExecution ?graph .
                }
             OPTIONAL {?_subject_map rml:functionExecution ?subject_function .
+                        OPTIONAL {?_subject_map rml:return ?subject_output .}
                         OPTIONAL {
                             ?_subject_map rml:returnMap ?output_map .
                             ?output_map rml:constant ?subject_output .        
@@ -1977,6 +1981,7 @@ def mapping_parser(mapping_file):
             OPTIONAL {
                 ?_predicate_object_map rml:predicateMap ?_predicate_map .
                 ?_predicate_map rml:functionExecution ?predicate_function .
+                OPTIONAL {?_predicate_map rml:return ?predicate_output .}
                 OPTIONAL {
                     ?_predicate_map rml:returnMap ?output_map .
                     ?output_map rml:constant ?predicate_output .        
@@ -2073,10 +2078,12 @@ def mapping_parser(mapping_file):
                 ?_predicate_object_map rml:object ?object_constant_shortcut .
             }
             OPTIONAL{
+                ?_predicate_object_map rml:objectMap ?_object_map .
                 OPTIONAL {
                     ?_object_map rml:datatype ?object_datatype .
                 }
                 ?_object_map rml:functionExecution ?function.
+                OPTIONAL {?_object_map rml:return ?func_output .}
                 OPTIONAL {
                     ?_object_map rml:returnMap ?output_map .
                     ?output_map rml:constant ?func_output .        
@@ -5473,7 +5480,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 func = new_inner_function(row,triples_map.subject_map.value,triples_map)
                             else:
                                 func = execute_function(row,None,current_func)
-                    if triples_map.subject_map.func_result != None and func != None:
+                    if triples_map.subject_map.func_result != None:
+                        if "unknownOut" == triples_map.subject_map.func_result:
+                            func = None
+                    if triples_map.subject_map.func_result != None and func != None and isinstance(func,dict):
                         func = func[triples_map.subject_map.func_result]
                     if func != None:
                         if "http://" in func or "https://" in func:
@@ -5628,7 +5638,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     func = new_inner_function(row,predicate_object_map.predicate_map.value,triples_map)
                                 else:
                                     func = execute_function(row,None,current_func)
-                        if predicate_object_map.predicate_map.func_result != None and func != None:
+                        if predicate_object_map.predicate_map.func_result != None:
+                            if "unknownOut" == predicate_object_map.predicate_map.func_result:
+                                func = None
+                        if predicate_object_map.predicate_map.func_result != None and func != None and isinstance(func,dict):
                             func = func[predicate_object_map.predicate_map.func_result]
                         if None != func:
                             predicate = "<" + func + ">"
@@ -6131,7 +6144,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 func = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
                             else:
                                 func = execute_function(row,None,current_func)
-                    if predicate_object_map.object_map.func_result != None and func != None:
+                    if predicate_object_map.object_map.func_result != None:
+                        if "unknownOut" == predicate_object_map.object_map.func_result:
+                            func = None
+                    if predicate_object_map.object_map.func_result != None and func != None and isinstance(func,dict):
                         func = func[predicate_object_map.object_map.func_result]
                     if predicate_object_map.object_map.term is not None:
                         if func != None:
@@ -6145,6 +6161,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     else:
                         if None != func:
                             object = "\"" + func + "\""
+                            if is_convertible_to_int(func):
+                                object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
                         else:
                             object = None
             elif "quoted triples map" in predicate_object_map.object_map.mapping_type:
@@ -6288,14 +6306,33 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     for graph in triples_map.subject_map.graph:
                         triple = subject + " " + predicate + " " + object + ".\n"
                         if graph != None and "defaultGraph" not in graph:
-                            if "{" in graph:
-                                triple = triple[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
-                                                                                  triples_map.iterator) + ">.\n"
-                                dictionary_table_update("<" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
-                                                                                  triples_map.iterator) + ">")
+                            func = None
+                            for func_map in triples_map.func_map_list:
+                                if func_map.func_map_id == str(graph):
+                                    current_func = {"inputs":func_map.parameters, 
+                                                    "function":func_map.name}
+                                    inner_func = False
+                                    for param in func_map.parameters:
+                                        if "function" in func_map.parameters[param]["type"]:
+                                            inner_func = True
+                                    if inner_func:
+                                        func = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                                    else:
+                                        func = execute_function(row,None,current_func)
+                            if predicate_object_map.object_map.func_result != None and func != None and isinstance(func,dict):
+                                func = func[predicate_object_map.object_map.func_result]
+                            if func != None:
+                                triple = triple[:-2] + " <" + func + ">.\n"
+                                dictionary_table_update("<" + func + ">")
                             else:
-                                triple = triple[:-2] + " <" + graph + ">.\n"
-                                dictionary_table_update("<" + graph + ">")
+                                if "{" in graph:
+                                    triple = triple[:-2] + " <" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
+                                                                                      triples_map.iterator) + ">.\n"
+                                    dictionary_table_update("<" + string_substitution(graph, "{(.+?)}", row, "subject", ignore,
+                                                                                      triples_map.iterator) + ">")
+                                else:
+                                    triple = triple[:-2] + " <" + graph + ">.\n"
+                                    dictionary_table_update("<" + graph + ">")
                         if no_inner_cycle:
                             if predicate[1:-1] not in predicate_object_map.graph or graph != None or triples_map.subject_map.graph == [None]:
                                 if duplicate == "yes":

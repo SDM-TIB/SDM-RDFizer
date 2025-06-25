@@ -17,12 +17,21 @@ global functions_pool
 functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "replaceValue":"","concat2":"","uuid":"","helloworld":"",
                 "escape":"","schema":"","string_replace":"",
-                "parseURL":""}
+                "parseURL":"","random":"","length":"","string_substring":""}
 
 
 ## Define your functions here following examples below, the column "names" from the csv files 
 ## that you aim to use as the input parameters of functions are only required to be provided 
 ## as the keys of "global_dic"
+def string_substring(): 
+    if int(global_dic["p_int_i_from"]) > len(str(global_dic["valueParam"])):
+        return None
+    else:
+        return str(global_dic["valueParam"])[int(global_dic["p_int_i_from"]):]
+
+def length(): 
+    return str(len(str(global_dic["valueParam"])))
+
 def toLowerCase(): 
     return str(global_dic["valueParam"]).lower()
 
@@ -57,6 +66,10 @@ def concat2():
     return(result)
 
 def uuid():
+    from uuid import uuid4
+    return str(uuid4())
+
+def random():
     from uuid import uuid4
     return str(uuid4())
 
