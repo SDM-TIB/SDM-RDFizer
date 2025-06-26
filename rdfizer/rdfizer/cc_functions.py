@@ -217,14 +217,14 @@ def gather_subject(data, subject, gather_map, output_file_descriptor, iterator):
 def gather_triples_generation(data, subject_predicate, base, gather_map, output_file_descriptor, iterator, triples_map_list, gather_map_list, graph):
 	blank_id = str(uuid4())
 	if gather_map.value != "None":
-		object = string_substitution_json(gather_map.value, "{(.+?)}", data, "subject", "yes", iterator)
+		object = string_substitution_json(gather_map.value, "{(.+?)}", data[0], "subject", "yes", iterator)
 		if "http" in object:
 			object = "<" + object + ">"
 		else:
-			if base != "":
-				object = "<" + base +  object + ">"
+			if base != "" and base != None:
+				object = "<" + base + "base/" + object + ">"
 			else:
-				object = "<http://example.com/base/" + base +  object + ">"
+				object = "<http://example.com/base/" +  object + ">"
 	else:
 		global gather_blank
 		object = "_:" + blank_id + str(gather_blank)
@@ -244,9 +244,15 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 				i += 1
 	elif "#Bag" in gather_map.type:
 		element_values = []
-		for element in gather_map.gather_list:
-			if element["type"] == "reference":
-				element_values += string_substitution_json(element["value"],".+", data, "object", "yes", iterator)
+		if isinstance(data,list):
+			for row in data:
+				for element in gather_map.gather_list:
+					if element["type"] == "reference":
+						element_values += string_substitution_json(element["value"],".+", row, "object", "yes", iterator)
+		else:
+			for element in gather_map.gather_list:
+				if element["type"] == "reference":
+					element_values += string_substitution_json(element["value"],".+", data, "object", "yes", iterator)
 		if gather_map.empty != None and gather_map.empty:
 			if element_values == []:
 				if "" != subject_predicate:
@@ -304,22 +310,41 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 	elif "#List" in gather_map.type:
 		if "cartesian" not in gather_map.strategy:
 			element_values = []
-			for element in gather_map.gather_list:
-				if element["type"] == "reference":
-					element_values += string_substitution_json(element["value"],".+", data, "object", "yes", iterator)
-				elif element["type"] == "gather map":
-					element_values.append(gather_triples_generation(data, "", base, gather_map_list[element["value"]], output_file_descriptor, iterator, triples_map_list, gather_map_list,graph))
-				elif element["type"] == "join":
-					for tm in triples_map_list:
-						if tm.triples_map_id == element["value"]:
-							if element["child"] != "None" and element["child"] != "None":
-								if tm.triples_map_id + "_" + element["child"] not in cc_join_table:
-									with open(str(tm.data_source),"r") as input_file_descriptor:
-										parent_data = csv.DictReader(input_file_descriptor, delimiter=",")
-										hash_maker_cc(parent_data, tm, element["parent"], element["child"], triples_map_list)
-								element_values += cc_join_table[tm.triples_map_id + "_" + element["child"]][data[element["child"]]]
-							else:
-								element_values.append("<" + string_substitution(tm.subject_map.value, "{(.+?)}", data, "subject", "yes", "") + ">")
+			if isinstance(data,list):
+				for row in data:
+					for element in gather_map.gather_list:
+						if element["type"] == "reference":
+							element_values += string_substitution_json(element["value"],".+", row, "object", "yes", iterator)
+						elif element["type"] == "gather map":
+							element_values.append(gather_triples_generation(row, "", base, gather_map_list[element["value"]], output_file_descriptor, iterator, triples_map_list, gather_map_list,graph))
+						elif element["type"] == "join":
+							for tm in triples_map_list:
+								if tm.triples_map_id == element["value"]:
+									if element["child"] != "None" and element["child"] != "None":
+										if tm.triples_map_id + "_" + element["child"] not in cc_join_table:
+											with open(str(tm.data_source),"r") as input_file_descriptor:
+												parent_data = csv.DictReader(input_file_descriptor, delimiter=",")
+												hash_maker_cc(parent_data, tm, element["parent"], element["child"], triples_map_list)
+										element_values += cc_join_table[tm.triples_map_id + "_" + element["child"]][row[element["child"]]]
+									else:
+										element_values.append("<" + string_substitution(tm.subject_map.value, "{(.+?)}", row, "subject", "yes", "") + ">")
+			else:
+				for element in gather_map.gather_list:
+					if element["type"] == "reference":
+						element_values += string_substitution_json(element["value"],".+", data, "object", "yes", iterator)
+					elif element["type"] == "gather map":
+						element_values.append(gather_triples_generation(data, "", base, gather_map_list[element["value"]], output_file_descriptor, iterator, triples_map_list, gather_map_list,graph))
+					elif element["type"] == "join":
+						for tm in triples_map_list:
+							if tm.triples_map_id == element["value"]:
+								if element["child"] != "None" and element["child"] != "None":
+									if tm.triples_map_id + "_" + element["child"] not in cc_join_table:
+										with open(str(tm.data_source),"r") as input_file_descriptor:
+											parent_data = csv.DictReader(input_file_descriptor, delimiter=",")
+											hash_maker_cc(parent_data, tm, element["parent"], element["child"], triples_map_list)
+									element_values += cc_join_table[tm.triples_map_id + "_" + element["child"]][data[element["child"]]]
+								else:
+									element_values.append("<" + string_substitution(tm.subject_map.value, "{(.+?)}", data, "subject", "yes", "") + ">")
 
 			if gather_map.empty != None and gather_map.empty:
 				if element_values == []:
@@ -419,8 +444,8 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 							output_file_descriptor.write(triple)
 							gather_blank += 1
 		else:
-			list_right = string_substitution_json(gather_map.gather_list[0],".+", data, "object", "yes", iterator)
-			list_left = string_substitution_json(gather_map.gather_list[1],".+", data, "object", "yes", iterator)
+			list_right = string_substitution_json(gather_map.gather_list[0]["value"],".+", data, "object", "yes", iterator)
+			list_left = string_substitution_json(gather_map.gather_list[1]["value"],".+", data, "object", "yes", iterator)
 			for value_right in list_right:
 				for value_left in list_left:
 					if "" != subject_predicate:
@@ -446,7 +471,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 
 	elif "#Seq" in gather_map.type:
 		for element in gather_map.gather_list:
-			element_values = string_substitution_json(element,".+", data, "object", "yes", iterator)
+			element_values = string_substitution_json(element["value"],".+", data, "object", "yes", iterator)
 			i = 1
 			for value in element_values:
 				triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#_" + str(i) + "> \"" + value + "\" .\n"
@@ -469,20 +494,7 @@ def grouping_values_json(gather_value,source,iterator):
 		for element in matches:
 			object = string_substitution_json(gather_value, "{(.+?)}", element, "subject", "yes", "")
 			if object not in gather_rows:
-				gather_rows[object] = element
+				gather_rows[object] = [element]
 			else:
-				new_row = {}
-				for key in gather_rows[object]:
-					if gather_rows[object][key] == element[key]:
-						new_row[key] = element[key]
-					else:
-						if isinstance(gather_rows[object][key],list) and isinstance(element[key],list):
-							new_row[key] = gather_rows[object][key] + element[key]
-						elif isinstance(gather_rows[object][key],list):
-							new_row[key] = gather_rows[object][key] + [element[key]]
-						elif isinstance(element[key],list):
-							new_row[key] = [gather_rows[object][key]] + element[key]
-						else:
-							new_row[key] = [gather_rows[object][key]] + [element[key]]	
-				gather_rows[object] = new_row
+				gather_rows[object].append(element)
 		return gather_rows

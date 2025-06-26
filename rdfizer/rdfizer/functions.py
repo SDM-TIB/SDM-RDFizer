@@ -990,7 +990,6 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 			else:
 				if "$." == reference_match.group(1)[:2]:
 					if "[" in reference_match.group(1)[2:]:
-						print(reference_match.group(1)[2:])
 						match = reference_match.group(1)[2:]
 					else:
 						match = reference_match.group(1)[2:]

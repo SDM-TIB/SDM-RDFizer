@@ -1652,6 +1652,9 @@ def mapping_parser(mapping_file):
         prefix sd: <http://www.w3.org/ns/sparql-service-description#>
         SELECT DISTINCT *
         WHERE {
+                OPTIONAL{
+                    ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
+                }
                 {OPTIONAL {
                     ?_object_map rml:template ?gather_value .
                 }
@@ -1659,9 +1662,6 @@ def mapping_parser(mapping_file):
                     ?_object_map rml:reference ?gather_value_reference .
                 }
                 OPTIONAL { ?_object_map rml:termType ?termtype . }
-                OPTIONAL{
-                    ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
-                }
                 ?_object_map rml:gather ?gather_list .
                 ?gather_list rdf:rest*/rdf:first ?item .
                 OPTIONAL {
@@ -1681,7 +1681,7 @@ def mapping_parser(mapping_file):
                 ?_object_map rml:gatherAs ?gather_type .
                 OPTIONAL{
                     ?_object_map rml:strategy ?strategy
-                }}
+                } }
                 UNION
                 {?_object_map rml:gather ?gather_list .
                 ?gather_list rdf:rest*/rdf:first ?item .
@@ -1719,6 +1719,9 @@ def mapping_parser(mapping_file):
         prefix sd: <http://www.w3.org/ns/sparql-service-description#>
         SELECT DISTINCT *
         WHERE {
+            OPTIONAL{
+                ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
+            }
             OPTIONAL {
                 ?_object_map rml:template ?gather_value .
             }
@@ -1726,9 +1729,6 @@ def mapping_parser(mapping_file):
                 ?_object_map rml:reference ?gather_value_reference .
             }
             OPTIONAL { ?_object_map rml:termType ?termtype . }
-            OPTIONAL{
-                ?_object_map rml:allowEmptyListAndContainer ?empty_allow .
-            }
             ?_object_map rml:gather ?gather_list .
             ?gather_list rdf:rest*/rdf:first ?item .
             OPTIONAL {
@@ -1930,10 +1930,14 @@ def mapping_parser(mapping_file):
                                  ?dump void:dataDump ?subject_graph_dump.}
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
-                       ?subject_graph_structure rml:constant ?graph . 
+                       ?subject_graph_structure rml:template ?graph . 
                        OPTIONAL {?subject_graph_structure rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
                                  ?dump void:dataDump ?subject_graph_dump.}
+                }
+            OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
+                       ?subject_graph_structure rml:reference ?graph .
+                       OPTIONAL {?subject_graph_structure rml:termType ?graph_type} 
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subj_graph_structure .
                        ?subj_graph_structure rml:functionExecution ?graph .
@@ -2385,6 +2389,49 @@ def mapping_parser(mapping_file):
                     if gather_element_attr != {}:
                         gather_list_elements.append(gather_element_attr)
 
+                if len(gather_list_elements) > 1:
+                    order_query = """
+                    prefix rr: <http://www.w3.org/ns/r2rml#> 
+                    prefix rml: <http://w3id.org/rml/> 
+                    prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+                    prefix td: <https://www.w3.org/2019/wot/td#>
+                    prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> 
+                    prefix dcat: <http://www.w3.org/ns/dcat#>
+                    prefix void: <http://rdfs.org/ns/void#>
+                    prefix sd: <http://www.w3.org/ns/sparql-service-description#>
+                    SELECT DISTINCT *
+                    WHERE {
+                      ?_object_map rml:gather ?gather_list .
+                      ?gather_list rdf:first ?first .
+                      OPTIONAL {?first rml:reference ?first_value}
+                      OPTIONAL {?first rml:template ?first_value}
+                      ?gather_list rdf:rest ?rest1 .
+                      ?rest1 rdf:first ?second .
+                      OPTIONAL {?second rml:reference ?second_value}
+                      OPTIONAL {?second rml:template ?second_value}
+                    }
+                    """
+                    order_results = mapping_graph.query(order_query, initBindings={
+                                                                    'list': result_triples_map.gather_list})
+                    temp_gather_list = []
+                    for order_element in order_results:
+                        for gather_element in gather_list_elements:
+                            if gather_element["value"] == str(order_element.first_value):
+                                if gather_element not in temp_gather_list:
+                                    temp_gather_list.append(gather_element)
+                                break
+                        for gather_element in gather_list_elements:
+                            if gather_element["value"] == str(order_element.second_value):
+                                if gather_element not in temp_gather_list:
+                                    temp_gather_list.append(gather_element)
+                                break
+                    if len(temp_gather_list) < len(gather_list_elements):
+                        for gather_element in gather_list_elements:
+                            if gather_element not in temp_gather_list:
+                                temp_gather_list.append(gather_element)
+                    gather_list_elements = temp_gather_list
+
+
                 if result_triples_map.termtype != None:
                     gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), "None","blank", 
                                  str(result_triples_map.gather_type), gather_list_elements,gather_empty,
@@ -2525,6 +2572,13 @@ def mapping_parser(mapping_file):
                         str(triples_map.triples_map_id) == str(result_triples_map.triples_map_id))
         if not triples_map_exists:
             gather = True
+            if new_formulation == "yes":
+                if "Literal" in str(result_triples_map.graph_type):
+                    graph = "Literal"
+                else:
+                    graph = result_triples_map.graph
+            else:
+                graph = result_triples_map.graph
             if result_triples_map.subject_template != None:
                 gather = False
                 if new_formulation == "yes":
@@ -2536,7 +2590,7 @@ def mapping_parser(mapping_file):
 
                             mapping_query_gather_results = mapping_graph.query(mapping_query_prepared, initBindings={
                                                                         'subject_gather_list': result_triples_map.subject_gather_list})
-                            if result_triples_map.empty_allow != None:
+                            if result_triples_map.subject_empty_allow != None:
                                 if str(result_triples_map.subject_empty_allow).lower() == "true":
                                     gather_empty = True
                                 elif str(result_triples_map.subject_empty_allow).lower() == "false":
@@ -2562,54 +2616,54 @@ def mapping_parser(mapping_file):
                                                                              str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
                             subject_map = tm.SubjectMap(gather_value, "None", "gather map","None","None",
                                                             [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                            [result_triples_map.graph],"None")
+                                                            [graph],"None")
                             gather_map_seen.append(result_triples_map.subject_gather_list)
                     else:
                         if result_triples_map.rdf_class is None:
                             reference, condition = string_separetion(str(result_triples_map.subject_template))
                             subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
                                                         [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                        [result_triples_map.graph],"None")
+                                                        [graph],"None")
                         else:
                             reference, condition = string_separetion(str(result_triples_map.subject_template))
                             subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
                                                         [str(result_triples_map.rdf_class)], result_triples_map.termtype,
-                                                        [result_triples_map.graph],"None")
+                                                        [graph],"None")
                 else:
                     if result_triples_map.rdf_class is None:
                         reference, condition = string_separetion(str(result_triples_map.subject_template))
                         subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
                                                     [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                    [result_triples_map.graph],"None")
+                                                    [graph],"None")
                     else:
                         reference, condition = string_separetion(str(result_triples_map.subject_template))
                         subject_map = tm.SubjectMap(str(result_triples_map.subject_template), condition, "template","None","None",
                                                     [str(result_triples_map.rdf_class)], result_triples_map.termtype,
-                                                    [result_triples_map.graph],"None")
+                                                    [graph],"None")
             elif result_triples_map.subject_reference != None:
                 gather = False
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_reference))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference","None","None",
                                                 [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
                 else:
                     reference, condition = string_separetion(str(result_triples_map.subject_reference))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_reference), condition, "reference","None","None",
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
             elif result_triples_map.subject_constant != None:
                 gather = False
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant","None","None",
                                                 [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
                 else:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant","None","None",
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype,
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
             elif result_triples_map.subject_function != None:
                 gather = False
                 func_output = "None"
@@ -2622,12 +2676,12 @@ def mapping_parser(mapping_file):
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_function), condition, "function","None","None", 
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
-                                                [result_triples_map.graph],func_output)
+                                                [graph],func_output)
                 else:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_function), condition, "function","None","None",
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
-                                                [result_triples_map.graph],func_output)
+                                                [graph],func_output)
             elif result_triples_map.subject_quoted != None:
                 gather = False
                 if result_triples_map.rdf_class is None:
@@ -2635,13 +2689,13 @@ def mapping_parser(mapping_file):
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_quoted), condition, "quoted triples map", 
                                                 result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
                                                 [result_triples_map.rdf_class], result_triples_map.termtype, 
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
                 else:
                     reference, condition = string_separetion(str(result_triples_map.subject_quoted))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_quoted), condition, "quoted triples map", 
                                                 result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
-                                                [result_triples_map.graph],"None")
+                                                [graph],"None")
             if gather:
                 if result_triples_map.subject_gather_list != None:
                     if result_triples_map.subject_gather_list not in gather_map_seen:
@@ -2651,7 +2705,7 @@ def mapping_parser(mapping_file):
 
                         mapping_query_gather_results = mapping_graph.query(mapping_query_gather, initBindings={
                                                                     'subject_gather_list': result_triples_map.subject_gather_list})
-                        if result_triples_map.empty_allow != None:
+                        if result_triples_map.subject_empty_allow != None:
                             if str(result_triples_map.subject_empty_allow).lower() == "true":
                                 gather_empty = True
                             elif str(result_triples_map.subject_empty_allow).lower() == "false":
@@ -2668,7 +2722,7 @@ def mapping_parser(mapping_file):
                                                                      str(result_triples_map.subject_gather_type), gather_list_elements,gather_empty,"None")
                         subject_map = tm.SubjectMap(gather_value, "None", "gather map","None","None",
                                                             [result_triples_map.rdf_class], result_triples_map.termtype,
-                                                            [result_triples_map.graph],"None")
+                                                            [graph],"None")
                         gather_map_seen.append(result_triples_map.subject_gather_list)
 
             if new_formulation == "yes":
@@ -4187,7 +4241,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if triples_map.triples_map_id in base_iri_list:
                                         subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
                                     elif base != "" and base != None:
-                                        subject = "<" + base + subject_value + ">"
+                                        subject = "<" + base + "base/" + subject_value + ">"
                                     else:
                                         subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                                 else:
@@ -4377,7 +4431,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
-                subject = "<" + triples_map.subject_map.value + ">"
+                if "BlankNode" in str(triples_map.subject_map.term_type):
+                    subject = None
+                elif "Literal" in str(triples_map.subject_map.term_type):
+                    subject = None
+                else:
+                    subject = "<" + triples_map.subject_map.value + ">"
             elif "Literal" in triples_map.subject_map.subject_mapping_type:
                 subject = None
             elif triples_map.subject_map.subject_mapping_type == "gather map":
@@ -4862,7 +4921,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         else:
                             object = string_substitution_json(gather_map_list[predicate_object_map.object_map.value].value, ".+", data, "object", "yes", iterator)
                         if object not in gather_object_values:
-                            print(predicate_object_map.graph)
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
                                 if "{" in predicate_object_map.graph[predicate[1:-1]]:
                                     graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
@@ -4875,7 +4933,6 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 gather_list_values = grouping_values_json(gather_map_list[predicate_object_map.object_map.value].value,triples_map.data_source,triples_map.iterator)
                             gather_triples_generation(gather_list_values[object],sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator,triples_map_list,gather_map_list,graph)
                     else:
-                        print(data)
                         if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in predicate_object_map.graph[predicate[1:-1]]:
                             if "{" in predicate_object_map.graph[predicate[1:-1]]:
                                 graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
@@ -4897,7 +4954,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     dictionary_table_update(object)
                     for graph in triples_map.subject_map.graph:
                         triple = subject + " " + predicate + " " + object + ".\n"
-                        if graph != None and "defaultGraph" not in graph:
+                        if graph != None and "defaultGraph" not in graph and "Literal" != str(graph):
                             if "{" in graph:
                                 triple = triple[:-2] + " <" + string_substitution_json(graph, "{(.+?)}", data, "subject",
                                                                                        ignore, iterator) + ">.\n"
@@ -4907,7 +4964,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 triple = triple[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
-                        if predicate_object_map.graph[predicate[1:-1]] == None or graph != None:
+                        if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
                             if duplicate == "yes":
                                 if predicate in general_predicates:
                                     if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
