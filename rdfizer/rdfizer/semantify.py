@@ -669,7 +669,10 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                     else:
                         hash_table.update({row[parent] : {triples : "subject"}})
     if isinstance(child_object.child,list):
-        join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
+        if quoted == "":
+            join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
+        else:
+            join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
     else:
         join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child : hash_table})
 
