@@ -676,7 +676,6 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
     else:
         join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child : hash_table})
 
-
 def hash_maker_list(parent_data, parent_subject, child_object):
     hash_table = {}
     global blank_message
@@ -2405,10 +2404,12 @@ def mapping_parser(mapping_file):
                       ?gather_list rdf:first ?first .
                       OPTIONAL {?first rml:reference ?first_value}
                       OPTIONAL {?first rml:template ?first_value}
+                      OPTIONAL {?first rml:gather ?first_value}
                       ?gather_list rdf:rest ?rest1 .
                       ?rest1 rdf:first ?second .
                       OPTIONAL {?second rml:reference ?second_value}
                       OPTIONAL {?second rml:template ?second_value}
+                      OPTIONAL {?second rml:gather ?second_value}
                     }
                     """
                     order_results = mapping_graph.query(order_query, initBindings={
@@ -2428,11 +2429,19 @@ def mapping_parser(mapping_file):
                     if len(temp_gather_list) < len(gather_list_elements):
                         for gather_element in gather_list_elements:
                             if gather_element not in temp_gather_list:
-                                temp_gather_list.append(gather_element)
+                                temp_gather_list.insert(0,gather_element)
                     gather_list_elements = temp_gather_list
 
-
                 if result_triples_map.termtype != None:
+                    """if result_triples_map.gather_value_reference != None:
+                        gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value_reference),"blank_reference", 
+                                     str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                     str(result_triples_map.strategy))
+                    elif result_triples_map.gather_value != None:
+                        gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value),"blank_template", 
+                                     str(result_triples_map.gather_type), gather_list_elements,gather_empty,
+                                     str(result_triples_map.strategy))
+                    else:"""
                     gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), "None","blank", 
                                  str(result_triples_map.gather_type), gather_list_elements,gather_empty,
                                  str(result_triples_map.strategy))
@@ -2441,7 +2450,7 @@ def mapping_parser(mapping_file):
                                  str(result_triples_map.gather_type), gather_list_elements,gather_empty,
                                  str(result_triples_map.strategy))
                 elif result_triples_map.gather_value_reference != None:
-                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value),"reference", 
+                    gather_map_list[str(result_triples_map.gather_list)] = tm.GatherMap(str(result_triples_map.gather_list), str(result_triples_map.gather_value_reference),"reference", 
                                  str(result_triples_map.gather_type), gather_list_elements,gather_empty,
                                  str(result_triples_map.strategy))
                 else:
@@ -2557,7 +2566,7 @@ def mapping_parser(mapping_file):
             if str(result_triples_map._source) not in view_sources:
                 view_sources[str(result_triples_map._source)] = view
             
-
+    remove_triples_maps = []
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
         if new_formulation == "yes":
@@ -3070,70 +3079,100 @@ def mapping_parser(mapping_file):
         else:
             for triples_map in triples_map_list:
                 if str(triples_map.triples_map_id) == str(result_triples_map.triples_map_id):
-                    if str(result_triples_map.rdf_class) not in triples_map.subject_map.rdf_class:
-                        triples_map.subject_map.rdf_class.append(str(result_triples_map.rdf_class))
-                    if result_triples_map.graph not in triples_map.subject_map.graph:
-                        triples_map.graph.append(result_triples_map.graph)
-
-                    if new_formulation == "yes":
-                        output_file = ""
-                        if result_triples_map.subject_dump != None:
-                            output_file = result_triples_map.subject_dump[7:] if result_triples_map.subject_dump[:7] == "file://" else result_triples_map.subject_dump  
-                        elif result_triples_map.subject_graph_dump != None:
-                            output_file = result_triples_map.subject_graph_dump[7:] if result_triples_map.subject_graph_dump[:7] == "file://" else result_triples_map.subject_graph_dump   
-                        if output_file != "":
-                            if str(result_triples_map.triples_map_id) not in logical_dump:
-                                logical_dump[str(result_triples_map.triples_map_id)] = {output_file:"subject"}
+                    if result_triples_map.subject_template != None:
+                        if new_formulation == "yes":
+                            if result_triples_map.subject_gather_list != None:
+                                subject_value = "gather_subject_" + str(gather_id)
                             else:
-                                if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
-                                    logical_dump[str(result_triples_map.triples_map_id)][output_file] = "subject"
+                                subject_value = str(result_triples_map.subject_template)
+                        else:
+                            subject_value = str(result_triples_map.subject_template)
+                    elif result_triples_map.subject_reference != None:
+                        subject_value = str(result_triples_map.subject_reference)
+                    elif result_triples_map.subject_constant != None:
+                        subject_value = str(result_triples_map.subject_constant)
+                    elif result_triples_map.subject_function != None:
+                        subject_value = str(result_triples_map.subject_function)
+                    elif result_triples_map.subject_quoted != None:
+                        subject_value = str(result_triples_map.subject_quoted)
 
-                    if result_triples_map.predicate_constant_shortcut != None:
-                        for po in triples_map.predicate_object_maps_list:
-                            if po.predicate_map.value == str(result_triples_map.predicate_constant_shortcut):
-                                if str(result_triples_map.predicate_constant_shortcut) in po.graph:
-                                    po.graph[str(result_triples_map.predicate_constant_shortcut)] = result_triples_map.predicate_object_graph
+                    if triples_map.subject_map.value == subject_value:
+                        if str(result_triples_map.rdf_class) not in triples_map.subject_map.rdf_class:
+                            triples_map.subject_map.rdf_class.append(str(result_triples_map.rdf_class))
+                        if result_triples_map.graph not in triples_map.subject_map.graph:
+                            triples_map.graph.append(result_triples_map.graph)
 
-                    if new_formulation == "yes":
-                        output_file = ""
-                        if result_triples_map.predicate_dump != None:
-                            if result_triples_map.predicate_constant != None:
-                                value = result_triples_map.predicate_constant
-                            elif result_triples_map.predicate_template != None:
-                                value = result_triples_map.predicate_template
-                            elif result_triples_map.predicate_reference != None:
-                                value = result_triples_map.predicate_reference
-                            output_file = result_triples_map.predicate_dump[7:] if result_triples_map.predicate_dump[:7] == "file://" else result_triples_map.predicate_dump 
-                            
-                            if str(result_triples_map.triples_map_id) not in logical_dump:
-                                logical_dump[str(result_triples_map.triples_map_id)] = {output_file:value}
-                            else:
-                                if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
-                                    logical_dump[str(result_triples_map.triples_map_id)][output_file] = value
+                        if new_formulation == "yes":
+                            output_file = ""
+                            if result_triples_map.subject_dump != None:
+                                output_file = result_triples_map.subject_dump[7:] if result_triples_map.subject_dump[:7] == "file://" else result_triples_map.subject_dump  
+                            elif result_triples_map.subject_graph_dump != None:
+                                output_file = result_triples_map.subject_graph_dump[7:] if result_triples_map.subject_graph_dump[:7] == "file://" else result_triples_map.subject_graph_dump   
+                            if output_file != "":
+                                if str(result_triples_map.triples_map_id) not in logical_dump:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:"subject"}
+                                else:
+                                    if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
+                                        logical_dump[str(result_triples_map.triples_map_id)][output_file] = "subject"
 
-                        output_file = ""
-                        if result_triples_map.object_dump != None:
-                            output_file = result_triples_map.object_dump[7:] if result_triples_map.object_dump[:7] == "file://" else result_triples_map.object_dump  
-                        elif result_triples_map.object_graph_dump != None:
-                            output_file = result_triples_map.object_graph_dump[7:] if result_triples_map.object_graph_dump[:7] == "file://" else result_triples_map.object_graph_dump
-                        elif result_triples_map.language_dump != None:
-                            output_file = result_triples_map.language_dump[7:] if result_triples_map.language_dump[:7] == "file://" else result_triples_map.language_dump  
-                        elif result_triples_map.datatype_dump != None:
-                            output_file = result_triples_map.datatype_dump[7:] if result_triples_map.datatype_dump[:7] == "file://" else result_triples_map.datatype_dump    
-                        if output_file != "":
-                            if result_triples_map.object_constant != None:
-                                value = result_triples_map.object_constant
-                            elif result_triples_map.object_reference != None:
-                                value = result_triples_map.object_reference
-                            elif result_triples_map.object_template != None:
-                                value = result_triples_map.object_template
-                            elif result_triples_map.object_parent_triples_map != None:
-                                value = result_triples_map.object_parent_triples_map   
-                            if str(result_triples_map.triples_map_id) not in logical_dump:
-                                logical_dump[str(result_triples_map.triples_map_id)] = {output_file:value}
-                            else:
-                                if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
-                                    logical_dump[str(result_triples_map.triples_map_id)][output_file] = value
+                        if result_triples_map.predicate_constant_shortcut != None:
+                            for po in triples_map.predicate_object_maps_list:
+                                if po.predicate_map.value == str(result_triples_map.predicate_constant_shortcut):
+                                    if str(result_triples_map.predicate_constant_shortcut) in po.graph:
+                                        po.graph[str(result_triples_map.predicate_constant_shortcut)] = result_triples_map.predicate_object_graph
+
+                        if new_formulation == "yes":
+                            output_file = ""
+                            if result_triples_map.predicate_dump != None:
+                                if result_triples_map.predicate_constant != None:
+                                    value = result_triples_map.predicate_constant
+                                elif result_triples_map.predicate_template != None:
+                                    value = result_triples_map.predicate_template
+                                elif result_triples_map.predicate_reference != None:
+                                    value = result_triples_map.predicate_reference
+                                output_file = result_triples_map.predicate_dump[7:] if result_triples_map.predicate_dump[:7] == "file://" else result_triples_map.predicate_dump 
+                                
+                                if str(result_triples_map.triples_map_id) not in logical_dump:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:value}
+                                else:
+                                    if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
+                                        logical_dump[str(result_triples_map.triples_map_id)][output_file] = value
+
+                            output_file = ""
+                            if result_triples_map.object_dump != None:
+                                output_file = result_triples_map.object_dump[7:] if result_triples_map.object_dump[:7] == "file://" else result_triples_map.object_dump  
+                            elif result_triples_map.object_graph_dump != None:
+                                output_file = result_triples_map.object_graph_dump[7:] if result_triples_map.object_graph_dump[:7] == "file://" else result_triples_map.object_graph_dump
+                            elif result_triples_map.language_dump != None:
+                                output_file = result_triples_map.language_dump[7:] if result_triples_map.language_dump[:7] == "file://" else result_triples_map.language_dump  
+                            elif result_triples_map.datatype_dump != None:
+                                output_file = result_triples_map.datatype_dump[7:] if result_triples_map.datatype_dump[:7] == "file://" else result_triples_map.datatype_dump    
+                            if output_file != "":
+                                if result_triples_map.object_constant != None:
+                                    value = result_triples_map.object_constant
+                                elif result_triples_map.object_reference != None:
+                                    value = result_triples_map.object_reference
+                                elif result_triples_map.object_template != None:
+                                    value = result_triples_map.object_template
+                                elif result_triples_map.object_parent_triples_map != None:
+                                    value = result_triples_map.object_parent_triples_map   
+                                if str(result_triples_map.triples_map_id) not in logical_dump:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:value}
+                                else:
+                                    if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
+                                        logical_dump[str(result_triples_map.triples_map_id)][output_file] = value
+                    else:
+                        remove_triples_maps.append(str(result_triples_map.triples_map_id))
+    if remove_triples_maps != []:
+        for remove_tm in remove_triples_maps:
+            tm_element = None
+            for triples_map in triples_map_list:
+                if remove_tm == triples_map.triples_map_id:
+                    tm_element = triples_map
+                    break
+            if tm_element != None:
+               triples_map_list.remove(tm_element) 
+
     return mappings_expansion(triples_map_list)
 
 
@@ -4240,6 +4279,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
                                         subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    elif base != "" and base != None and len(base_iri_list) > 0:
+                                        subject = "<" + base + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + "base/" + subject_value + ">"
                                     else:
@@ -5565,8 +5606,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                 hash_maker(data, triples_map_element, triples_map.subject_map, "quoted", triples_map_list)
                                             else:
                                                 pass
-                                if row[triples_map.subject_map.child] in join_table["quoted_" + triples_map_element.triples_map_id + "_" + triples_map.subject_map.child]:
-                                    subject_list = join_table["quoted_" + triples_map_element.triples_map_id + "_" + triples_map.subject_map.child][row[triples_map.subject_map.child]]
+                                if str(row[triples_map.subject_map.child]) in join_table["quoted_" + triples_map_element.triples_map_id + "_" + triples_map.subject_map.child]:
+                                    subject_list = join_table["quoted_" + triples_map_element.triples_map_id + "_" + triples_map.subject_map.child][str(row[triples_map.subject_map.child])]
                         else:
                             subject_list = inner_semantify_file(triples_map_element, triples_map_list, delimiter, row, base)
                         subject = None
@@ -6238,8 +6279,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                 hash_maker(data, triples_map_element, predicate_object_map.object_map, "quoted", triples_map_list)
                                             else:
                                                 pass
-                                if row[predicate_object_map.object_map.child[0]] in join_table["quoted_" + triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
-                                    object_list = join_table["quoted_" + triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][row[predicate_object_map.object_map.child[0]]]
+                                if str(row[predicate_object_map.object_map.child[0]]) in join_table["quoted_" + triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]]:
+                                    object_list = join_table["quoted_" + triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[0]][str(row[predicate_object_map.object_map.child[0]])]
                         else:
                             object_list = inner_semantify_file(triples_map_element, triples_map_list, delimiter, row, base)
                         object = None

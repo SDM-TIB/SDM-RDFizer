@@ -217,14 +217,34 @@ def gather_subject(data, subject, gather_map, output_file_descriptor, iterator):
 def gather_triples_generation(data, subject_predicate, base, gather_map, output_file_descriptor, iterator, triples_map_list, gather_map_list, graph):
 	blank_id = str(uuid4())
 	if gather_map.value != "None":
-		object = string_substitution_json(gather_map.value, "{(.+?)}", data[0], "subject", "yes", iterator)
-		if "http" in object:
-			object = "<" + object + ">"
+		if isinstance(data,list):
+			if "{" in gather_map.value:
+				object = string_substitution_json(gather_map.value, "{(.+?)}", data[0], "subject", "yes", iterator)
+				if "http" in object:
+					object = "<" + object + ">"
+				else:
+					if base != "" and base != None:
+						object = "<" + base + "base/" + object + ">"
+					else:
+						object = "<http://example.com/base/" +  object + ">"
+			elif gather_map.value_type == "blank_reference":
+				object = "_:" + string_substitution_json(gather_map.value, ".+", data[0], "subject", "yes", iterator)[1:-1]
+			elif gather_map.value_type == "blank_template":
+				object = "_:" +  string_substitution_json(gather_map.value, "{(.+?)}", data[0], "subject", "yes", iterator)
 		else:
-			if base != "" and base != None:
-				object = "<" + base + "base/" + object + ">"
-			else:
-				object = "<http://example.com/base/" +  object + ">"
+			if "{" in gather_map.value:
+				object = string_substitution_json(gather_map.value, "{(.+?)}", data, "subject", "yes", iterator)
+				if "http" in object:
+					object = "<" + object + ">"
+				else:
+					if base != "" and base != None:
+						object = "<" + base + "base/" + object + ">"
+					else:
+						object = "<http://example.com/base/" +  object + ">"
+			elif gather_map.value_type == "blank_reference":
+				object = "_:" + string_substitution_json(gather_map.value, ".+", data, "subject", "yes", iterator)[1:-1]
+			elif gather_map.value_type == "blank_template":
+				object = "_:" +  string_substitution_json(gather_map.value, "{(.+?)}", data, "subject", "yes", iterator)
 	else:
 		global gather_blank
 		object = "_:" + blank_id + str(gather_blank)
@@ -358,8 +378,9 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 					if "" != subject_predicate:
 						triple = subject_predicate + " " + object + " .\n"
 						output_file_descriptor.write(triple)
+					i = 0
 					for value in element_values:
-						if value == element_values[0]:
+						if value == element_values[0] and i == 0:
 							if "_:" not in value and "http" not in value:
 								triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
 							else:
@@ -371,7 +392,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 							if graph != "":
 								triple = triple[:-2] + graph + " .\n"
 							output_file_descriptor.write(triple)
-						elif value == element_values[len(element_values)-1]:
+						elif value == element_values[len(element_values)-1] and i == len(element_values)-1:
 							if "_:" not in value and "http" not in value:
 								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
 							else:
@@ -397,6 +418,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 								triple = triple[:-2] + graph + " .\n"
 							output_file_descriptor.write(triple)
 							gather_blank += 1
+						i += 1
 			else:
 				if element_values != []:
 					if "" != subject_predicate:
@@ -404,8 +426,9 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 						if graph != "":
 							triple = triple[:-2] + graph + " .\n"
 						output_file_descriptor.write(triple)
+					i = 0
 					for value in element_values:
-						if value == element_values[0]:
+						if value == element_values[0] and i == 0:
 							if "_:" not in value and "http" not in value:
 								triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
 							else:
@@ -417,7 +440,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 							if graph != "":
 								triple = triple[:-2] + graph + " .\n"
 							output_file_descriptor.write(triple)
-						elif value == element_values[len(element_values)-1]:
+						elif value == element_values[len(element_values)-1] and i == len(element_values)-1:
 							if "_:" not in value and "http" not in value:
 								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
 							else:
@@ -443,6 +466,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 								triple = triple[:-2] + graph + " .\n"
 							output_file_descriptor.write(triple)
 							gather_blank += 1
+						i += 1
 		else:
 			list_right = string_substitution_json(gather_map.gather_list[0]["value"],".+", data, "object", "yes", iterator)
 			list_left = string_substitution_json(gather_map.gather_list[1]["value"],".+", data, "object", "yes", iterator)
