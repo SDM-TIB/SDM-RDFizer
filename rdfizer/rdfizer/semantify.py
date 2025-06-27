@@ -1875,6 +1875,14 @@ def mapping_parser(mapping_file):
                 OPTIONAL {?source_attr rml:root ?root .}
                 ?source_attr rml:path ?data_source
             }
+            OPTIONAL {
+                ?_source rml:source ?db .
+                ?db a d2rq:Database.
+                ?db d2rq:jdbcDSN ?jdbcDSN. 
+                OPTIONAL {?db d2rq:jdbcDriver ?jdbcDriver.} 
+                ?db d2rq:username ?user.
+                ?db d2rq:password ?password .
+            }
             OPTIONAL{
                 ?_source rml:source ?data_link .
                 ?data_link dcat:downloadURL ?url_source .
@@ -1912,6 +1920,9 @@ def mapping_parser(mapping_file):
             OPTIONAL {?_subject_map rml:template ?subject_template .}
             OPTIONAL {?_subject_map rml:reference ?subject_reference .}
             OPTIONAL {?_subject_map rml:constant ?subject_constant}
+            OPTIONAL {?_subject_map rml:logicalTarget ?output.
+                        ?output rml:target ?dump. 
+                        ?dump rml:path  ?subject_graph_dump.}
             OPTIONAL {?_subject_map rml:quotedTriplesMap ?subject_quoted .
                 OPTIONAL {
                         ?_subject_map rml:joinCondition ?join_condition .
@@ -1926,13 +1937,13 @@ def mapping_parser(mapping_file):
                        ?subject_graph_structure rml:constant ?graph . 
                        OPTIONAL {?subject_graph_structure rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?subject_graph_dump.}
+                                 ?dump  rml:path ?subject_graph_dump.}
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
                        ?subject_graph_structure rml:template ?graph . 
-                       OPTIONAL {?subject_graph_structure rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump void:dataDump ?subject_graph_dump.}
+                       OPTIONAL {?subject_graph_structure rml:logicalTarget ?subject_output .
+                                 ?subject_output rml:target ?dump.
+                                 ?dump  rml:path ?subject_graph_dump.}
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
                        ?subject_graph_structure rml:reference ?graph .
@@ -1996,7 +2007,8 @@ def mapping_parser(mapping_file):
             OPTIONAL {
                 ?_predicate_map rml:logicalTarget ?pre_output .
                 ?pre_output rml:target ?pre_dump.
-                ?pre_dump void:dataDump ?predicate_dump.
+                OPTIONAL {?pre_dump rml:path ?predicate_dump.}
+                OPTIONAL {?pre_dump void:dataDump ?predicate_dump.}
             }
 
     # Object --------------------------------------------------------------------------
@@ -2004,20 +2016,23 @@ def mapping_parser(mapping_file):
             OPTIONAL {
                 ?_predicate_object_map rml:objectMap ?_object_map .
                 ?_object_map rml:constant ?object_constant .
+                OPTIONAL {?language_map rml:logicalTarget ?obj_output .
+                                 ?obj_output rml:target ?obj_dump.
+                                 ?obj_dump rml:path ?object_dump.}
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
                           OPTIONAL {?language_map rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?language_dump.}
+                                 ?dump rml:path ?language_dump.}
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?datatype_dump.}
+                                 ?dump rml:path ?datatype_dump.}
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 OPTIONAL {
@@ -2037,20 +2052,23 @@ def mapping_parser(mapping_file):
             OPTIONAL {
                 ?_predicate_object_map rml:objectMap ?_object_map .
                 ?_object_map rml:reference ?object_reference .
+                OPTIONAL {?_object_map rml:logicalTarget ?object_output .
+                                 ?object_output rml:target ?obj_dump.
+                                 ?obj_dump rml:path ?object_dump.}
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
                           OPTIONAL {?language_map rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?language_dump.}
+                                 ?dump rml:path ?language_dump.}
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?object_datatype.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?datatype_dump.}
+                                 ?dump rml:path ?datatype_dump.}
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 OPTIONAL {
@@ -2099,15 +2117,15 @@ def mapping_parser(mapping_file):
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language_value.}
                           OPTIONAL {?language_map rml:logicalTarget ?language_output .
-                                 ?language_output rml:target ?language_dump.
-                                 ?language_dump void:dataDump ?language_dump.}
+                                 ?language_output rml:target ?lan_dump.
+                                 ?lan_dump rml:path ?language_dump.}
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype_value.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump void:dataDump ?datatype_dump.}
+                                 ?dump rml:path ?datatype_dump.}
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 
@@ -2122,20 +2140,13 @@ def mapping_parser(mapping_file):
                        OPTIONAL {?_graph_structure rml:constant ?predicate_object_graph  .} 
                        OPTIONAL {?_graph_structure rml:logicalTarget ?po_graph_output .
                                  ?po_graph_output rml:target ?po_graph_dump.
-                                 ?po_graph_dump void:dataDump ?object_graph_dump.}
+                                 ?po_graph_dump rml:path ?object_graph_dump.}
                      }
             OPTIONAL { ?_object_map rml:logicalTarget ?obj_output.
                         ?obj_output rml:target ?obj_dump.
                         ?obj_dump void:dataDump ?object_dump.}  
             }
-            OPTIONAL {
-                ?_source rml:source ?db .
-                ?db a d2rq:Database;
-                d2rq:jdbcDSN ?jdbcDSN; 
-                d2rq:jdbcDriver ?jdbcDriver; 
-                d2rq:username ?user;
-                d2rq:password ?password .
-            }
+            
         } """
     else:
         mapping_query = """
@@ -2957,7 +2968,18 @@ def mapping_parser(mapping_file):
                         output_file = result_predicate_object_map.datatype_dump[7:] if result_predicate_object_map.datatype_dump[:7] == "file://" else result_predicate_object_map.datatype_dump
                     if output_file != "":
                         if str(result_triples_map.triples_map_id) not in logical_dump:
-                            logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[object_map.value]}
+                            if result_predicate_object_map.language_dump != None:
+                                if result_predicate_object_map.language != None:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file: [object_map.value + "_" + result_predicate_object_map.language]}
+                                elif result_predicate_object_map.language_value != None:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file: [object_map.value + "_" + result_predicate_object_map.language_value]}
+                            elif result_predicate_object_map.datatype_dump != None:
+                                if result_predicate_object_map.object_datatype != None:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:str(object_map.value + "_" + result_predicate_object_map.object_datatype)}
+                                elif result_predicate_object_map.datatype_value != None:
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:str(object_map.value + "_" + result_predicate_object_map.datatype_value)}
+                            else:
+                                logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[object_map.value]}
                         else:
                             if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
                                 if result_predicate_object_map.language_dump != None:
@@ -2999,8 +3021,21 @@ def mapping_parser(mapping_file):
                             if output_file not in logical_dump[str(result_triples_map.triples_map_id)]:
                                 logical_dump[str(result_triples_map.triples_map_id)][output_file] = [object_map.value]
                             else:
-                                if object_map.value not in logical_dump[str(result_triples_map.triples_map_id)][output_file]:
-                                    logical_dump[str(result_triples_map.triples_map_id)][output_file].append(object_map.value)
+                                if object_map.value not in logical_dump[str(result_triples_map.triples_map_id)][output_file] and logical_dump[str(result_triples_map.triples_map_id)][output_file] != "subject":
+                                    if result_predicate_object_map.language != None:
+                                        if object_map.value + "_" + result_predicate_object_map.language not in logical_dump[str(result_triples_map.triples_map_id)][output_file]: 
+                                            logical_dump[str(result_triples_map.triples_map_id)][output_file].append(object_map.value + "_" + result_predicate_object_map.language)
+                                    elif result_predicate_object_map.language_value != None:
+                                        if object_map.value + "_" + result_predicate_object_map.language_value not in logical_dump[str(result_triples_map.triples_map_id)][output_file]:     
+                                            logical_dump[str(result_triples_map.triples_map_id)][output_file].append(object_map.value + "_" + result_predicate_object_map.language_value)
+                                    elif result_predicate_object_map.object_datatype != None:
+                                        if str(object_map.value + "_" + result_predicate_object_map.object_datatype) not in logical_dump[str(result_triples_map.triples_map_id)][output_file]:
+                                            logical_dump[str(result_triples_map.triples_map_id)][output_file].append(str(object_map.value + "_" + result_predicate_object_map.object_datatype))
+                                    elif result_predicate_object_map.datatype_value != None:
+                                        if str(object_map.value + "_" + result_predicate_object_map.datatype_value) not in logical_dump[str(result_triples_map.triples_map_id)][output_file]:
+                                            logical_dump[str(result_triples_map.triples_map_id)][output_file].append(str(object_map.value + "_" + result_predicate_object_map.datatype_value))
+                                    else:
+                                        logical_dump[str(result_triples_map.triples_map_id)][output_file].append(object_map.value)
                                 
                 if join:
                     predicate_object_maps_list += [
@@ -3443,7 +3478,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
         if triples_map.subject_map.rdf_class != [None] and subject != None:
             predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
             for rdf_class in triples_map.subject_map.rdf_class:
-                if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
+                if rdf_class != "None" and  rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                     obj = "<{}>".format(rdf_class)
                     dictionary_table_update(subject)
                     dictionary_table_update(obj)
@@ -4182,7 +4217,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             "$" + iterator.replace(new_iterator[:-1], ""))
                 elif "[*]" in tp:
                     if tp.split("[*]")[0] in row:
-                        row = row[tp.split("[*]")[0]]
+                        if isinstance(row[tp.split("[*]")[0]], list):
+                            for sub_row in row[tp.split("[*]")[0]]:
+                                i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, sub_row,
+                                                    "$" + iterator.replace(new_iterator[:-1], ""))
+                        else:
+                            i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, row,
+                                                "$" + iterator.replace(new_iterator[:-1], ""))
                     else:
                         row = []
                 elif "*" == tp:
@@ -4715,6 +4756,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     if object_list:
                         i = 0
                         while i < len(object_list):
+                            object_list[i] = "\"" + object_list[i] + "\""
                             if "\\" in object_list[i][1:-1]:
                                 object_list[i] = "\"" + object_list[i][1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object_list[i][1:-1]:
@@ -5516,8 +5558,23 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     subject_value = subject_value[1:-1]
                     if triples_map.subject_map.condition == "":
                         if " " not in subject_value:
-                            if "BlankNode" in triples_map.subject_map.term_type:
-                                subject = "_:" + subject_value
+                            if triples_map.subject_map.term_type != None:
+                                if "BlankNode" in triples_map.subject_map.term_type:
+                                    subject = "_:" + subject_value
+                                else:
+                                    if "http" not in subject_value:
+                                        if base != "" and base != None:
+                                            subject = "<" + base + subject_value + ">"
+                                        else:
+                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    else:
+                                        if is_valid_url_syntax(subject_value):
+                                            subject = "<" + subject_value + ">"
+                                        else:
+                                            if base != "" and base != None:
+                                                subject = "<" + base + subject_value + ">"
+                                            else:
+                                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                             else:
                                 if "http" not in subject_value:
                                     if base != "" and base != None:
@@ -5851,6 +5908,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     if predicate_object_map.object_map.datatype == None:
                         if predicate_object_map.object_map.value == "#" or "#" in predicate_object_map.object_map.value:
                             object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                        elif triples_map.reference_formulation != "RMLView":
+                            object = "\"" + object[1:-1] + "\""
                         elif is_convertible_to_int(object[1:-1]):
                             object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
                     if predicate_object_map.object_map.datatype != None:
@@ -7353,7 +7412,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
     if triples_map.subject_map.rdf_class != [None] and subject != None:
         predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
         for rdf_class in triples_map.subject_map.rdf_class:
-            if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
+            if rdf_class != "None" and rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                 obj = "<{}>".format(rdf_class)
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
@@ -9071,7 +9130,10 @@ def semantify(config_path, log_path='error.log'):
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
-                                                data = reader.to_dict(orient='records')
+                                                if valid_source(source):
+                                                    data = reader.to_dict(orient='records')
+                                                else:
+                                                    data = []
                                                 for triples_map in sorted_sources[source_type][source]:
                                                     if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
                                                         if (len(sorted_sources[source_type][source][
@@ -9183,7 +9245,10 @@ def semantify(config_path, log_path='error.log'):
                                                                     if source in delimiter:
                                                                         data = csv.DictReader(input_file_descriptor, delimiter=delimiter[source])
                                                                     else:
-                                                                        data = csv.DictReader(input_file_descriptor, delimiter=',')
+                                                                        if valid_source(source):
+                                                                            data = csv.DictReader(input_file_descriptor, delimiter=',')
+                                                                        else:
+                                                                            data = []
                                                                 else:
                                                                     data = csv.DictReader(input_file_descriptor, delimiter='\t')
                                                                 blank_message = True
@@ -9332,8 +9397,12 @@ def semantify(config_path, log_path='error.log'):
                                                                     shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
                                                             data = json.load(open(file.replace(".gz","")))
                                                     else:
-                                                        data = json.load(open(
-                                                        sorted_sources[source_type][source][triples_map].data_source))
+                                                        try:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source))
+                                                        except:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source, encoding='utf-16'))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -9834,7 +9903,8 @@ def semantify(config_path, log_path='error.log'):
                                                 reader = reader.where(pd.notnull(reader), None)
                                                 if duplicate == "yes":
                                                     reader = reader.drop_duplicates(keep='first')
-                                                data = reader.to_dict(orient='records')
+                                                if valid_source(source):
+                                                    data = reader.to_dict(orient='records')
                                                 for triples_map in sorted_sources[source_type][source]:
                                                     if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
                                                         if (len(sorted_sources[source_type][source][
@@ -9947,7 +10017,10 @@ def semantify(config_path, log_path='error.log'):
                                                                     if source in delimiter:
                                                                         data = csv.DictReader(input_file_descriptor, delimiter=delimiter[source])
                                                                     else:
-                                                                        data = csv.DictReader(input_file_descriptor, delimiter=',')
+                                                                        if valid_source(source):
+                                                                            data = csv.DictReader(input_file_descriptor, delimiter=',')
+                                                                        else:
+                                                                            data = []
                                                                 else:
                                                                     data = csv.DictReader(input_file_descriptor, delimiter='\t')
                                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
@@ -10095,8 +10168,12 @@ def semantify(config_path, log_path='error.log'):
                                                                     shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
                                                             data = json.load(open(file.replace(".gz","")))
                                                     else:
-                                                        data = json.load(open(
-                                                        sorted_sources[source_type][source][triples_map].data_source))
+                                                        try:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source))
+                                                        except:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source, encoding='utf-16'))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -11543,8 +11620,12 @@ def semantify(config_path, log_path='error.log'):
                                                                     shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
                                                             data = json.load(open(file.replace(".gz","")))
                                                     else:
-                                                        data = json.load(open(
+                                                        try:
+                                                            data = json.load(open(
                                                             sorted_sources[source_type][source][triples_map].data_source))
+                                                        except:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source, encoding='utf-16'))    
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
@@ -12295,8 +12376,12 @@ def semantify(config_path, log_path='error.log'):
                                                                     shutil.copyfileobj(gzip.GzipFile(fileobj=gz_file), txt_file)
                                                             data = json.load(open(file.replace(".gz","")))
                                                     else:
-                                                        data = json.load(open(
-                                                        sorted_sources[source_type][source][triples_map].data_source))
+                                                        try:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source))
+                                                        except:
+                                                            data = json.load(open(
+                                                            sorted_sources[source_type][source][triples_map].data_source, encoding='utf-16'))
                                                 blank_message = True
                                                 if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
                                                     for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:

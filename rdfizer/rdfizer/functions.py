@@ -7,7 +7,19 @@ import urllib
 import math
 import rdflib
 import xml.etree.ElementTree as ET
+import csv
 from uuid import uuid4
+
+def valid_source(file):
+	with open(file, newline='') as f:
+		reader = csv.reader(f)
+		header = next(reader)
+		expected_cols = len(header)
+
+		for i, row in enumerate(reader, start=2):  # Line 2 because header is line 1
+			if len(row) != expected_cols:
+				return False
+		return True
 
 def is_convertible_to_int(s):
     try:
@@ -56,10 +68,6 @@ def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
 			for possible_output in output_list[triples_map_id]:
 				if output_list[triples_map_id][possible_output] == "subject":
 					return False
-				elif po_map.predicate_map.value in output_list[triples_map_id][possible_output]:
-					return False
-				elif po_map.object_map.value in output_list[triples_map_id][possible_output]:
-					return False
 				elif po_map.object_map.datatype != None:
 					if po_map.object_map.value + "_" + po_map.object_map.datatype in output_list[triples_map_id][possible_output]:
 						return False
@@ -72,6 +80,10 @@ def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
 				elif po_map.object_map.language_map != None:
 					if po_map.object_map.value + "_" + po_map.object_map.language_map in output_list[triples_map_id][possible_output]:
 						return False
+				elif po_map.predicate_map.value in output_list[triples_map_id][possible_output]:
+					return False
+				elif po_map.object_map.value in output_list[triples_map_id][possible_output]:
+					return False
 			return True
 		else:
 			return True
@@ -679,7 +691,7 @@ def files_sort(triples_map_list, ordered, config):
 							source_predicate["JSONPath"][str(tp.data_source)] = {predicate : ""}
 						else:
 							source_predicate["JSONPath"][str(tp.data_source)] = {po.predicate_map.value : ""}  
-		elif tp.file_format == "XPath":
+		elif tp.file_format == "XPath" or "xml" in tp.data_source:
 			if "XPath" not in sorted_list:
 				sorted_list["XPath"] = {str(tp.data_source) : {tp.triples_map_id : tp}}
 			else:
@@ -825,6 +837,63 @@ def files_sort(triples_map_list, ordered, config):
 										source_predicate["csv"][str(tp.data_source)] = {po.predicate_map.value : ""}
 									else:
 										source_predicate["csv"]["endpoint:" + str(tp.data_source)] = {po.predicate_map.value : ""}
+				else:
+					if tp.query == "None":
+						if tp.iterator == "None":
+							if config["datasets"]["dbType"] == "mysql" or onfig["datasets"]["dbType"] == "sqlserver":
+								database, query_list = translate_sql(tp)
+							elif config["datasets"]["dbType"] == "postgres":
+								database, query_list = translate_postgressql(tp)
+							query = query_list[0]
+						else:
+							if "select" in tp.iterator.lower():
+								query = tp.iterator
+							else:
+								if config["datasets"]["dbType"] == "mysql" or onfig["datasets"]["dbType"] == "sqlserver":
+									database, query_list = translate_sql(tp)
+								elif config["datasets"]["dbType"] == "postgres":
+									database, query_list = translate_postgressql(tp)
+								query = query_list[0]
+					else:
+						query = tp.query
+					if config["datasets"]["dbType"] not in sorted_list:
+						sorted_list[config["datasets"]["dbType"]] = {query: {tp.triples_map_id : tp}}
+					else:
+						if query in sorted_list[config["datasets"]["dbType"]]:
+							sorted_list[config["datasets"]["dbType"]][query][tp.triples_map_id] = tp
+						else:
+							sorted_list[config["datasets"]["dbType"]][query] = {tp.triples_map_id : tp}
+					for po in tp.predicate_object_maps_list:
+						if po.predicate_map.value in general_predicates:
+							predicate = po.predicate_map.value + "_" + po.object_map.value
+							if predicate in predicate_list:
+								predicate_list[predicate] += 1
+							else:
+								predicate_list[predicate] = 1
+						else:
+							if po.predicate_map.value in predicate_list:
+								predicate_list[po.predicate_map.value] += 1
+							else:
+								predicate_list[po.predicate_map.value] = 1
+						if config["datasets"]["dbType"] not in source_predicate:
+							if po.predicate_map.value in general_predicates:
+								predicate = po.predicate_map.value + "_" + po.object_map.value
+								source_predicate[config["datasets"]["dbType"]] = {query : {predicate : ""}}
+							else:
+								source_predicate[config["datasets"]["dbType"]] = {query : {po.predicate_map.value : ""}}
+						else:
+							if query in source_predicate[config["datasets"]["dbType"]]:
+								if po.predicate_map.value in general_predicates:
+									predicate = po.predicate_map.value + "_" + po.object_map.value
+									source_predicate[config["datasets"]["dbType"]][query][predicate] = ""
+								else:
+									source_predicate[config["datasets"]["dbType"]][query][po.predicate_map.value] = ""
+							else:
+								if po.predicate_map.value in general_predicates:
+									predicate = po.predicate_map.value + "_" + po.object_map.value
+									source_predicate[config["datasets"]["dbType"]][query] = {predicate : ""}
+								else:
+									source_predicate[config["datasets"]["dbType"]][query] = {po.predicate_map.value : ""}
 			else:
 				if tp.query == "None":
 					if tp.iterator == "None":
@@ -1179,55 +1248,34 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 		elif pattern == ".+":
 			match = reference_match.group(0)
 			if "[*]" in match:
-				if match[:2] == "$.":
-					match = match[2:]
-				child_list = row[match.split("[*]")[0]]
-				object_list = []
-				for child in child_list:
-					if "." in match:
-						match = match.split(".")[1:]
-						if len(match) > 1:
-							value = child[match[0]]
-							for element in match:
-								if element in value:
-									value = value[element]
-						else:
-							if match[0] in child:
-								value = child[match[0]]
-							else:
-								value = None
-					if isinstance(match, list):
-						if len(match) > 1:
-							pass
-						else:
-							if match[0] in child:
-								value = child[match[0]]
-							else:
-								value = None
-					else:
-						value = child
-
-					if match is not None:
-						if (type(value).__name__) == "int":
-								value = str(value)
-						elif (type(value).__name__) == "float":
-								value = str(value)
-						if isinstance(value, dict):
-							if value:
-								print("Index needed")
-								return None
-							else:
-								return None
-						elif isinstance(value, list):
-							print("This level is a list.")
+				#if match[:2] == "$.":
+				#	match = match[2:]
+				from jsonpath_ng import jsonpath, parse
+				if ".*" in iterator:
+					jsonpath_expr = parse(match.replace(".*",".[*]"))
+				else:
+					jsonpath_expr = parse(match)
+				value = [v.value for v in jsonpath_expr.find(row)]
+				if match is not None:
+					if (type(value).__name__) == "int":
+							value = str(value)
+					elif (type(value).__name__) == "float":
+							value = str(value)
+					if isinstance(value, dict):
+						if value:
+							print("Index needed")
 							return None
-						else:		
-							if value is not None:
-								if re.search("^[\s|\t]*$", value) is None:
-									new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
-									new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
-									object_list.append(new_string)
-									new_string = string
+						else:
+							return None
+					elif isinstance(value, list):
+						return value
+					else:		
+						if value is not None:
+							if re.search("^[\s|\t]*$", value) is None:
+								new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
+								new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
+								object_list.append(new_string)
+								new_string = string
 				return object_list
 			else:
 				if match[:2] == "$.":
@@ -1269,7 +1317,9 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							return None
 						else:
 							return None
-					else:		
+					elif isinstance(value, list):
+						return value
+					else:	
 						if value is not None:
 							if re.search("^[\s|\t]*$", value) is None:
 								new_string = new_string[:start] + value.strip().replace("\"", "'") + new_string[end:]
@@ -2064,7 +2114,12 @@ def remove_duplicate_po(po_list):
 		else:
 			for po_unique in unique_list:
 				if po.predicate_map.value == po_unique.predicate_map.value and po.object_map.value == po_unique.object_map.value:
-					break
+					if  po.object_map.language != po_unique.object_map.language or po.object_map.language_map != po_unique.object_map.language_map:
+						unique_list.append(po)
+					elif  po.object_map.datatype != po_unique.object_map.datatype or po.object_map.datatype_map != po_unique.object_map.datatype_map:
+						unique_list.append(po)
+					else:
+						break
 			else:
 				unique_list.append(po)
 	return unique_list
