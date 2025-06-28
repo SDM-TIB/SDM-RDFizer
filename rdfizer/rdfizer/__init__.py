@@ -1897,7 +1897,7 @@ def mapping_parser(mapping_file):
                 ?_source rml:source ?data_link .
                 ?data_link csvw:url ?url_source .
                 ?data_link csvw:dialect ?dialect .
-                ?dialect csvw:delimiter ?delimiter . 
+                ?dialect csvw:delimiter ?delimiter .
             }
             OPTIONAL{
                 ?_source rml:source ?data_link .
@@ -3107,6 +3107,7 @@ def mapping_parser(mapping_file):
                     predicate_object_maps_list += [
                         tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map, predicate_object_graph)]
             predicate_object_maps_list = remove_duplicate_po(predicate_object_maps_list)
+            print(result_triples_map.url_source)
             if result_triples_map.url_source is not None:
                 if result_triples_map.delimiter is not None:
                     url_source = str(result_triples_map.url_source)[7:] if str(result_triples_map.url_source)[:7] == "file://" else str(result_triples_map.url_source)
@@ -7382,7 +7383,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                         subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                         except:
                             subject = None
-
                 elif "BlankNode" in triples_map.subject_map.term_type:
                     if triples_map.subject_map.condition == "":
 
@@ -7454,6 +7454,22 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                         if " " not in subject_value:
                             subject = "<" + subject_value + ">"
                         else:
+                            subject = None
+                    elif "BlankNode" in triples_map.subject_map.term_type:
+                        try:
+                            if "/" in subject_value:
+                                subject = "_:" + encode_char(subject_value.replace("/", "2F")).replace("%", "")
+                                if "." in subject:
+                                    subject = subject.replace(".", "2E")
+                                if blank_message:
+                                    logger.warning(
+                                        "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                    blank_message = False
+                            else:
+                                subject = "_:" + encode_char(subject_value).replace("%", "")
+                                if "." in subject:
+                                    subject = subject.replace(".", "2E")
+                        except:
                             subject = None
                 except:
                     subject = None
@@ -7656,6 +7672,22 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     object = object.replace("\n", "\\n")
                 if predicate_object_map.object_map.datatype != None:
                     object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+                elif is_convertible_to_int(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                elif is_bool(object[1:-1]):
+                    if "1" == object[1:-1]:
+                        object = "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                    elif "0" == object[1:-1]:
+                        object = "\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                    else:
+                        object = object.lower() + "^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                elif is_convertible_to_double(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#double>"
+                    object = object.replace(" ","")
+                elif is_date(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#date>"
+                elif is_datetime(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#dateTime>"
                 elif predicate_object_map.object_map.datatype_map != None:
                     datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
                                                            row_headers, "object", ignore)
@@ -8333,6 +8365,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             subject = "<" + encode_char(subject_value) + ">"
                     else:
                         subject = None
+                elif "BlankNode" in triples_map.subject_map.term_type:
+                    subject = "_:" + subject_value
 
             else:
                 #   field, condition = condition_separetor(triples_map.subject_map.condition)
@@ -8385,7 +8419,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
     if triples_map.subject_map.rdf_class != [None] and subject != None:
         predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
         for rdf_class in triples_map.subject_map.rdf_class:
-            if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
+            if rdf_class != "None" and rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                 obj = "<{}>".format(rdf_class)
                 dictionary_table_update(subject)
                 dictionary_table_update(obj)
@@ -8546,6 +8580,22 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     object = object.replace("\n", "\\n")
                 if predicate_object_map.object_map.datatype != None:
                     object += "^^<{}>".format(predicate_object_map.object_map.datatype)
+                elif is_convertible_to_int(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                elif is_bool(object[1:-1]):
+                    if "1" == object[1:-1]:
+                        object = "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                    elif "0" == object[1:-1]:
+                        object = "\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                    else:
+                        object = object.lower() + "^^<http://www.w3.org/2001/XMLSchema#boolean>"
+                elif is_convertible_to_double(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#double>"
+                elif is_date(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#date>"
+                elif is_datetime(object[1:-1]):
+                    object += "^^<http://www.w3.org/2001/XMLSchema#dateTime>"
+                    object = object.replace(" ","")
                 elif predicate_object_map.object_map.datatype_map != None:
                     datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
                                                            row_headers, "object", ignore)
@@ -9154,7 +9204,7 @@ def semantify(config_path, log_path='error.log'):
                                                                                                  source][triples_map],
                                                                                              triples_map_list, ",",
                                                                                              logical_output_descriptor,
-                                                                                             data).result()
+                                                                                             data, True).result()
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
@@ -9222,7 +9272,119 @@ def semantify(config_path, log_path='error.log'):
                                                                                          source][triples_map],
                                                                                      triples_map_list, ",",
                                                                                      output_file_descriptor,
-                                                                                     data).result()
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
+                                        elif "http" in source:
+                                            for triples_map in sorted_sources[source_type][source]:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    if ".csv" in source:
+                                                        if source in delimiter:
+                                                            reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
+                                                        else:
+                                                            reader = pd.read_csv(source, dtype=str, encoding="utf-8")
+                                                    else:
+                                                        reader = pd.read_csv(source, dtype=str, sep='\t', encoding="utf-8")
+                                                    reader = reader.where(pd.notnull(reader), None)
+                                                    if duplicate == "yes":
+                                                        reader = reader.drop_duplicates(keep='first')
+                                                    data = reader.to_dict(orient='records')
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                             sorted_sources[source_type][
+                                                                                                 source][triples_map],
+                                                                                             triples_map_list, ",",
+                                                                                             logical_output_descriptor,
+                                                                                             data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
                                                     if duplicate == "yes":
                                                         predicate_list = release_PTT(
                                                             sorted_sources[source_type][source][triples_map],
@@ -10059,6 +10221,118 @@ def semantify(config_path, log_path='error.log'):
                                                         generated_subjects = release_subjects(
                                                             sorted_sources[source_type][source][triples_map],
                                                             generated_subjects)
+                                        elif "http" in source:
+                                            for triples_map in sorted_sources[source_type][source]:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    if ".csv" in source:
+                                                        if source in delimiter:
+                                                            reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
+                                                        else:
+                                                            reader = pd.read_csv(source, dtype=str, encoding="utf-8")
+                                                    else:
+                                                        reader = pd.read_csv(source, dtype=str, sep='\t', encoding="utf-8")
+                                                    reader = reader.where(pd.notnull(reader), None)
+                                                    if duplicate == "yes":
+                                                        reader = reader.drop_duplicates(keep='first')
+                                                    data = reader.to_dict(orient='records')
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                             sorted_sources[source_type][
+                                                                                                 source][triples_map],
+                                                                                             triples_map_list, ",",
+                                                                                             logical_output_descriptor,
+                                                                                             data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
                                         else:
                                             if enrichment == "yes":
                                                 if ".csv" in source:
@@ -10679,7 +10953,7 @@ def semantify(config_path, log_path='error.log'):
                                                 driver = "{}"
                                             conn = pyodbc.connect("DRIVER=" + driver
                                                                     + ";SERVER=" + config[dataset_i]["host"] + "," + config[dataset_i]["port"]
-                                                                    + ";DATABASE=" + config[dataset_i]["database"]
+                                                                    + ";DATABASE=" + config[dataset_i]["db"]
                                                                     + ";UID=" + config[dataset_i]["user"]
                                                                     + ";PWD=" + config[dataset_i]["password"]
                                                                     + ";trustServerCertificate=yes")
@@ -11629,6 +11903,118 @@ def semantify(config_path, log_path='error.log'):
                                                         generated_subjects = release_subjects(
                                                             sorted_sources[source_type][source][triples_map],
                                                             generated_subjects)
+                                        elif "http" in source:
+                                            for triples_map in sorted_sources[source_type][source]:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    if ".csv" in source:
+                                                        if source in delimiter:
+                                                            reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
+                                                        else:
+                                                            reader = pd.read_csv(source, dtype=str, encoding="utf-8")
+                                                    else:
+                                                        reader = pd.read_csv(source, dtype=str, sep='\t', encoding="utf-8")
+                                                    reader = reader.where(pd.notnull(reader), None)
+                                                    if duplicate == "yes":
+                                                        reader = reader.drop_duplicates(keep='first')
+                                                    data = reader.to_dict(orient='records')
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                             sorted_sources[source_type][
+                                                                                                 source][triples_map],
+                                                                                             triples_map_list, ",",
+                                                                                             logical_output_descriptor,
+                                                                                             data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
                                         else:
                                             if enrichment == "yes":
                                                 reader = pd.read_csv(source, encoding="utf-8")
@@ -12441,6 +12827,118 @@ def semantify(config_path, log_path='error.log'):
                                                         generated_subjects = release_subjects(
                                                             sorted_sources[source_type][source][triples_map],
                                                             generated_subjects)
+                                        elif "http" in source:
+                                            for triples_map in sorted_sources[source_type][source]:
+                                                if (len(sorted_sources[source_type][source][
+                                                            triples_map].predicate_object_maps_list) > 0 and
+                                                    sorted_sources[source_type][source][
+                                                        triples_map].predicate_object_maps_list[
+                                                        0].predicate_map.value != "None") or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.rdf_class != [None] or \
+                                                        sorted_sources[source_type][source][
+                                                            triples_map].subject_map.subject_mapping_type == "gather map":
+                                                    if ".csv" in source:
+                                                        if source in delimiter:
+                                                            reader = pd.read_csv(source, dtype=str, sep=delimiter[source], encoding="utf-8")
+                                                        else:
+                                                            reader = pd.read_csv(source, dtype=str, encoding="utf-8")
+                                                    else:
+                                                        reader = pd.read_csv(source, dtype=str, sep='\t', encoding="utf-8")
+                                                    reader = reader.where(pd.notnull(reader), None)
+                                                    if duplicate == "yes":
+                                                        reader = reader.drop_duplicates(keep='first')
+                                                    data = reader.to_dict(orient='records')
+                                                    if sorted_sources[source_type][source][triples_map].triples_map_id in logical_dump:
+                                                        for dump_output in logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id]:
+                                                            repeat_output = is_repeat_output(dump_output,logical_dump[sorted_sources[source_type][source][triples_map].triples_map_id])
+                                                            if repeat_output == "":
+                                                                temp_generated = g_triples
+                                                                g_triples = {}
+                                                                with open(dump_output, "w") as logical_output_descriptor:
+                                                                    current_logical_dump = dump_output
+                                                                    number_triple += executor.submit(semantify_file,
+                                                                                             sorted_sources[source_type][
+                                                                                                 source][triples_map],
+                                                                                             triples_map_list, ",",
+                                                                                             logical_output_descriptor,
+                                                                                             data, True).result()
+                                                                    current_logical_dump = ""
+                                                                g_triples = temp_generated
+                                                                temp_generated = {}
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
+                                                                    context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    jsonld_data = g.serialize(format="json-ld", context=context)
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(jsonld_data)
+                                                                elif "n3" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    n3_data = g.serialize(format="n3")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(n3_data)
+                                                                elif "rdfjson" in dump_output:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    json_data = generate_rdfjson(g)
+                                                                    with open(dump_output, "w") as f:
+                                                                        json.dump(json_data,f)
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    xml_data = g.serialize(format="xml")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(xml_data)
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
+                                                                    g = rdflib.Graph()
+                                                                    g.parse(dump_output, format="nt")
+                                                                    ttl_data = g.serialize(format="ttl")
+                                                                    with open(dump_output, "w") as f:
+                                                                        f.write(ttl_data)
+                                                                elif "tar.gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.gz",""))
+                                                                    with tarfile.open(dump_output, "w:gz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.gz",""), arcname=dump_output.replace(".tar.gz",""))
+                                                                elif "tar.xz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".tar.xz",""))
+                                                                    with tarfile.open(dump_output, "w:xz") as tar:
+                                                                        tar.add(dump_output.replace(".tar.xz",""), arcname=dump_output.replace(".tar.xz",""))
+                                                                elif ".gz" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".gz",""))
+                                                                    with open(dump_output.replace(".gz",""), 'rb') as f_in:
+                                                                        with gzip.open(dump_output, 'wb') as f_out:
+                                                                            f_out.writelines(f_in)
+                                                                elif ".zip" in dump_output:
+                                                                    os.system("mv " + dump_output + " " + dump_output.replace(".zip",""))
+                                                                    zip = zipfile.ZipFile(dump_output, "w", zipfile.ZIP_DEFLATED)
+                                                                    zip.write(dump_output.replace(".zip",""), os.path.basename(dump_output.replace(".zip","")))
+                                                                    zip.close()
+                                                            else:
+                                                                os.system("cp " + repeat_output + " " + dump_output)
+                                                    number_triple += executor.submit(semantify_file,
+                                                                                     sorted_sources[source_type][
+                                                                                         source][triples_map],
+                                                                                     triples_map_list, ",",
+                                                                                     output_file_descriptor,
+                                                                                     data, True).result()
+                                                    if duplicate == "yes":
+                                                        predicate_list = release_PTT(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            predicate_list)
+                                                    if mapping_partitions == "yes":
+                                                        generated_subjects = release_subjects(
+                                                            sorted_sources[source_type][source][triples_map],
+                                                            generated_subjects)
                                         else:
                                             if enrichment == "yes":
                                                 reader = pd.read_csv(source, encoding="utf-8")
@@ -13048,7 +13546,7 @@ def semantify(config_path, log_path='error.log'):
                                                 driver = "{}"
                                             conn = pyodbc.connect("DRIVER=" + driver
                                                                     + ";SERVER=" + config[dataset_i]["host"] + "," + config[dataset_i]["port"]
-                                                                    + ";DATABASE=" + config[dataset_i]["database"]
+                                                                    + ";DATABASE=" + config[dataset_i]["db"]
                                                                     + ";UID=" + config[dataset_i]["user"]
                                                                     + ";PWD=" + config[dataset_i]["password"]
                                                                     + ";trustServerCertificate=yes")

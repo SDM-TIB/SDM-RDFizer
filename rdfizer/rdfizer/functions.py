@@ -8,7 +8,34 @@ import math
 import rdflib
 import xml.etree.ElementTree as ET
 import csv
+from datetime import datetime
 from uuid import uuid4
+import base64
+
+def is_bool(string):
+    try:
+    	if "1" == string or "0" == string or string.lower() == "false" or string.lower() == "true":
+        	bool(string)
+        	return True
+    	else:
+    		return False
+    except ValueError:
+        return False
+
+def is_datetime(string):
+    try:
+        string = string.replace(" T", "T")
+        datetime.fromisoformat(string)
+        return True
+    except ValueError:
+        return False
+
+def is_date(string, format="%Y-%m-%d"):
+    try:
+        datetime.strptime(string, format)
+        return True
+    except ValueError:
+        return False
 
 def valid_source(file):
 	with open(file, newline='') as f:
@@ -20,6 +47,13 @@ def valid_source(file):
 			if len(row) != expected_cols:
 				return False
 		return True
+
+def is_convertible_to_double(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def is_convertible_to_int(s):
     try:
@@ -542,7 +576,7 @@ def extract_base(file):
 			return base
 
 def encode_char(string):
-	encoded = urllib.parse.quote(string, safe='_-.~:@&=+%',encoding='utf-8')
+	encoded = urllib.parse.quote(string, safe='_-.~:@=+%',encoding='utf-8')
 	return encoded
 
 def combine_sublist(sublists, full_list):
@@ -840,20 +874,26 @@ def files_sort(triples_map_list, ordered, config):
 				else:
 					if tp.query == "None":
 						if tp.iterator == "None":
-							if config["datasets"]["dbType"] == "mysql" or onfig["datasets"]["dbType"] == "sqlserver":
+							if config["datasets"]["dbType"] == "mysql" or config["datasets"]["dbType"] == "sqlserver":
 								database, query_list = translate_sql(tp)
 							elif config["datasets"]["dbType"] == "postgres":
 								database, query_list = translate_postgressql(tp)
-							query = query_list[0]
+							if config["datasets"]["dbType"] == "sqlserver":
+								query = query_list[0].replace("`","")
+							else:
+								query = query_list[0]
 						else:
 							if "select" in tp.iterator.lower():
 								query = tp.iterator
 							else:
-								if config["datasets"]["dbType"] == "mysql" or onfig["datasets"]["dbType"] == "sqlserver":
+								if config["datasets"]["dbType"] == "mysql" or config["datasets"]["dbType"] == "sqlserver":
 									database, query_list = translate_sql(tp)
 								elif config["datasets"]["dbType"] == "postgres":
 									database, query_list = translate_postgressql(tp)
-								query = query_list[0]
+								if config["datasets"]["dbType"] == "sqlserver":
+									query = query_list[0].replace("`","")
+								else:
+									query = query_list[0]
 					else:
 						query = tp.query
 					if config["datasets"]["dbType"] not in sorted_list:
@@ -1847,10 +1887,13 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 				temp = match.split("{")
 				match = temp[len(temp)-1]
 			if match in row_headers:
+				bytes_values = ""
 				if row[row_headers.index(match)] != None:
 					value = row[row_headers.index(match)]
 					if (type(value).__name__) != "str":
 						if (type(value).__name__) != "float":
+							if (type(value).__name__) == "bytes":
+								bytes_values = "yes"
 							value = str(value)
 						else:
 							value = str(math.ceil(value))
@@ -1863,7 +1906,7 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 					if re.search("^[\s|\t]*$", value) is None:
 						if value == "-":
 							value = "UnKnown"
-						if "http" not in value:
+						if "http" not in value and bytes_values == "":
 							value = encode_char(value)
 						new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
 						offset_current_substitution = offset_current_substitution + len(value) - (end - start)
@@ -1897,6 +1940,8 @@ def string_substitution_array(string, pattern, row, row_headers, term, ignore):
 					elif type(value).__name__ == "datetime":
 						value = value.strftime("%Y-%m-%d T%H:%M:%S")
 					elif type(value).__name__ != "str":
+						value = str(value)
+					elif type(value).__name__ != "boolean":
 						value = str(value)
 					if "b\'" == value[0:2] and "\'" == value[len(value)-1]:
 						value = value.replace("b\'","")
