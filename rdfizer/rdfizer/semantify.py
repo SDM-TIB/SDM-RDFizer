@@ -84,6 +84,8 @@ global delimiter
 delimiter = {}
 global logical_dump
 logical_dump = {}
+global dump_serialization
+dump_serialization = {}
 global gather_map_list
 gather_map_list = {}
 global gather_object_values 
@@ -1922,7 +1924,9 @@ def mapping_parser(mapping_file):
             OPTIONAL {?_subject_map rml:constant ?subject_constant}
             OPTIONAL {?_subject_map rml:logicalTarget ?output.
                         ?output rml:target ?dump. 
-                        ?dump rml:path  ?subject_graph_dump.}
+                        ?dump rml:path  ?subject_graph_dump.
+                        OPTIONAL {?output rml:serialization ?subject_serialization.} 
+                        OPTIONAL {?output rml:encoding ?subject_encoding.} }
             OPTIONAL {?_subject_map rml:quotedTriplesMap ?subject_quoted .
                 OPTIONAL {
                         ?_subject_map rml:joinCondition ?join_condition .
@@ -1937,13 +1941,17 @@ def mapping_parser(mapping_file):
                        ?subject_graph_structure rml:constant ?graph . 
                        OPTIONAL {?subject_graph_structure rml:logicalTarget ?output .
                                  ?output rml:target ?dump.
-                                 ?dump  rml:path ?subject_graph_dump.}
+                                 ?dump  rml:path ?subject_graph_dump.
+                                 OPTIONAL {?output rml:serialization ?subject_serialization.} 
+                                 OPTIONAL {?output rml:encoding ?subject_encoding.} }
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
                        ?subject_graph_structure rml:template ?graph . 
                        OPTIONAL {?subject_graph_structure rml:logicalTarget ?subject_output .
                                  ?subject_output rml:target ?dump.
-                                 ?dump  rml:path ?subject_graph_dump.}
+                                 ?dump  rml:path ?subject_graph_dump.
+                                 OPTIONAL {?output rml:serialization ?subject_serialization.} 
+                                 OPTIONAL {?output rml:encoding ?subject_encoding.} }
                 }
             OPTIONAL { ?_subject_map rml:graphMap ?subject_graph_structure .
                        ?subject_graph_structure rml:reference ?graph .
@@ -1973,7 +1981,9 @@ def mapping_parser(mapping_file):
                 }
             OPTIONAL {?_subject_map rml:logicalTarget ?output.
                       ?output rml:target ?dump.
-                      ?dump void:dataDump ?subject_dump.
+                      ?dump rml:path ?subject_dump.
+                      OPTIONAL {?output rml:serialization ?subject_serialization.} 
+                      OPTIONAL {?output rml:encoding ?subject_encoding.}
                     }         
 
     # Predicate -----------------------------------------------------------------------
@@ -2009,6 +2019,8 @@ def mapping_parser(mapping_file):
                 ?pre_output rml:target ?pre_dump.
                 OPTIONAL {?pre_dump rml:path ?predicate_dump.}
                 OPTIONAL {?pre_dump void:dataDump ?predicate_dump.}
+                OPTIONAL {?pre_dump rml:serialization ?predicate_serialization.}
+                OPTIONAL {?pre_dump rml:encoding ?predicate_encoding.} 
             }
 
     # Object --------------------------------------------------------------------------
@@ -2018,21 +2030,27 @@ def mapping_parser(mapping_file):
                 ?_object_map rml:constant ?object_constant .
                 OPTIONAL {?language_map rml:logicalTarget ?obj_output .
                                  ?obj_output rml:target ?obj_dump.
-                                 ?obj_dump rml:path ?object_dump.}
+                                 ?obj_dump rml:path ?object_dump.
+                                 OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?obj_output rml:encoding ?object_encoding.} }
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
-                          OPTIONAL {?language_map rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump rml:path ?language_dump.}
+                          OPTIONAL {?language_map rml:logicalTarget ?obj_output .
+                                 ?obj_output rml:target ?lan_dump.
+                                 ?lan_dump rml:path ?language_dump.
+                                 OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?obj_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype.}
-                          OPTIONAL {?datatype_map rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump rml:path ?datatype_dump.}
+                          OPTIONAL {?datatype_map rml:logicalTarget ?obj_output .
+                                 ?obj_output rml:target ?dump.
+                                 ?dump rml:path ?datatype_dump.
+                                 OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?obj_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 OPTIONAL {
@@ -2054,21 +2072,27 @@ def mapping_parser(mapping_file):
                 ?_object_map rml:reference ?object_reference .
                 OPTIONAL {?_object_map rml:logicalTarget ?object_output .
                                  ?object_output rml:target ?obj_dump.
-                                 ?obj_dump rml:path ?object_dump.}
+                                 ?obj_dump rml:path ?object_dump.
+                                 OPTIONAL {?object_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?object_output rml:encoding ?object_encoding.} }
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
                           OPTIONAL {?language_map rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump rml:path ?language_dump.}
+                                 ?object_output rml:target ?dump.
+                                 ?dump rml:path ?language_dump.
+                                 OPTIONAL {?object_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?object_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?object_datatype.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump rml:path ?datatype_dump.}
+                                 ?object_output rml:target ?dump.
+                                 ?dump rml:path ?datatype_dump.
+                                 OPTIONAL {?object_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?object_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 OPTIONAL {
@@ -2118,14 +2142,18 @@ def mapping_parser(mapping_file):
                           OPTIONAL {?language_map rml:constant ?language_value.}
                           OPTIONAL {?language_map rml:logicalTarget ?language_output .
                                  ?language_output rml:target ?lan_dump.
-                                 ?lan_dump rml:path ?language_dump.}
+                                 ?lan_dump rml:path ?language_dump.
+                                 OPTIONAL {?language_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?language_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype_value.}
-                          OPTIONAL {?datatype_map rml:logicalTarget ?output .
-                                 ?output rml:target ?dump.
-                                 ?dump rml:path ?datatype_dump.}
+                          OPTIONAL {?datatype_map rml:logicalTarget ?data_output .
+                                 ?data_output rml:target ?dump.
+                                 ?dump rml:path ?datatype_dump.
+                                 OPTIONAL {?data_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?data_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 
@@ -2140,7 +2168,9 @@ def mapping_parser(mapping_file):
                        OPTIONAL {?_graph_structure rml:constant ?predicate_object_graph  .} 
                        OPTIONAL {?_graph_structure rml:logicalTarget ?po_graph_output .
                                  ?po_graph_output rml:target ?po_graph_dump.
-                                 ?po_graph_dump rml:path ?object_graph_dump.}
+                                 ?po_graph_dump rml:path ?object_graph_dump.
+                                 OPTIONAL {?po_graph_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?po_graph_output rml:encoding ?object_encoding.} }
                      }
             OPTIONAL { ?_object_map rml:logicalTarget ?obj_output.
                         ?obj_output rml:target ?obj_dump.
@@ -2303,6 +2333,7 @@ def mapping_parser(mapping_file):
     global gather_id
     global view_sources
     global base_iri_list
+    global dump_serialization
     if new_formulation == "yes":
         mapping_query_results = mapping_graph.query(function_query)
         for result_triples_map in mapping_query_results:
@@ -2961,11 +2992,29 @@ def mapping_parser(mapping_file):
                 if new_formulation == "yes":
                     output_file = ""
                     if result_predicate_object_map.object_dump != None:
-                        output_file = result_predicate_object_map.object_dump[7:] if result_predicate_object_map.object_dump[:7] == "file://" else result_predicate_object_map.object_dump  
+                        output_file = result_predicate_object_map.object_dump[7:] if result_predicate_object_map.object_dump[:7] == "file://" else result_predicate_object_map.object_dump
+                        if result_predicate_object_map.object_serialization != None:
+                            if output_file not in dump_serialization:
+                                if result_predicate_object_map.object_encoding != None:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization) + "_" + str(result_predicate_object_map.object_encoding)
+                                else:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     elif result_predicate_object_map.language_dump != None:
                         output_file = result_predicate_object_map.language_dump[7:] if result_predicate_object_map.language_dump[:7] == "file://" else result_predicate_object_map.language_dump  
+                        if result_predicate_object_map.object_serialization != None:
+                            if output_file not in dump_serialization:
+                                if result_predicate_object_map.object_encoding != None:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
+                                else:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     elif result_predicate_object_map.datatype_dump != None:
                         output_file = result_predicate_object_map.datatype_dump[7:] if result_predicate_object_map.datatype_dump[:7] == "file://" else result_predicate_object_map.datatype_dump
+                        if result_predicate_object_map.object_serialization != None:
+                            if output_file not in dump_serialization:
+                                if result_predicate_object_map.object_encoding != None:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
+                                else:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     if output_file != "":
                         if str(result_triples_map.triples_map_id) not in logical_dump:
                             if result_predicate_object_map.language_dump != None:
@@ -3014,6 +3063,12 @@ def mapping_parser(mapping_file):
                                         logical_dump[str(result_triples_map.triples_map_id)][output_file].append(object_map.value)
                     if result_predicate_object_map.object_graph_dump != None:
                         output_file = result_predicate_object_map.object_graph_dump[7:] if result_predicate_object_map.object_graph_dump[:7] == "file://" else result_predicate_object_map.object_graph_dump
+                        if result_predicate_object_map.object_serialization != None:
+                            if output_file not in dump_serialization:
+                                if result_predicate_object_map.object_encoding != None:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
+                                else:
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     if output_file != "":
                         if str(result_triples_map.triples_map_id) not in logical_dump:
                             logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[object_map.value]}
@@ -3140,9 +3195,21 @@ def mapping_parser(mapping_file):
                         if new_formulation == "yes":
                             output_file = ""
                             if result_triples_map.subject_dump != None:
-                                output_file = result_triples_map.subject_dump[7:] if result_triples_map.subject_dump[:7] == "file://" else result_triples_map.subject_dump  
+                                output_file = result_triples_map.subject_dump[7:] if result_triples_map.subject_dump[:7] == "file://" else result_triples_map.subject_dump
+                                if result_triples_map.subject_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.subject_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.subject_serialization)+ "_" + str(result_triples_map.subject_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.subject_serialization)  
                             elif result_triples_map.subject_graph_dump != None:
-                                output_file = result_triples_map.subject_graph_dump[7:] if result_triples_map.subject_graph_dump[:7] == "file://" else result_triples_map.subject_graph_dump   
+                                output_file = result_triples_map.subject_graph_dump[7:] if result_triples_map.subject_graph_dump[:7] == "file://" else result_triples_map.subject_graph_dump 
+                                if result_triples_map.subject_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.subject_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.subject_serialization)+ "_" + str(result_triples_map.subject_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.subject_serialization)     
                             if output_file != "":
                                 if str(result_triples_map.triples_map_id) not in logical_dump:
                                     logical_dump[str(result_triples_map.triples_map_id)] = {output_file:"subject"}
@@ -3165,7 +3232,13 @@ def mapping_parser(mapping_file):
                                     value = result_triples_map.predicate_template
                                 elif result_triples_map.predicate_reference != None:
                                     value = result_triples_map.predicate_reference
-                                output_file = result_triples_map.predicate_dump[7:] if result_triples_map.predicate_dump[:7] == "file://" else result_triples_map.predicate_dump 
+                                output_file = result_triples_map.predicate_dump[7:] if result_triples_map.predicate_dump[:7] == "file://" else result_triples_map.predicate_dump
+                                if result_predicate_object_map.object_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.predicate_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.predicate_serialization)+ "_" + str(result_triples_map.predicate_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.predicate_serialization)   
                                 
                                 if str(result_triples_map.triples_map_id) not in logical_dump:
                                     logical_dump[str(result_triples_map.triples_map_id)] = {output_file:value}
@@ -3175,13 +3248,37 @@ def mapping_parser(mapping_file):
 
                             output_file = ""
                             if result_triples_map.object_dump != None:
-                                output_file = result_triples_map.object_dump[7:] if result_triples_map.object_dump[:7] == "file://" else result_triples_map.object_dump  
+                                output_file = result_triples_map.object_dump[7:] if result_triples_map.object_dump[:7] == "file://" else result_triples_map.object_dump
+                                if result_predicate_object_map.object_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.object_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)+ "_" + str(result_triples_map.object_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)    
                             elif result_triples_map.object_graph_dump != None:
                                 output_file = result_triples_map.object_graph_dump[7:] if result_triples_map.object_graph_dump[:7] == "file://" else result_triples_map.object_graph_dump
+                                if result_predicate_object_map.object_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.object_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)+ "_" + str(result_triples_map.object_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization) 
                             elif result_triples_map.language_dump != None:
-                                output_file = result_triples_map.language_dump[7:] if result_triples_map.language_dump[:7] == "file://" else result_triples_map.language_dump  
+                                output_file = result_triples_map.language_dump[7:] if result_triples_map.language_dump[:7] == "file://" else result_triples_map.language_dump
+                                if result_predicate_object_map.object_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.object_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)+ "_" + str(result_triples_map.object_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)    
                             elif result_triples_map.datatype_dump != None:
-                                output_file = result_triples_map.datatype_dump[7:] if result_triples_map.datatype_dump[:7] == "file://" else result_triples_map.datatype_dump    
+                                output_file = result_triples_map.datatype_dump[7:] if result_triples_map.datatype_dump[:7] == "file://" else result_triples_map.datatype_dump
+                                if result_predicate_object_map.object_serialization != None:
+                                    if output_file not in dump_serialization:
+                                        if result_triples_map.object_encoding != None:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)+ "_" + str(result_triples_map.object_encoding)
+                                        else:
+                                            dump_serialization[output_file] = str(result_triples_map.object_serialization)      
                             if output_file != "":
                                 if result_triples_map.object_constant != None:
                                     value = result_triples_map.object_constant
@@ -8950,7 +9047,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -8969,13 +9074,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -9053,7 +9158,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -9072,13 +9185,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -9163,7 +9276,15 @@ def semantify(config_path, log_path='error.log'):
                                                                             current_logical_dump = ""
                                                                         g_triples = temp_generated
                                                                         temp_generated = {}
-                                                                        if "jsonld" in dump_output:
+                                                                        dump_format = ""
+                                                                        if dump_output in dump_serialization:
+                                                                            dump_format = dump_serialization[dump_output]
+                                                                        if "UTF-16" in dump_format:
+                                                                            with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                content = infile.read()
+                                                                                with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                    outfile.write(content)
+                                                                        elif "jsonld" in dump_output:
                                                                             context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
@@ -9182,13 +9303,13 @@ def semantify(config_path, log_path='error.log'):
                                                                             json_data = generate_rdfjson(g)
                                                                             with open(dump_output, "w") as f:
                                                                                 json.dump(json_data,f)
-                                                                        elif "rdfxml" in dump_output:
+                                                                        elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             xml_data = g.serialize(format="xml")
                                                                             with open(dump_output, "w") as f:
                                                                                 f.write(xml_data)
-                                                                        elif "ttl" in dump_output:
+                                                                        elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             ttl_data = g.serialize(format="ttl")
@@ -9269,7 +9390,15 @@ def semantify(config_path, log_path='error.log'):
                                                                                 current_logical_dump = ""
                                                                             g_triples = temp_generated
                                                                             temp_generated = {}
-                                                                            if "jsonld" in dump_output:
+                                                                            dump_format = ""
+                                                                            if dump_output in dump_serialization:
+                                                                                dump_format = dump_serialization[dump_output]
+                                                                            if "UTF-16" in dump_format:
+                                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                    content = infile.read()
+                                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                        outfile.write(content)
+                                                                            elif "jsonld" in dump_output:
                                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
@@ -9288,13 +9417,13 @@ def semantify(config_path, log_path='error.log'):
                                                                                 json_data = generate_rdfjson(g)
                                                                                 with open(dump_output, "w") as f:
                                                                                     json.dump(json_data,f)
-                                                                            elif "rdfxml" in dump_output:
+                                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 xml_data = g.serialize(format="xml")
                                                                                 with open(dump_output, "w") as f:
                                                                                     f.write(xml_data)
-                                                                            elif "ttl" in dump_output:
+                                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 ttl_data = g.serialize(format="ttl")
@@ -9421,7 +9550,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -9440,13 +9577,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -9514,7 +9651,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -9533,13 +9678,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -9612,7 +9757,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -9631,13 +9784,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -9722,7 +9875,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -9741,13 +9902,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -9825,7 +9986,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -9844,13 +10013,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -9934,7 +10103,15 @@ def semantify(config_path, log_path='error.log'):
                                                                             current_logical_dump = ""
                                                                         g_triples = temp_generated
                                                                         temp_generated = {}
-                                                                        if "jsonld" in dump_output:
+                                                                        dump_format = ""
+                                                                        if dump_output in dump_serialization:
+                                                                            dump_format = dump_serialization[dump_output]
+                                                                        if "UTF-16" in dump_format:
+                                                                            with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                content = infile.read()
+                                                                                with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                    outfile.write(content)
+                                                                        elif "jsonld" in dump_output:
                                                                             context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
@@ -9953,13 +10130,13 @@ def semantify(config_path, log_path='error.log'):
                                                                             json_data = generate_rdfjson(g)
                                                                             with open(dump_output, "w") as f:
                                                                                 json.dump(json_data,f)
-                                                                        elif "rdfxml" in dump_output:
+                                                                        elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             xml_data = g.serialize(format="xml")
                                                                             with open(dump_output, "w") as f:
                                                                                 f.write(xml_data)
-                                                                        elif "ttl" in dump_output:
+                                                                        elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             ttl_data = g.serialize(format="ttl")
@@ -10040,7 +10217,15 @@ def semantify(config_path, log_path='error.log'):
                                                                                 current_logical_dump = ""
                                                                             g_triples = temp_generated
                                                                             temp_generated = {}
-                                                                            if "jsonld" in dump_output:
+                                                                            dump_format = ""
+                                                                            if dump_output in dump_serialization:
+                                                                                dump_format = dump_serialization[dump_output]
+                                                                            if "UTF-16" in dump_format:
+                                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                    content = infile.read()
+                                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                        outfile.write(content)
+                                                                            elif "jsonld" in dump_output:
                                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
@@ -10059,13 +10244,13 @@ def semantify(config_path, log_path='error.log'):
                                                                                 json_data = generate_rdfjson(g)
                                                                                 with open(dump_output, "w") as f:
                                                                                     json.dump(json_data,f)
-                                                                            elif "rdfxml" in dump_output:
+                                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 xml_data = g.serialize(format="xml")
                                                                                 with open(dump_output, "w") as f:
                                                                                     f.write(xml_data)
-                                                                            elif "ttl" in dump_output:
+                                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 ttl_data = g.serialize(format="ttl")
@@ -10192,7 +10377,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -10211,13 +10404,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -10285,7 +10478,12 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -10384,7 +10582,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -10403,13 +10609,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -10537,7 +10743,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     cursor.execute(source)
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -10556,13 +10770,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -10633,7 +10847,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     cursor.execute(source)
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -10652,13 +10874,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -10729,7 +10951,15 @@ def semantify(config_path, log_path='error.log'):
                                                                         current_logical_dump = ""
                                                                         g_triples = temp_generated
                                                                         temp_generated = {}
-                                                                        if "jsonld" in dump_output:
+                                                                        dump_format = ""
+                                                                        if dump_output in dump_serialization:
+                                                                            dump_format = dump_serialization[dump_output]
+                                                                        if "UTF-16" in dump_format:
+                                                                            with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                content = infile.read()
+                                                                                with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                    outfile.write(content)
+                                                                        elif "jsonld" in dump_output:
                                                                             context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
@@ -10748,13 +10978,13 @@ def semantify(config_path, log_path='error.log'):
                                                                             json_data = generate_rdfjson(g)
                                                                             with open(dump_output, "w") as f:
                                                                                 json.dump(json_data,f)
-                                                                        elif "rdfxml" in dump_output:
+                                                                        elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             xml_data = g.serialize(format="xml")
                                                                             with open(dump_output, "w") as f:
                                                                                 f.write(xml_data)
-                                                                        elif "ttl" in dump_output:
+                                                                        elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             ttl_data = g.serialize(format="ttl")
@@ -10823,7 +11053,15 @@ def semantify(config_path, log_path='error.log'):
                                                                         current_logical_dump = ""
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -10842,13 +11080,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -10958,7 +11196,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -10977,13 +11223,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -11046,7 +11292,15 @@ def semantify(config_path, log_path='error.log'):
                                                                         current_logical_dump = ""
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -11065,13 +11319,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -11191,7 +11445,15 @@ def semantify(config_path, log_path='error.log'):
                                                                         current_logical_dump = ""
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -11210,13 +11472,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -11294,7 +11556,15 @@ def semantify(config_path, log_path='error.log'):
                                                                         current_logical_dump = ""
                                                                     g_triples = temp_generated
                                                                     temp_generated = {}
-                                                                    if "jsonld" in dump_output:
+                                                                    dump_format = ""
+                                                                    if dump_output in dump_serialization:
+                                                                        dump_format = dump_serialization[dump_output]
+                                                                    if "UTF-16" in dump_format:
+                                                                        with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                            content = infile.read()
+                                                                            with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                outfile.write(content)
+                                                                    elif "jsonld" in dump_output:
                                                                         context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
@@ -11313,13 +11583,13 @@ def semantify(config_path, log_path='error.log'):
                                                                         json_data = generate_rdfjson(g)
                                                                         with open(dump_output, "w") as f:
                                                                             json.dump(json_data,f)
-                                                                    elif "rdfxml" in dump_output:
+                                                                    elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         xml_data = g.serialize(format="xml")
                                                                         with open(dump_output, "w") as f:
                                                                             f.write(xml_data)
-                                                                    elif "ttl" in dump_output:
+                                                                    elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                         g = rdflib.Graph()
                                                                         g.parse(dump_output, format="nt")
                                                                         ttl_data = g.serialize(format="ttl")
@@ -11395,7 +11665,15 @@ def semantify(config_path, log_path='error.log'):
                                                                             current_logical_dump = ""
                                                                         g_triples = temp_generated
                                                                         temp_generated = {}
-                                                                        if "jsonld" in dump_output:
+                                                                        dump_format = ""
+                                                                        if dump_output in dump_serialization:
+                                                                            dump_format = dump_serialization[dump_output]
+                                                                        if "UTF-16" in dump_format:
+                                                                            with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                content = infile.read()
+                                                                                with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                    outfile.write(content)
+                                                                        elif "jsonld" in dump_output:
                                                                             context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
@@ -11414,13 +11692,13 @@ def semantify(config_path, log_path='error.log'):
                                                                             json_data = generate_rdfjson(g)
                                                                             with open(dump_output, "w") as f:
                                                                                 json.dump(json_data,f)
-                                                                        elif "rdfxml" in dump_output:
+                                                                        elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             xml_data = g.serialize(format="xml")
                                                                             with open(dump_output, "w") as f:
                                                                                 f.write(xml_data)
-                                                                        elif "ttl" in dump_output:
+                                                                        elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             ttl_data = g.serialize(format="ttl")
@@ -11492,7 +11770,15 @@ def semantify(config_path, log_path='error.log'):
                                                                                 current_logical_dump = ""
                                                                             g_triples = temp_generated
                                                                             temp_generated = {}
-                                                                            if "jsonld" in dump_output:
+                                                                            dump_format = ""
+                                                                            if dump_output in dump_serialization:
+                                                                                dump_format = dump_serialization[dump_output]
+                                                                            if "UTF-16" in dump_format:
+                                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                    content = infile.read()
+                                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                        outfile.write(content)
+                                                                            elif "jsonld" in dump_output:
                                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
@@ -11511,13 +11797,13 @@ def semantify(config_path, log_path='error.log'):
                                                                                 json_data = generate_rdfjson(g)
                                                                                 with open(dump_output, "w") as f:
                                                                                     json.dump(json_data,f)
-                                                                            elif "rdfxml" in dump_output:
+                                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 xml_data = g.serialize(format="xml")
                                                                                 with open(dump_output, "w") as f:
                                                                                     f.write(xml_data)
-                                                                            elif "ttl" in dump_output:
+                                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 ttl_data = g.serialize(format="ttl")
@@ -11644,7 +11930,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -11663,13 +11957,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -11737,7 +12031,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -11756,13 +12058,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -11837,7 +12139,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -11856,13 +12166,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -11947,7 +12257,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -11966,13 +12284,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -12050,7 +12368,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -12069,13 +12395,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -12151,7 +12477,15 @@ def semantify(config_path, log_path='error.log'):
                                                                             current_logical_dump = ""
                                                                         g_triples = temp_generated
                                                                         temp_generated = {}
-                                                                        if "jsonld" in dump_output:
+                                                                        dump_format = ""
+                                                                        if dump_output in dump_serialization:
+                                                                            dump_format = dump_serialization[dump_output]
+                                                                        if "UTF-16" in dump_format:
+                                                                            with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                content = infile.read()
+                                                                                with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                    outfile.write(content)
+                                                                        elif "jsonld" in dump_output:
                                                                             context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
@@ -12170,13 +12504,13 @@ def semantify(config_path, log_path='error.log'):
                                                                             json_data = generate_rdfjson(g)
                                                                             with open(dump_output, "w") as f:
                                                                                 json.dump(json_data,f)
-                                                                        elif "rdfxml" in dump_output:
+                                                                        elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             xml_data = g.serialize(format="xml")
                                                                             with open(dump_output, "w") as f:
                                                                                 f.write(xml_data)
-                                                                        elif "ttl" in dump_output:
+                                                                        elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                             g = rdflib.Graph()
                                                                             g.parse(dump_output, format="nt")
                                                                             ttl_data = g.serialize(format="ttl")
@@ -12248,7 +12582,15 @@ def semantify(config_path, log_path='error.log'):
                                                                                 current_logical_dump = ""
                                                                             g_triples = temp_generated
                                                                             temp_generated = {}
-                                                                            if "jsonld" in dump_output:
+                                                                            dump_format = ""
+                                                                            if dump_output in dump_serialization:
+                                                                                dump_format = dump_serialization[dump_output]
+                                                                            if "UTF-16" in dump_format:
+                                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                                    content = infile.read()
+                                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                                        outfile.write(content)
+                                                                            elif "jsonld" in dump_output:
                                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
@@ -12267,13 +12609,13 @@ def semantify(config_path, log_path='error.log'):
                                                                                 json_data = generate_rdfjson(g)
                                                                                 with open(dump_output, "w") as f:
                                                                                     json.dump(json_data,f)
-                                                                            elif "rdfxml" in dump_output:
+                                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 xml_data = g.serialize(format="xml")
                                                                                 with open(dump_output, "w") as f:
                                                                                     f.write(xml_data)
-                                                                            elif "ttl" in dump_output:
+                                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                                 g = rdflib.Graph()
                                                                                 g.parse(dump_output, format="nt")
                                                                                 ttl_data = g.serialize(format="ttl")
@@ -12400,7 +12742,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -12419,13 +12769,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -12493,7 +12843,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                             g_triples = temp_generated
                                                             temp_generated = {}
-                                                            if "jsonld" in dump_output:
+                                                            dump_format = ""
+                                                            if dump_output in dump_serialization:
+                                                                dump_format = dump_serialization[dump_output]
+                                                            if "UTF-16" in dump_format:
+                                                                with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                    content = infile.read()
+                                                                    with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                        outfile.write(content)
+                                                            elif "jsonld" in dump_output:
                                                                 context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
@@ -12512,13 +12870,13 @@ def semantify(config_path, log_path='error.log'):
                                                                 json_data = generate_rdfjson(g)
                                                                 with open(dump_output, "w") as f:
                                                                     json.dump(json_data,f)
-                                                            elif "rdfxml" in dump_output:
+                                                            elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 xml_data = g.serialize(format="xml")
                                                                 with open(dump_output, "w") as f:
                                                                     f.write(xml_data)
-                                                            elif "ttl" in dump_output:
+                                                            elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                 g = rdflib.Graph()
                                                                 g.parse(dump_output, format="nt")
                                                                 ttl_data = g.serialize(format="ttl")
@@ -12592,7 +12950,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -12761,7 +13127,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 cursor.execute(source)
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -12780,13 +13154,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -12889,7 +13263,15 @@ def semantify(config_path, log_path='error.log'):
                                                                     current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -12908,13 +13290,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -13043,7 +13425,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 cursor.execute(source)
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -13062,13 +13452,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
@@ -13131,7 +13521,15 @@ def semantify(config_path, log_path='error.log'):
                                                                 current_logical_dump = ""
                                                                 g_triples = temp_generated
                                                                 temp_generated = {}
-                                                                if "jsonld" in dump_output:
+                                                                dump_format = ""
+                                                                if dump_output in dump_serialization:
+                                                                    dump_format = dump_serialization[dump_output]
+                                                                if "UTF-16" in dump_format:
+                                                                    with open(dump_output, "r", encoding="utf-8") as infile:
+                                                                        content = infile.read()
+                                                                        with open(dump_output, "w", encoding="utf-16") as outfile:
+                                                                            outfile.write(content)
+                                                                elif "jsonld" in dump_output:
                                                                     context = extract_prefixes_from_ttl(config[dataset_i]["mapping"])
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
@@ -13150,13 +13548,13 @@ def semantify(config_path, log_path='error.log'):
                                                                     json_data = generate_rdfjson(g)
                                                                     with open(dump_output, "w") as f:
                                                                         json.dump(json_data,f)
-                                                                elif "rdfxml" in dump_output:
+                                                                elif "rdfxml" in dump_output or "RDF_XML" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     xml_data = g.serialize(format="xml")
                                                                     with open(dump_output, "w") as f:
                                                                         f.write(xml_data)
-                                                                elif "ttl" in dump_output:
+                                                                elif "ttl" in dump_output or "Turtle" in dump_format:
                                                                     g = rdflib.Graph()
                                                                     g.parse(dump_output, format="nt")
                                                                     ttl_data = g.serialize(format="ttl")
