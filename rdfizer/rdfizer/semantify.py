@@ -2028,7 +2028,7 @@ def mapping_parser(mapping_file):
             OPTIONAL {
                 ?_predicate_object_map rml:objectMap ?_object_map .
                 ?_object_map rml:constant ?object_constant .
-                OPTIONAL {?language_map rml:logicalTarget ?obj_output .
+                OPTIONAL {?object_map rml:logicalTarget ?obj_output .
                                  ?obj_output rml:target ?obj_dump.
                                  ?obj_dump rml:path ?object_dump.
                                  OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
@@ -2037,8 +2037,8 @@ def mapping_parser(mapping_file):
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
-                          OPTIONAL {?language_map rml:logicalTarget ?obj_output .
-                                 ?obj_output rml:target ?lan_dump.
+                          OPTIONAL {?language_map rml:logicalTarget ?lan_obj_output .
+                                 ?lan_obj_output rml:target ?lan_dump.
                                  ?lan_dump rml:path ?language_dump.
                                  OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
                                  OPTIONAL {?obj_output rml:encoding ?object_encoding.} }
@@ -2046,9 +2046,9 @@ def mapping_parser(mapping_file):
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype.}
-                          OPTIONAL {?datatype_map rml:logicalTarget ?obj_output .
-                                 ?obj_output rml:target ?dump.
-                                 ?dump rml:path ?datatype_dump.
+                          OPTIONAL {?datatype_map rml:logicalTarget ?dan_obj_output .
+                                 ?dan_obj_output rml:target ?data_dump.
+                                 ?data_dump rml:path ?datatype_dump.
                                  OPTIONAL {?obj_output rml:serialization ?object_serialization.} 
                                  OPTIONAL {?obj_output rml:encoding ?object_encoding.} }
                          }
@@ -2079,20 +2079,20 @@ def mapping_parser(mapping_file):
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
-                          OPTIONAL {?language_map rml:logicalTarget ?output .
-                                 ?object_output rml:target ?dump.
-                                 ?dump rml:path ?language_dump.
-                                 OPTIONAL {?object_output rml:serialization ?object_serialization.} 
-                                 OPTIONAL {?object_output rml:encoding ?object_encoding.} }
+                          OPTIONAL {?language_map rml:logicalTarget ?language_object_output .
+                                 ?language_object_output rml:target ?lan_dump.
+                                 ?lan_dump rml:path ?language_dump.
+                                 OPTIONAL {?language_object_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?language_object_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?object_datatype.}
-                          OPTIONAL {?datatype_map rml:logicalTarget ?output .
-                                 ?object_output rml:target ?dump.
+                          OPTIONAL {?datatype_map rml:logicalTarget ?data_object_output .
+                                 ?data_object_output rml:target ?dump.
                                  ?dump rml:path ?datatype_dump.
-                                 OPTIONAL {?object_output rml:serialization ?object_serialization.} 
-                                 OPTIONAL {?object_output rml:encoding ?object_encoding.} }
+                                 OPTIONAL {?data_object_output rml:serialization ?object_serialization.} 
+                                 OPTIONAL {?data_object_output rml:encoding ?object_encoding.} }
                          }
                 OPTIONAL {?_object_map rml:termType ?term .}
                 OPTIONAL {
@@ -2991,12 +2991,12 @@ def mapping_parser(mapping_file):
 
                 if new_formulation == "yes":
                     output_file = ""
-                    if result_predicate_object_map.object_dump != None:
-                        output_file = result_predicate_object_map.object_dump[7:] if result_predicate_object_map.object_dump[:7] == "file://" else result_predicate_object_map.object_dump
+                    if result_predicate_object_map.datatype_dump != None:
+                        output_file = result_predicate_object_map.datatype_dump[7:] if result_predicate_object_map.datatype_dump[:7] == "file://" else result_predicate_object_map.datatype_dump
                         if result_predicate_object_map.object_serialization != None:
                             if output_file not in dump_serialization:
                                 if result_predicate_object_map.object_encoding != None:
-                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization) + "_" + str(result_predicate_object_map.object_encoding)
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
                                 else:
                                     dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     elif result_predicate_object_map.language_dump != None:
@@ -3007,12 +3007,12 @@ def mapping_parser(mapping_file):
                                     dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
                                 else:
                                     dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
-                    elif result_predicate_object_map.datatype_dump != None:
-                        output_file = result_predicate_object_map.datatype_dump[7:] if result_predicate_object_map.datatype_dump[:7] == "file://" else result_predicate_object_map.datatype_dump
+                    elif result_predicate_object_map.object_dump != None:
+                        output_file = result_predicate_object_map.object_dump[7:] if result_predicate_object_map.object_dump[:7] == "file://" else result_predicate_object_map.object_dump
                         if result_predicate_object_map.object_serialization != None:
                             if output_file not in dump_serialization:
                                 if result_predicate_object_map.object_encoding != None:
-                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)+ "_" + str(result_predicate_object_map.object_encoding)
+                                    dump_serialization[output_file] = str(result_predicate_object_map.object_serialization) + "_" + str(result_predicate_object_map.object_encoding)
                                 else:
                                     dump_serialization[output_file] = str(result_predicate_object_map.object_serialization)
                     if output_file != "":
@@ -3024,9 +3024,9 @@ def mapping_parser(mapping_file):
                                     logical_dump[str(result_triples_map.triples_map_id)] = {output_file: [object_map.value + "_" + result_predicate_object_map.language_value]}
                             elif result_predicate_object_map.datatype_dump != None:
                                 if result_predicate_object_map.object_datatype != None:
-                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:str(object_map.value + "_" + result_predicate_object_map.object_datatype)}
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[str(object_map.value + "_" + result_predicate_object_map.object_datatype)]}
                                 elif result_predicate_object_map.datatype_value != None:
-                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:str(object_map.value + "_" + result_predicate_object_map.datatype_value)}
+                                    logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[str(object_map.value + "_" + result_predicate_object_map.datatype_value)]}
                             else:
                                 logical_dump[str(result_triples_map.triples_map_id)] = {output_file:[object_map.value]}
                         else:
@@ -3107,7 +3107,6 @@ def mapping_parser(mapping_file):
                     predicate_object_maps_list += [
                         tm.PredicateObjectMap(join_predicate[jp]["predicate"], object_map, predicate_object_graph)]
             predicate_object_maps_list = remove_duplicate_po(predicate_object_maps_list)
-            print(result_triples_map.url_source)
             if result_triples_map.url_source is not None:
                 if result_triples_map.delimiter is not None:
                     url_source = str(result_triples_map.url_source)[7:] if str(result_triples_map.url_source)[:7] == "file://" else str(result_triples_map.url_source)
@@ -4854,7 +4853,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     if object_list:
                         i = 0
                         while i < len(object_list):
-                            object_list[i] = "\"" + object_list[i] + "\""
+                            object_list[i] = "\"" + str(object_list[i]) + "\""
                             if "\\" in object_list[i][1:-1]:
                                 object_list[i] = "\"" + object_list[i][1:-1].replace("\\", "\\\\") + "\""
                             if "'" in object_list[i][1:-1]:
@@ -6006,7 +6005,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     if predicate_object_map.object_map.datatype == None:
                         if predicate_object_map.object_map.value == "#" or "#" in predicate_object_map.object_map.value:
                             object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        elif triples_map.reference_formulation != "RMLView":
+                        elif "RMLView" not in triples_map.reference_formulation:
                             object = "\"" + object[1:-1] + "\""
                         elif is_convertible_to_int(object[1:-1]):
                             object = "\"" + object[1:-1] + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>"

@@ -439,60 +439,61 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 						if graph != "":
 							triple = triple[:-2] + graph + " .\n"
 						output_file_descriptor.write(triple)
-					i = 0
-					for value in element_values:
-						if len(element_values) == 1:
-							if "_:" not in value and "http" not in value:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
-							else:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>.\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							gather_blank += 1
-						elif value == element_values[0] and i == 0:
-							if "_:" not in value and "http" not in value:
-								triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
-							else:
-								triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> " + "_:" + blank_id + str(gather_blank) + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-						elif value == element_values[len(element_values)-1] and i == len(element_values)-1:
-							if "_:" not in value and "http" not in value:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
-							else:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>.\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							gather_blank += 1
+					if len(element_values) == 1:
+						if "_:" not in element_values[0] and "http" not in element_values[0]:
+							triple = "_:" + blank_id + str(gather_blank - 1) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + element_values[0] + "\" .\n"
 						else:
-							if "_:" not in value and "http" not in value:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
+							triple = "_:" + blank_id + str(gather_blank - 1) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + element_values[0] + " .\n"
+						if graph != "":
+							triple = triple[:-2] + graph + " .\n"
+						output_file_descriptor.write(triple)
+						triple = "_:" + blank_id + str(gather_blank - 1) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>.\n"
+						if graph != "":
+							triple = triple[:-2] + graph + " .\n"
+						output_file_descriptor.write(triple)
+						gather_blank += 1
+					else:
+						i = 0
+						for value in element_values:
+							if value == element_values[0] and i == 0:
+								if "_:" not in value and "http" not in value:
+									triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
+								else:
+									triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+								triple = object + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> " + "_:" + blank_id + str(gather_blank) + " .\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+							elif value == element_values[len(element_values)-1] and i == len(element_values)-1:
+								if "_:" not in value and "http" not in value:
+									triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
+								else:
+									triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>.\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+								gather_blank += 1
 							else:
-								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> " + "_:" + blank_id + str(gather_blank+1) + " .\n"
-							if graph != "":
-								triple = triple[:-2] + graph + " .\n"
-							output_file_descriptor.write(triple)
-							gather_blank += 1
-						i += 1
+								if "_:" not in value and "http" not in value:
+									triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"" + value + "\" .\n"
+								else:
+									triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> " + value + " .\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+								triple = "_:" + blank_id + str(gather_blank) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> " + "_:" + blank_id + str(gather_blank+1) + " .\n"
+								if graph != "":
+									triple = triple[:-2] + graph + " .\n"
+								output_file_descriptor.write(triple)
+								gather_blank += 1
+							i += 1
 		else:
 			list_right = string_substitution_json(gather_map.gather_list[0]["value"],".+", data, "object", "yes", iterator)
 			list_left = string_substitution_json(gather_map.gather_list[1]["value"],".+", data, "object", "yes", iterator)

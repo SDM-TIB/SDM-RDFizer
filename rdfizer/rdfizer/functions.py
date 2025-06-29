@@ -124,11 +124,8 @@ def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
 	else:
 		if triples_map_id in output_list:
 			if current_output in output_list[triples_map_id]:
+				#print(output_list[triples_map_id][current_output])
 				if output_list[triples_map_id][current_output] == "subject":
-					return True
-				elif po_map.predicate_map.value in output_list[triples_map_id][current_output]:
-					return True
-				elif po_map.object_map.value in  output_list[triples_map_id][current_output]:
 					return True
 				elif po_map.object_map.datatype != None:
 					if po_map.object_map.value + "_" + po_map.object_map.datatype in output_list[triples_map_id][current_output]:
@@ -150,6 +147,10 @@ def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
 						return True
 					else:
 						return False
+				elif po_map.predicate_map.value in output_list[triples_map_id][current_output]:
+					return True
+				elif po_map.object_map.value in  output_list[triples_map_id][current_output]:
+					return True
 				else:
 					return False
 			else:
