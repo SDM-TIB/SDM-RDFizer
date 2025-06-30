@@ -4851,56 +4851,58 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     object_list = object
                     object = None
                     if object_list:
-                        i = 0
-                        while i < len(object_list):
-                            object_list[i] = "\"" + str(object_list[i]) + "\""
-                            if "\\" in object_list[i][1:-1]:
-                                object_list[i] = "\"" + object_list[i][1:-1].replace("\\", "\\\\") + "\""
-                            if "'" in object_list[i][1:-1]:
-                                object_list[i] = "\"" + object_list[i][1:-1].replace("'", "\\\\'") + "\""
-                            if "\"" in object_list[i][1:-1]:
-                                object_list[i] = "\"" + object_list[i][1:-1].replace("\"", "\\\"") + "\""
-                            if "\n" in object_list[i]:
-                                object_list[i] = object_list[i].replace("\n", "\\n")
-                            if predicate_object_map.object_map.datatype != None:
-                                object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(
-                                    predicate_object_map.object_map.datatype)
-                            elif predicate_object_map.object_map.datatype_map != None:
-                                datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
-                                                                    "object", ignore, iterator)
-                                if "http" in datatype_value:
-                                   object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
-                                else:
-                                   object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
-                            elif predicate_object_map.object_map.language != None:
-                                if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
-                                    object_list[i] += "@es"
-                                elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
-                                    object_list[i] += "@en"
-                                elif len(predicate_object_map.object_map.language) == 2:
-                                    object_list[i] += "@" + predicate_object_map.object_map.language
-                                else:
-                                    object_list[i] = None
-                            elif predicate_object_map.object_map.language_map != None:
-                                object_list[i] += "@" + string_substitution_json(
-                                    predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
-                                    iterator)[1:-1]
-                            elif predicate_object_map.object_map.term != None:
-                                if "IRI" in predicate_object_map.object_map.term:
-                                    if " " not in object_list[i]:
-                                        object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'", "'") + "\""
-                                        object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
+                        if predicate_object_map.object_map.value[-3:] == "[*]":
+                            i = 0
+                            while i < len(object_list):
+                                object_list[i] = "\"" + str(object_list[i]) + "\""
+                                if "\\" in object_list[i][1:-1]:
+                                    object_list[i] = "\"" + object_list[i][1:-1].replace("\\", "\\\\") + "\""
+                                if "'" in object_list[i][1:-1]:
+                                    object_list[i] = "\"" + object_list[i][1:-1].replace("'", "\\\\'") + "\""
+                                if "\"" in object_list[i][1:-1]:
+                                    object_list[i] = "\"" + object_list[i][1:-1].replace("\"", "\\\"") + "\""
+                                if "\n" in object_list[i]:
+                                    object_list[i] = object_list[i].replace("\n", "\\n")
+                                if predicate_object_map.object_map.datatype != None:
+                                    object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(
+                                        predicate_object_map.object_map.datatype)
+                                elif predicate_object_map.object_map.datatype_map != None:
+                                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                                                                        "object", ignore, iterator)
+                                    if "http" in datatype_value:
+                                       object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
+                                    else:
+                                       object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                elif predicate_object_map.object_map.language != None:
+                                    if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
+                                        object_list[i] += "@es"
+                                    elif "english" == predicate_object_map.object_map.language or "en" == predicate_object_map.object_map.language:
+                                        object_list[i] += "@en"
+                                    elif len(predicate_object_map.object_map.language) == 2:
+                                        object_list[i] += "@" + predicate_object_map.object_map.language
                                     else:
                                         object_list[i] = None
-                            i += 1
+                                elif predicate_object_map.object_map.language_map != None:
+                                    object_list[i] += "@" + string_substitution_json(
+                                        predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
+                                        iterator)[1:-1]
+                                elif predicate_object_map.object_map.term != None:
+                                    if "IRI" in predicate_object_map.object_map.term:
+                                        if " " not in object_list[i]:
+                                            object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'", "'") + "\""
+                                            object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
+                                        else:
+                                            object_list[i] = None
+                                i += 1
 
-                        if None in object_list:
-                            temp = []
-                            for object_element in object_list:
-                                if object_element != None:
-                                    temp.append(object_element)
-                            object_list = temp
-
+                            if None in object_list:
+                                temp = []
+                                for object_element in object_list:
+                                    if object_element != None:
+                                        temp.append(object_element)
+                                object_list = temp
+                        else:
+                            object_list = []
                 else:
                     if object != None:
                         if "\\" in object[1:-1]:
