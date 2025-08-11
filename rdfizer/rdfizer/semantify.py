@@ -2187,7 +2187,8 @@ def mapping_parser(mapping_file):
     		prefix td: <https://www.w3.org/2019/wot/td#>
     		prefix htv: <http://www.w3.org/2011/http#>
     		prefix hctl: <https://www.w3.org/2019/wot/hypermedia#>
-            prefix fnml: <http://semweb.mmlab.be/ns/fnml#>  
+            prefix fnml: <http://semweb.mmlab.be/ns/fnml#>
+            prefix csvw: <http://www.w3.org/ns/csvw#>   
     		SELECT DISTINCT *
     		WHERE {
 
@@ -2200,6 +2201,12 @@ def mapping_parser(mapping_file):
     				?data_link td:hasForm ?form .
     				?form hctl:hasTarget ?url_source .
     			}
+                OPTIONAL{
+                    ?_source rml:source ?data_link .
+                    ?data_link csvw:url ?url_source .
+                    ?data_link csvw:dialect ?dialect .
+                    ?dialect csvw:delimiter ?delimiter .
+                }
     			OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
     			OPTIONAL { ?_source rml:iterator ?iterator . }
     			OPTIONAL { ?_source rr:tableName ?tablename .}
