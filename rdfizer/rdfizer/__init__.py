@@ -2757,6 +2757,23 @@ def mapping_parser(mapping_file):
                                 else:
                                     if func_map.name == "To be named":
                                         func_map.name = str(result_triples_map.param_constant)
+                            for elem in func_map.parameters:
+                                if isinstance(func_map.parameters[elem],list):
+                                    unique = []
+                                    for sub_elem in func_map.parameters[elem]:
+                                        if sub_elem not in unique:
+                                            unique.append(sub_elem)
+                                    if len(unique) == 1:
+                                        func_map.parameters[elem] = unique[0]
+                                    else:
+                                        func_map.parameters[elem] = unique
+
+
+        #for func in func_map_list:
+        #    print(func.func_map_id)
+        #    print(func.name)
+        #    print(func.parameters)
+
     remove_triples_maps = []
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
