@@ -2,26 +2,51 @@ import re
 import sys
 import os
 from .fnml_functions import *
+try:
+    from triples_map import TriplesMap as tm
+except:
+    from .triples_map import TriplesMap as tm
 
 def new_inner_function(row,function,triples_map):
     functions = []
     keys = []
+    inner_temp_row = {}
     for func_map in triples_map.func_map_list:
         if func_map.func_map_id == function:
             for param in func_map.parameters:
-                if func_map.parameters[param]["type"] == "function":
-                    for fm in triples_map.func_map_list:
-                        if fm.func_map_id == func_map.parameters[param]["value"]:
-                            functions.append(func_map.parameters[param]["value"])
-                    func_map.parameters[param]["type"] = "reference"    
-                elif func_map.parameters[param]["type"] == "template":
-                    if "{" in func_map.parameters[param]["value"]:
-                        attr_list = func_map.parameters[param]["value"].split("{")
-                        for attr in attr_list:
-                            if "}" in attr:
-                                keys.append(attr.split("}")[0])
-                elif func_map.parameters[param]["type"] == "reference":
-                    keys.append(func_map.parameters[param]["value"])
+                if isinstance(func_map.parameters[param],list):
+                    array_functions = []
+                    for elem in func_map.parameters[param]:
+                        if elem["type"] == "function":
+                            for fm in triples_map.func_map_list:
+                                if fm.func_map_id == elem["value"]:
+                                    array_functions.append(elem["value"])  
+                        elif elem["type"] == "template":
+                            if "{" in elem["value"]:
+                                attr_list = elem["value"].split("{")
+                                for attr in attr_list:
+                                    if "}" in attr:
+                                        keys.append(attr.split("}")[0])
+                        elif elem["type"] == "reference":
+                            keys.append(elem["value"])
+                        if array_functions:
+                            inner_temp_row = {}
+                            for func in array_functions:
+                                value = new_inner_function(row,func,triples_map)
+                                inner_temp_row[func] = value
+                else:
+                    if func_map.parameters[param]["type"] == "function":
+                        for fm in triples_map.func_map_list:
+                            if fm.func_map_id == func_map.parameters[param]["value"]:
+                                functions.append(func_map.parameters[param]["value"])
+                    elif func_map.parameters[param]["type"] == "template":
+                        if "{" in func_map.parameters[param]["value"]:
+                            attr_list = func_map.parameters[param]["value"].split("{")
+                            for attr in attr_list:
+                                if "}" in attr:
+                                    keys.append(attr.split("}")[0])
+                    elif func_map.parameters[param]["type"] == "reference":
+                        keys.append(func_map.parameters[param]["value"])
             if functions:
                 temp_row = {}
                 for func in functions:
@@ -29,13 +54,53 @@ def new_inner_function(row,function,triples_map):
                     temp_row[func] = value
                 for key in keys:
                     temp_row[key] = row[key]
-                current_func = {"inputs":func_map.parameters, 
+                if inner_temp_row:
+                    temp_row = temp_row | inner_temp_row
+                temp_parameters = {}
+                for func in func_map.parameters:
+                    if isinstance(func_map.parameters[func],list):
+                        temp_array = []
+                        for elem in func_map.parameters[func]:
+                            if "function" in elem["type"]:
+                                temp_dic = {"type":"reference","value":elem["value"]}
+                            else:
+                                temp_dic = {"type":elem["type"],"value":elem["value"]}
+                            temp_array.append(temp_dic)
+                        temp_parameters[func] = temp_array
+                    else:
+                        if "function" in func_map.parameters[func]["type"]:
+                            temp_dic = {"type":"reference","value":func_map.parameters[func]["value"]}
+                        else:
+                            temp_dic = {"type":func_map.parameters[func]["type"],"value":func_map.parameters[func]["value"]}
+                        temp_parameters[func] = temp_dic
+                current_func = {"inputs":temp_parameters, 
                                 "function":func_map.name}
                 return execute_function(temp_row,None,current_func)
             else:
-                current_func = {"inputs":func_map.parameters, 
+                temp_parameters = {}
+                for func in func_map.parameters:
+                    if isinstance(func_map.parameters[func],list):
+                        temp_array = []
+                        for elem in func_map.parameters[func]:
+                            if "function" in elem["type"]:
+                                temp_dic = {"type":"reference","value":elem["value"]}
+                            else:
+                                temp_dic = {"type":elem["type"],"value":elem["value"]}
+                            temp_array.append(temp_dic)
+                        temp_parameters[func] = temp_array
+                    else:
+                        if "function" in func_map.parameters[func]["type"]:
+                            temp_dic = {"type":"reference","value":func_map.parameters[func]["value"]}
+                        else:
+                            temp_dic = {"type":func_map.parameters[func]["type"],"value":func_map.parameters[func]["value"]}
+                        temp_parameters[func] = temp_dic
+                current_func = {"inputs":temp_parameters, 
                                 "function":func_map.name}
-                return execute_function(row,None,current_func)  
+                if inner_temp_row:
+                    new_row = row | inner_temp_row
+                    return execute_function(new_row,None,current_func)
+                else:
+                    return execute_function(row,None,current_func)  
 
 
 def inner_function(row,dic,triples_map_list):

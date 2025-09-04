@@ -2179,6 +2179,36 @@ def mapping_parser(mapping_file):
             
         } """
     else:
+        function_query = """
+        prefix rr: <http://www.w3.org/ns/r2rml#> 
+        prefix rml: <http://semweb.mmlab.be/ns/rml#> 
+        prefix ql: <http://semweb.mmlab.be/ns/ql#> 
+        prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+        prefix td: <https://www.w3.org/2019/wot/td#>
+        prefix htv: <http://www.w3.org/2011/http#>
+        prefix hctl: <https://www.w3.org/2019/wot/hypermedia#>
+        prefix fnml: <http://semweb.mmlab.be/ns/fnml#>
+        prefix csvw: <http://www.w3.org/ns/csvw#>
+        SELECT DISTINCT *
+        WHERE {
+        OPTIONAL {
+                ?function_id fnml:functionValue ?function .
+                OPTIONAL{?function rml:logicalSource ?_source .}
+                OPTIONAL{?_source rml:source ?data_source .}
+                OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
+                OPTIONAL {
+                   ?function rr:predicateObjectMap ?_predicate_object_map .
+                   ?_predicate_object_map rr:predicate ?param .
+                   ?_predicate_object_map rr:objectMap ?object_map . 
+                   OPTIONAL {?object_map rr:constant ?param_constant.}
+                   OPTIONAL {?object_map rr:template ?param_template.}
+                   OPTIONAL {?object_map rml:reference ?param_reference.}
+                   OPTIONAL {?object_map fnml:functionValue ?param_func .}
+                }
+            }
+        }
+
+        """
         mapping_query = """
             prefix rr: <http://www.w3.org/ns/r2rml#> 
             prefix rml: <http://semweb.mmlab.be/ns/rml#> 
@@ -2316,7 +2346,15 @@ def mapping_parser(mapping_file):
                                      rr:parent ?parent_value.
                     }
                 }
-                OPTIONAL {?_object_map fnml:functionValue ?function .}
+                OPTIONAL{
+                    ?_predicate_object_map rr:objectMap ?_object_map .
+                    OPTIONAL {
+                        ?_object_map rr:datatype ?object_datatype .
+                    }
+                    ?_object_map fnml:functionValue ?function .
+                    OPTIONAL {?_object_map rr:termType ?term .}
+                    
+                }
                 OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
                 OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
                            ?_graph_structure rr:constant ?predicate_object_graph  . }
@@ -2615,6 +2653,110 @@ def mapping_parser(mapping_file):
             if str(result_triples_map._source) not in view_sources:
                 view_sources[str(result_triples_map._source)] = view
             
+    else:
+        mapping_query_results = mapping_graph.query(function_query)
+        for result_triples_map in mapping_query_results:
+            if result_triples_map.function_id != None:
+                func_map_exists = False
+                for func_map in func_map_list:
+                    func_map_exists = func_map_exists or (
+                                str(func_map.func_map_id) == str(result_triples_map.function))
+                if not func_map_exists:
+                    function = "To be named"
+                    parameters = {}
+                    if result_triples_map.param != None:
+                        if "executes" not in str(result_triples_map.param):
+                            if str(result_triples_map.param) not in parameters:
+                                if result_triples_map.param_constant != None:
+                                    parameters[str(result_triples_map.param)] = {
+                                            "value":str(result_triples_map.param_constant), 
+                                            "type":"constant"}
+                                elif result_triples_map.param_reference != None:
+                                    parameters[str(result_triples_map.param)] = {
+                                            "value":str(result_triples_map.param_reference), 
+                                            "type":"reference"}
+                                elif result_triples_map.param_template != None:
+                                    parameters[str(result_triples_map.param)] = {
+                                            "value":str(result_triples_map.param_template), 
+                                            "type":"template"}
+                                elif result_triples_map.param_func != None:
+                                    parameters[str(result_triples_map.param)] = {
+                                            "value":str(result_triples_map.param_func), 
+                                            "type":"function"}
+                        else:
+                            function = str(result_triples_map.param_constant)
+                    func_map = tm.FunctionMap(str(result_triples_map.function),function,parameters)
+                    func_map_list.append(func_map)
+                else:
+                    for func_map in func_map_list:
+                        if str(func_map.func_map_id) == str(result_triples_map.function):
+                            if result_triples_map.param != None:
+                                if "executes" not in str(result_triples_map.param):
+                                    if str(result_triples_map.param) not in func_map.parameters:
+                                        if result_triples_map.param_constant != None:
+                                            func_map.parameters[str(result_triples_map.param)] = {
+                                                    "value":str(result_triples_map.param_constant), 
+                                                    "type":"constant"}
+                                        elif result_triples_map.param_reference != None:
+                                            func_map.parameters[str(result_triples_map.param)] = {
+                                                    "value":str(result_triples_map.param_reference), 
+                                                    "type":"reference"}
+                                        elif result_triples_map.param_template != None:
+                                            func_map.parameters[str(result_triples_map.param)] = {
+                                                    "value":str(result_triples_map.param_template), 
+                                                    "type":"template"}
+                                        elif result_triples_map.param_func != None:
+                                            func_map.parameters[str(result_triples_map.param)] = {
+                                                    "value":str(result_triples_map.param_func), 
+                                                    "type":"function"}
+                                    else:
+                                        if result_triples_map.param_constant != None:
+                                            if not isinstance(func_map.parameters[str(result_triples_map.param)],list):
+                                                if func_map.parameters[str(result_triples_map.param)]["value"] != result_triples_map.param_constant:
+                                                    func_map.parameters[str(result_triples_map.param)] = [func_map.parameters[str(result_triples_map.param)]]
+                                                    func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_constant), 
+                                                            "type":"constant"})
+                                            else:
+                                                func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_constant), 
+                                                            "type":"constant"})
+                                        elif result_triples_map.param_reference != None:
+                                            if not isinstance(func_map.parameters[str(result_triples_map.param)],list):
+                                                if func_map.parameters[str(result_triples_map.param)]["value"] != result_triples_map.param_reference:
+                                                    func_map.parameters[str(result_triples_map.param)] = [func_map.parameters[str(result_triples_map.param)]]
+                                                    func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_reference), 
+                                                            "type":"reference"})
+                                            else:
+                                                func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_reference), 
+                                                            "type":"reference"})
+                                        elif result_triples_map.param_template != None:
+                                            if not isinstance(func_map.parameters[str(result_triples_map.param)],list):
+                                                if func_map.parameters[str(result_triples_map.param)]["value"] != result_triples_map.param_template:
+                                                    func_map.parameters[str(result_triples_map.param)] = [func_map.parameters[str(result_triples_map.param)]]
+                                                    func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_template), 
+                                                            "type":"template"})
+                                            else:
+                                                func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_template), 
+                                                            "type":"template"})
+                                        elif result_triples_map.param_func != None:
+                                            if not isinstance(func_map.parameters[str(result_triples_map.param)],list):
+                                                if func_map.parameters[str(result_triples_map.param)]["value"] != result_triples_map.param_func:
+                                                    func_map.parameters[str(result_triples_map.param)] = [func_map.parameters[str(result_triples_map.param)]]
+                                                    func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_func), 
+                                                            "type":"function"})
+                                            else:
+                                                func_map.parameters[str(result_triples_map.param)].append({
+                                                            "value":str(result_triples_map.param_func), 
+                                                            "type":"function"})
+                                else:
+                                    if func_map.name == "To be named":
+                                        func_map.name = str(result_triples_map.param_constant)
     remove_triples_maps = []
     mapping_query_results = mapping_graph.query(mapping_query)
     for result_triples_map in mapping_query_results:
@@ -2725,11 +2867,12 @@ def mapping_parser(mapping_file):
             elif result_triples_map.subject_function != None:
                 gather = False
                 func_output = "None"
-                if result_triples_map.subject_output != None:
-                    if "#" in result_triples_map.subject_output:
-                        func_output = result_triples_map.subject_output.split("#")[1]
-                    else:
-                        func_output = result_triples_map.subject_output.split("/")[len(result_triples_map.subject_output.split("/"))-1]
+                if new_formulation == "yes":
+                    if result_triples_map.subject_output != None:
+                        if "#" in result_triples_map.subject_output:
+                            func_output = result_triples_map.subject_output.split("#")[1]
+                        else:
+                            func_output = result_triples_map.subject_output.split("/")[len(result_triples_map.subject_output.split("/"))-1]
                 if result_triples_map.rdf_class is None:
                     reference, condition = string_separetion(str(result_triples_map.subject_constant))
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_function), condition, "function","None","None", 
@@ -2959,12 +3102,15 @@ def mapping_parser(mapping_file):
                                 "parents"].append(str(result_predicate_object_map.parent_value))
                     join = False
                 elif result_predicate_object_map.function is not None:
+                    #for var, val in zip(mapping_query_prepared_results.vars, result_predicate_object_map):
+                        #print(f"{var} -> {val}")
                     func_output = "None"
-                    if result_predicate_object_map.func_output != None:
-                        if "#" in result_predicate_object_map.func_output:
-                            func_output = result_predicate_object_map.func_output.split("#")[1]
-                        else:
-                            func_output = result_predicate_object_map.func_output.split("/")[len(result_predicate_object_map.func_output.split("/"))-1]
+                    if new_formulation == "yes":
+                        if result_predicate_object_map.func_output != None:
+                            if "#" in result_predicate_object_map.func_output:
+                                func_output = result_predicate_object_map.func_output.split("#")[1]
+                            else:
+                                func_output = result_predicate_object_map.func_output.split("/")[len(result_predicate_object_map.func_output.split("/"))-1]
                     object_map = tm.ObjectMap("reference function", str(result_predicate_object_map.function),
                                             str(result_predicate_object_map.object_datatype), "None", "None", 
                                             result_predicate_object_map.term, result_predicate_object_map.language,
@@ -5706,56 +5852,36 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 
             elif "function" in triples_map.subject_map.subject_mapping_type:
                 subject = None
-                if new_formulation == "no":
-                    temp_dics = []
-                    for triples_map_element in triples_map_list:
-                        if triples_map_element.triples_map_id == triples_map.subject_map.value:
-                            dic = create_dictionary(triples_map_element)
-                            current_func = {"output_name":"OUTPUT", 
-                                            "inputs":dic["inputs"], 
-                                            "function":dic["executes"],
-                                            "func_par":dic}
-                            for inputs in dic["inputs"]:
-                                temp_dic = {}
-                                if "reference function" in inputs:
-                                    temp_dic = {"inputs":dic["inputs"], 
-                                                    "function":dic["executes"],
-                                                    "func_par":dic,
-                                                    "id":triples_map_element.triples_map_id}
-                                    if inner_function_exists(temp_dic, temp_dics):
-                                        temp_dics.append(temp_dic)
-                            if temp_dics:
-                                func = inner_function(row,current_func,triples_map_list)
-                                subject = "<" + encode_char(func) + ">"
+                func = None
+                for func_map in triples_map.func_map_list:
+                    if func_map.func_map_id == triples_map.subject_map.value:
+                        current_func = {"inputs":func_map.parameters, 
+                                        "function":func_map.name}
+                        inner_func = False
+                        for param in func_map.parameters:
+                            if isinstance(func_map.parameters[param],list):
+                                for elem in func_map.parameters[param]:
+                                    if "function" in elem["type"]:
+                                        inner_func = True  
                             else:
-                                func = execute_function(row,current_func)
-                                subject = "<" + encode_char(func) + ">"
-                else:
-                    func = None
-                    for func_map in triples_map.func_map_list:
-                        if func_map.func_map_id == triples_map.subject_map.value:
-                            current_func = {"inputs":func_map.parameters, 
-                                            "function":func_map.name}
-                            inner_func = False
-                            for param in func_map.parameters:
                                 if "function" in func_map.parameters[param]["type"]:
                                     inner_func = True
-                            if inner_func:
-                                func = new_inner_function(row,triples_map.subject_map.value,triples_map)
-                            else:
-                                func = execute_function(row,None,current_func)
-                    if triples_map.subject_map.func_result != None:
-                        if "unknownOut" == triples_map.subject_map.func_result:
-                            func = None
-                    if triples_map.subject_map.func_result != None and func != None and isinstance(func,dict):
-                        func = func[triples_map.subject_map.func_result]
-                    if func != None:
-                        if "http://" in func or "https://" in func:
-                            subject = "<" + func + ">"
+                        if inner_func:
+                            func = new_inner_function(row,triples_map.subject_map.value,triples_map)
                         else:
-                            subject = "<" + encode_char(func) + ">"
+                            func = execute_function(row,None,current_func)
+                if triples_map.subject_map.func_result != None:
+                    if "unknownOut" == triples_map.subject_map.func_result:
+                        func = None
+                if triples_map.subject_map.func_result != None and func != None and isinstance(func,dict):
+                    func = func[triples_map.subject_map.func_result]
+                if func != None:
+                    if "http://" in func or "https://" in func:
+                        subject = "<" + func + ">"
                     else:
-                        subject = None
+                        subject = "<" + encode_char(func) + ">"
+                else:
+                    subject = None
             elif "quoted triples map" in triples_map.subject_map.subject_mapping_type:
                 for triples_map_element in triples_map_list:
                     if triples_map_element.triples_map_id == triples_map.subject_map.value:
@@ -6358,79 +6484,47 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     object = None
             elif predicate_object_map.object_map.mapping_type == "reference function":
                 object = None
-                if new_formulation == "no":
-                    temp_dics = []
-                    for triples_map_element in triples_map_list:
-                        if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
-                            dic = create_dictionary(triples_map_element)
-                            current_func = {"inputs":dic["inputs"], 
-                                            "function":dic["executes"],
-                                            "func_par":dic}
-                            for inputs in dic["inputs"]:
-                                temp_dic = {}
-                                if "reference function" in inputs:
-                                    temp_dic = {"inputs":dic["inputs"], 
-                                                    "function":dic["executes"],
-                                                    "func_par":dic,
-                                                    "id":triples_map_element.triples_map_id}
-                                    if inner_function_exists(temp_dic, temp_dics):
-                                        temp_dics.append(temp_dic)
-                            if temp_dics:
-                                func = inner_function(row,current_func,triples_map_list)
-                                if predicate_object_map.object_map.term is not None:
-                                    if "IRI" in predicate_object_map.object_map.term:
-                                        object = "<" + encode_char(func) + ">"
-                                else:
-                                    if "" != func:
-                                        object = "\"" + func + "\""
-                                    else:
-                                        object = None
+                func = None
+                for func_map in triples_map.func_map_list:
+                    if func_map.func_map_id == predicate_object_map.object_map.value:
+                        #print(func_map.parameters)
+                        current_func = {"inputs":func_map.parameters, 
+                                        "function":func_map.name}
+                        #print("HOla")
+                        inner_func = False
+                        for param in func_map.parameters:
+                            if isinstance(func_map.parameters[param],list):
+                                for elem in func_map.parameters[param]:
+                                    if "function" in elem["type"]:
+                                        inner_func = True
                             else:
-                                if predicate_object_map.object_map.term is not None:
-                                    func = execute_function(row,None,current_func)
-                                    if "IRI" in predicate_object_map.object_map.term:
-                                        object = "<" + encode_char(func) + ">"
-                                else:
-                                    func = execute_function(row,None,current_func)
-                                    if "" != func:
-                                        object = "\"" + func + "\""
-                                    else:
-                                        object = None
-                else:
-                    func = None
-                    for func_map in triples_map.func_map_list:
-                        if func_map.func_map_id == predicate_object_map.object_map.value:
-                            current_func = {"inputs":func_map.parameters, 
-                                            "function":func_map.name}
-                            inner_func = False
-                            for param in func_map.parameters:
                                 if "function" in func_map.parameters[param]["type"]:
                                     inner_func = True
-                            if inner_func:
-                                func = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                        if inner_func:
+                            func = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                        else:
+                            func = execute_function(row,None,current_func)
+                if predicate_object_map.object_map.func_result != None:
+                    if "unknownOut" == predicate_object_map.object_map.func_result:
+                        func = None
+                if predicate_object_map.object_map.func_result != None and func != None and isinstance(func,dict):
+                    func = func[predicate_object_map.object_map.func_result]
+                if predicate_object_map.object_map.term is not None:
+                    if func != None:
+                        if "IRI" in predicate_object_map.object_map.term:
+                            if "http://" in func.lower() or "https://" in func.lower():
+                                object = "<" + func + ">"
                             else:
-                                func = execute_function(row,None,current_func)
-                    if predicate_object_map.object_map.func_result != None:
-                        if "unknownOut" == predicate_object_map.object_map.func_result:
-                            func = None
-                    if predicate_object_map.object_map.func_result != None and func != None and isinstance(func,dict):
-                        func = func[predicate_object_map.object_map.func_result]
-                    if predicate_object_map.object_map.term is not None:
-                        if func != None:
-                            if "IRI" in predicate_object_map.object_map.term:
-                                if "http://" in func.lower() or "https://" in func.lower():
-                                    object = "<" + func + ">"
-                                else:
-                                    object = "<" + encode_char(func) + ">"
-                        else:
-                            object = None
+                                object = "<" + encode_char(func) + ">"
                     else:
-                        if None != func:
-                            object = "\"" + func + "\""
-                            if is_convertible_to_int(func):
-                                object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        else:
-                            object = None
+                        object = None
+                else:
+                    if None != func:
+                        object = "\"" + func + "\""
+                        if is_convertible_to_int(func):
+                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                    else:
+                        object = None
             elif "quoted triples map" in predicate_object_map.object_map.mapping_type:
                 for triples_map_element in triples_map_list:
                     if triples_map_element.triples_map_id == predicate_object_map.object_map.value:

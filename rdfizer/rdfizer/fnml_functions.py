@@ -17,12 +17,87 @@ global functions_pool
 functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "replaceValue":"","concat2":"","uuid":"","helloworld":"",
                 "escape":"","schema":"","string_replace":"",
-                "parseURL":"","random":"","length":"","string_substring":""}
+                "parseURL":"","random":"","length":"","string_substring":"",
+                "array_join":"","control_if":"","string_md5":"","string_contains":"",
+                "string_replace":"","slugify":"","trueCondition":"","isNull":"",
+                "notEqual":"","equal":"","normalizeDateTime":"","normalizeDate":"",
+                "listContainsElement":""}
 
 
 ## Define your functions here following examples below, the column "names" from the csv files 
 ## that you aim to use as the input parameters of functions are only required to be provided 
 ## as the keys of "global_dic"
+def listContainsElement():
+    if str(global_dic["str"]) in global_dic["list"]:
+        return True
+    else:
+        return False
+
+def normalizeDate():
+    from datetime import datetime
+    #from dateutil import parser
+    return datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"]))
+
+def normalizeDateTime():
+    from datetime import datetime
+    #from dateutil import parser
+    return datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"]))
+
+def equal():
+    if str(global_dic["valueParameter"]) == str(global_dic["valueParameter2"]):
+        return True
+    else:
+        return False
+
+def notEqual():
+    if str(global_dic["valueParameter"]) != str(global_dic["valueParameter2"]):
+        return True
+    else:
+        return False
+
+def isNull():
+    if str(global_dic["str"]) == "null" or str(global_dic["str"]) == "":
+        return True
+    else:
+        return False
+
+def trueCondition():
+    if bool(global_dic["strBoolean"]):
+        return str(global_dic["str"])
+    else:
+        return None
+
+def slugify():
+    from slugify import slugify
+    return slugify(str(global_dic["str"]))
+
+def string_replace():
+    return str(global_dic["valueParameter"]).replace(str(global_dic["p_string_find"]),str(global_dic["p_string_replace"]))
+
+def string_contains():
+    if str(global_dic["string_sub"]) in str(global_dic["valueParameter"]):
+        return True
+    else:
+        return False
+
+def string_md5():
+    import hashlib
+    return hashlib.md5(str(global_dic["valueParameter"]).encode()).hexdigest()
+
+def control_if():
+    if bool(global_dic["param_b"]):
+        return str(global_dic["param_true"])
+    else:
+        return str(global_dic["param_false"])
+
+def array_join():
+    output = ""
+    for elem in global_dic["p_array_a"]:
+        output += str(elem)
+        if elem != global_dic["p_array_a"][len(global_dic["p_array_a"])-1]:
+            output += str(global_dic["p_string_sep"])    
+    return output
+
 def string_substring(): 
     if int(global_dic["p_int_i_from"]) > len(str(global_dic["valueParam"])):
         return None
@@ -140,25 +215,50 @@ def execution_dic(row,header,dic):
                 param = inputs.split("#")[1]
             else:
                 param = inputs.split("/")[len(inputs.split("/"))-1]
-            if "constant" != dic["inputs"][inputs]["type"]:
-                if "reference" == dic["inputs"][inputs]["type"]:
-                    if isinstance(row,dict):
-                        if dic["inputs"][inputs]["value"] in row:
-                            output[param] = row[dic["inputs"][inputs]["value"]]
-                        else:
-                            return None
+            if isinstance(dic["inputs"][inputs],list):
+                output[param] = []
+                for elem in dic["inputs"][inputs]:
+                    if "constant" != elem["type"]:
+                        if "reference" == elem["type"]:
+                            if isinstance(row,dict):
+                                if elem["value"] in row:
+                                    output[param].append(row[elem["value"]])
+                                else:
+                                    return None
+                            else:
+                                if elem["value"] in header:
+                                    output[param].append(row[header.index(elem["value"])])
+                                else:
+                                    return None
+                        elif "template" == elem["type"]:
+                            if isinstance(row,dict):
+                                output[param].append(string_substitution(elem["value"], "{(.+?)}", row, "subject", "yes", "None"))
+                            else:
+                                output[param].append(string_substitution_array(elem["value"], "{(.+?)}", row, header, "subject", "yes"))
+                            if output[param] == None:
+                                return None
                     else:
-                        if dic["inputs"][inputs]["value"] in header:
-                            output[param] = row[header.index(dic["inputs"][inputs]["value"])]
-                        else:
-                            return None
-                elif "template" == dic["inputs"][inputs]["type"]:
-                    if isinstance(row,dict):
-                        output[param] = string_substitution(dic["inputs"][inputs]["value"], "{(.+?)}", row, "subject", "yes", "None")
-                    else:
-                        output[param] = string_substitution_array(dic["inputs"][inputs]["value"], "{(.+?)}", row, header, "subject", "yes")
-                    if output[param] == None:
-                        return None
+                       output[param].append(elem["value"])
             else:
-               output[param] = dic["inputs"][inputs]["value"] 
+                if "constant" != dic["inputs"][inputs]["type"]:
+                    if "reference" == dic["inputs"][inputs]["type"]:
+                        if isinstance(row,dict):
+                            if dic["inputs"][inputs]["value"] in row:
+                                output[param] = row[dic["inputs"][inputs]["value"]]
+                            else:
+                                return None
+                        else:
+                            if dic["inputs"][inputs]["value"] in header:
+                                output[param] = row[header.index(dic["inputs"][inputs]["value"])]
+                            else:
+                                return None
+                    elif "template" == dic["inputs"][inputs]["type"]:
+                        if isinstance(row,dict):
+                            output[param] = string_substitution(dic["inputs"][inputs]["value"], "{(.+?)}", row, "subject", "yes", "None")
+                        else:
+                            output[param] = string_substitution_array(dic["inputs"][inputs]["value"], "{(.+?)}", row, header, "subject", "yes")
+                        if output[param] == None:
+                            return None
+                else:
+                   output[param] = dic["inputs"][inputs]["value"] 
     return output
