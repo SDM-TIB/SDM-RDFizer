@@ -2061,6 +2061,7 @@ def mapping_parser(mapping_file):
                 ?_predicate_object_map rml:objectMap ?_object_map .
                 ?_object_map rml:template ?object_template .
                 OPTIONAL {?_object_map rml:termType ?term .}
+                OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           ?language_map rml:reference ?language_value.}
                 OPTIONAL {
@@ -2298,6 +2299,7 @@ def mapping_parser(mapping_file):
                 OPTIONAL {
                     ?_object_map rr:template ?object_template .
                     OPTIONAL {?_object_map rr:termType ?term .}
+                    OPTIONAL { ?_object_map rr:language ?language .}
                     OPTIONAL {?_object_map rml:languageMap ?language_map.
                               ?language_map rml:reference ?language_value.}
                     OPTIONAL {
