@@ -85,10 +85,10 @@ def string_md5():
     return hashlib.md5(str(global_dic["valueParameter"]).encode()).hexdigest()
 
 def controls_if():
-    if bool(global_dic["param_b"]):
-        return str(global_dic["param_true"])
+    if bool(global_dic["bool_b"]):
+        return str(global_dic["any_true"])
     else:
-        return str(global_dic["param_false"])
+        return str(global_dic["any_false"])
 
 def array_join():
     output = ""
