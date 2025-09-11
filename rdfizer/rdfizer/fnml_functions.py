@@ -18,7 +18,7 @@ functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "replaceValue":"","concat2":"","uuid":"","helloworld":"",
                 "escape":"","schema":"","string_replace":"",
                 "parseURL":"","random":"","length":"","string_substring":"",
-                "array_join":"","control_if":"","string_md5":"","string_contains":"",
+                "array_join":"","controls_if":"","string_md5":"","string_contains":"",
                 "string_replace":"","slugify":"","trueCondition":"","isNull":"",
                 "notEqual":"","equal":"","normalizeDateTime":"","normalizeDate":"",
                 "listContainsElement":""}
@@ -84,7 +84,7 @@ def string_md5():
     import hashlib
     return hashlib.md5(str(global_dic["valueParameter"]).encode()).hexdigest()
 
-def control_if():
+def controls_if():
     if bool(global_dic["param_b"]):
         return str(global_dic["param_true"])
     else:
