@@ -19,7 +19,7 @@ functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "escape":"","schema":"","string_replace":"",
                 "parseURL":"","random":"","length":"","string_substring":"",
                 "array_join":"","controls_if":"","string_md5":"","string_contains":"",
-                "string_replace":"","slugify":"","trueCondition":"","isNull":"",
+                "slugify":"","trueCondition":"","isNull":"",
                 "notEqual":"","equal":"","normalizeDateTime":"","normalizeDate":"",
                 "listContainsElement":""}
 
@@ -86,9 +86,15 @@ def string_md5():
 
 def controls_if():
     if bool(global_dic["bool_b"]):
-        return str(global_dic["any_true"])
+        if "any_true" in global_dic:
+            return str(global_dic["any_true"])
+        else:
+            return None
     else:
-        return str(global_dic["any_false"])
+        if "any_false" in global_dic:
+            return str(global_dic["any_false"])
+        else:
+            return None
 
 def array_join():
     output = ""
@@ -116,8 +122,8 @@ def toUpperCase():
 def helloworld(): 
     return "Hello World!"
 
-def string_replace(): 
-    return global_dic["valueParam"].replace(global_dic["param_find"],global_dic["param_replace"])
+#def string_replace(): 
+#    return global_dic["valueParam"].replace(global_dic["param_find"],global_dic["param_replace"])
 
 def parseURL():
     parsed = {}
@@ -257,7 +263,7 @@ def execution_dic(row,header,dic):
                             output[param] = string_substitution(dic["inputs"][inputs]["value"], "{(.+?)}", row, "subject", "yes", "None")
                         else:
                             output[param] = string_substitution_array(dic["inputs"][inputs]["value"], "{(.+?)}", row, header, "subject", "yes")
-                        if output[param] == None:
+                        if output[param] == None and "controls_if" not in dic["function"]:
                             return None
                 else:
                    output[param] = dic["inputs"][inputs]["value"] 
