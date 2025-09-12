@@ -105,10 +105,10 @@ def array_join():
     return output
 
 def string_substring(): 
-    if int(global_dic["p_int_i_from"]) > len(str(global_dic["valueParam"])):
+    if int(global_dic["param_int_i_from"]) > len(str(global_dic["valueParameter"])) or int(global_dic["param_int_i_opt_to"]) > len(str(global_dic["valueParameter"])):
         return None
     else:
-        return str(global_dic["valueParam"])[int(global_dic["p_int_i_from"]):]
+        return str(global_dic["valueParameter"])[int(global_dic["param_int_i_from"]):int(global_dic["param_int_i_opt_to"])]
 
 def length(): 
     return str(len(str(global_dic["valueParam"])))
