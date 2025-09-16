@@ -36,12 +36,12 @@ def listContainsElement():
 def normalizeDate():
     from datetime import datetime
     #from dateutil import parser
-    return datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"]))
+    return str(datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"])))
 
 def normalizeDateTime():
     from datetime import datetime
     #from dateutil import parser
-    return datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"]))
+    return str(datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"])))
 
 def equal():
     if str(global_dic["valueParameter"]) == str(global_dic["valueParameter2"]):
