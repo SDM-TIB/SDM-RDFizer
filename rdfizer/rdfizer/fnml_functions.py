@@ -63,7 +63,10 @@ def isNull():
 
 def trueCondition():
     if bool(global_dic["strBoolean"]):
-        return str(global_dic["str"])
+        if "None" != str(global_dic["str"]):
+            return str(global_dic["str"])
+        else:
+            return None
     else:
         return None
 
@@ -87,12 +90,18 @@ def string_md5():
 def controls_if():
     if bool(global_dic["bool_b"]):
         if "any_true" in global_dic:
-            return str(global_dic["any_true"])
+            if "None" == str(global_dic["any_true"]):
+                return None
+            else:
+                return str(global_dic["any_true"])
         else:
             return None
     else:
         if "any_false" in global_dic:
-            return str(global_dic["any_false"])
+            if "None" == str(global_dic["any_false"]):
+                return None
+            else:
+                return str(global_dic["any_false"])
         else:
             return None
 
