@@ -497,6 +497,8 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                                     value = "_:" + encode_char(value).replace("%", "")
                                                     if "." in value:
                                                         value = value.replace(".", "2E")
+                                            else:
+                                                value = "<" + value + ">"
                                         else:
                                             value = "<" + value + ">"
                                         hash_table[row[child_object.parent[0]]].update({value: "object"})
@@ -713,6 +715,8 @@ def hash_maker_list(parent_data, parent_subject, child_object):
                                             value = "_:" + encode_char(value).replace("%", "")
                                             if "." in value:
                                                 value = value.replace(".", "2E")
+                                    else:
+                                        value = "<" + value + ">"
                                 else:
                                     value = "<" + value + ">"
                                 hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
@@ -745,6 +749,8 @@ def hash_maker_list(parent_data, parent_subject, child_object):
                                             value = "_:" + encode_char(value).replace("%", "")
                                             if "." in value:
                                                 value = value.replace(".", "2E")
+                                    else:
+                                        value = "<" + value + ">"
                                 else:
                                     value = "<" + value + ">"
                                 hash_table[child_list_value(child_object.parent, row)].update({value: "object"})
@@ -777,11 +783,12 @@ def hash_maker_list(parent_data, parent_subject, child_object):
                                         value = "_:" + encode_char(value).replace("%", "")
                                         if "." in value:
                                             value = value.replace(".", "2E")
+                                else:
+                                    value = "<" + value + ">"
                             else:
                                 value = "<" + value + ">"
                             hash_table.update({child_list_value(child_object.parent, row): {value: "object"}})
     join_table.update({parent_subject.triples_map_id + "_" + child_list(child_object.child): hash_table})
-
 
 def hash_maker_xml(parent_data, parent_subject, child_object, parent_map, namespace):
     hash_table = {}
