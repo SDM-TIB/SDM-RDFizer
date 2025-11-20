@@ -4056,6 +4056,13 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                                         hash_maker(data[list(data.keys())[0]], triples_map_element,
                                                                    predicate_object_map.object_map,"", triples_map_list)
 
+                                    elif "RMLView" in triples_map_element.file_format:
+                                        if triples_map_element.data_source in inner_view:
+                                            data = view_projection(view_sources[triples_map_element.data_source],
+                                                                    view_sources,inner_view[triples_map_element.data_source])
+                                        else:
+                                            data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                        hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                                     elif triples_map_element.file_format == "XPath":
                                         with open(str(triples_map_element.data_source),
                                                   "r") as input_file_descriptor:
@@ -4491,6 +4498,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     else:
                         i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, row,
                                             "$" + iterator.replace(new_iterator[:-1], ""))
+                    executed = False
                 elif "[*]" in tp:
                     if tp.split("[*]")[0] in row:
                         if isinstance(row[tp.split("[*]")[0]], list):
@@ -4500,6 +4508,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         else:
                             i += semantify_json(triples_map, triples_map_list, delimiter, output_file_descriptor, row,
                                                 "$" + iterator.replace(new_iterator[:-1], ""))
+                        executed = False
                     else:
                         row = []
                 elif "*" == tp:
@@ -5162,6 +5171,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                                         hash_maker(data_element[list(data_element.keys())[0]],
                                                                    triples_map_element, predicate_object_map.object_map,"", triples_map_list)
 
+                                    elif "RMLView" in triples_map_element.file_format:
+                                        if triples_map_element.data_source in inner_view:
+                                            data = view_projection(view_sources[triples_map_element.data_source],
+                                                                    view_sources,inner_view[triples_map_element.data_source])
+                                        else:
+                                            data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                        hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                                     elif triples_map_element.file_format == "XPath":
                                         with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
                                             child_tree = ET.parse(input_file_descriptor)
@@ -5222,6 +5238,13 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                                         else:
                                                             hash_maker(data_element[list(data_element.keys())[0]],
                                                                        triples_map_element, predicate_object_map.object_map,"", triples_map_list)
+                                        elif "RMLView" in triples_map_element.file_format:
+                                            if triples_map_element.data_source in inner_view:
+                                                data = view_projection(view_sources[triples_map_element.data_source],
+                                                                        view_sources,inner_view[triples_map_element.data_source])
+                                            else:
+                                                data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                            hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                                         elif triples_map_element.file_format == "XPath":
                                             with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
                                                 child_tree = ET.parse(input_file_descriptor)
@@ -6287,6 +6310,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                            triples_map_element,
                                                                            predicate_object_map.object_map,"", triples_map_list)
 
+                                        elif "RMLView" in triples_map_element.file_format:
+                                            if triples_map_element.data_source in inner_view:
+                                                data = view_projection(view_sources[triples_map_element.data_source],
+                                                                        view_sources,inner_view[triples_map_element.data_source])
+                                            else:
+                                                data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                            hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
+
                                         elif triples_map_element.file_format == "XPath":
                                             with open(str(triples_map_element.data_source),
                                                       "r") as input_file_descriptor:
@@ -6430,6 +6461,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                             triples_map_element,
                                                                             predicate_object_map.object_map)
 
+                                        elif "RMLView" in triples_map_element.file_format:
+                                            if triples_map_element.data_source in inner_view:
+                                                data = view_projection(view_sources[triples_map_element.data_source],
+                                                                        view_sources,inner_view[triples_map_element.data_source])
+                                            else:
+                                                data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                            hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
+                                        
                                         elif triples_map_element.file_format == "XPath":
                                             with open(str(triples_map_element.data_source),
                                                       "r") as input_file_descriptor:
@@ -7879,6 +7918,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                                 elif len(data) < 2:
                                                     hash_maker_list(data[list(data.keys())[0]], triples_map_element,
                                                                     predicate_object_map.object_map)
+                                elif "RMLView" in triples_map_element.file_format:
+                                    if triples_map_element.data_source in inner_view:
+                                        data = view_projection(view_sources[triples_map_element.data_source],
+                                                                view_sources,inner_view[triples_map_element.data_source])
+                                    else:
+                                        data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                    hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                                 elif triples_map_element.file_format == "XPath":
                                     with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
                                         child_tree = ET.parse(input_file_descriptor)
@@ -7943,7 +7989,13 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                                 elif len(data) < 2:
                                                     hash_maker_list(data[list(data.keys())[0]], triples_map_element,
                                                                     predicate_object_map.object_map)
-
+                                elif "RMLView" in triples_map_element.file_format:
+                                    if triples_map_element.data_source in inner_view:
+                                        data = view_projection(view_sources[triples_map_element.data_source],
+                                                                view_sources,inner_view[triples_map_element.data_source])
+                                    else:
+                                        data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                    hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                                 elif triples_map_element.file_format == "XPath":
                                     with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
                                         child_tree = ET.parse(input_file_descriptor)
@@ -8779,7 +8831,13 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                             data = json.load(input_file_descriptor)
                                             hash_maker(data[list(data.keys())[0]], triples_map_element,
                                                        predicate_object_map.object_map,"", triples_map_list)
-
+                            elif "RMLView" in triples_map_element.file_format:
+                                if triples_map_element.data_source in inner_view:
+                                    data = view_projection(view_sources[triples_map_element.data_source],
+                                                            view_sources,inner_view[triples_map_element.data_source])
+                                else:
+                                    data = view_projection(view_sources[triples_map_element.data_source],view_sources,[])
+                                hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
                             elif triples_map_element.file_format == "XPath":
                                 with open(str(triples_map_element.data_source), "r") as input_file_descriptor:
                                     child_tree = ET.parse(input_file_descriptor)
