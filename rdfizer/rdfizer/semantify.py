@@ -2112,8 +2112,12 @@ def mapping_parser(mapping_file):
                 ?_object_map rml:parentTriplesMap ?object_parent_triples_map .
                 OPTIONAL {
                     ?_object_map rml:joinCondition ?join_condition .
-                    ?join_condition rml:child ?child_value;
-                                 rml:parent ?parent_value.
+                    OPTIONAL{?join_condition rml:child ?child_value.}
+                    OPTIONAL{?join_condition rml:parent ?parent_value.}
+                    OPTIONAL{?join_condition rml:childMap ?childMap.
+                             OPTIONAL{?childMap rml:reference ?child_reference.}
+                             OPTIONAL{?childMap rml:template ?child_template.}
+                             OPTIONAL{?childMap rml:constant ?child_constant.}}
                     OPTIONAL{?parent_value rml:functionExecution ?executed_parent .
                             ?executed_parent rml:function ?parent_function .}
                     OPTIONAL{?child_value rml:functionExecution ?executed_child .
@@ -6508,22 +6512,25 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 if predicate_object_map.object_map.parent != None:
                                     if (triples_map_element.triples_map_id + "_" + child_list(
                                             predicate_object_map.object_map.child)) not in join_table:
-                                        with open(str(triples_map_element.data_source),
-                                                  "r") as input_file_descriptor:
-                                            if str(triples_map_element.file_format).lower() == "csv":
-                                                parent_data = csv.DictReader(input_file_descriptor,
-                                                                             delimiter=delimiter)
-                                                hash_maker_list(parent_data, triples_map_element,
-                                                                predicate_object_map.object_map)
-                                            else:
-                                                parent_data = json.load(input_file_descriptor)
-                                                if isinstance(parent_data, list):
+                                        if "RMLView" in triples_map_element.file_format:
+                                            hash_maker(data, triples_map_element,predicate_object_map.object_map,"", triples_map_list)
+                                        else:
+                                            with open(str(triples_map_element.data_source),
+                                                      "r") as input_file_descriptor:
+                                                if str(triples_map_element.file_format).lower() == "csv":
+                                                    parent_data = csv.DictReader(input_file_descriptor,
+                                                                                 delimiter=delimiter)
                                                     hash_maker_list(parent_data, triples_map_element,
                                                                     predicate_object_map.object_map)
                                                 else:
-                                                    hash_maker_list(parent_data[list(parent_data.keys())[0]],
-                                                                    triples_map_element,
-                                                                    predicate_object_map.object_map)
+                                                    parent_data = json.load(input_file_descriptor)
+                                                    if isinstance(parent_data, list):
+                                                        hash_maker_list(parent_data, triples_map_element,
+                                                                        predicate_object_map.object_map)
+                                                    else:
+                                                        hash_maker_list(parent_data[list(parent_data.keys())[0]],
+                                                                        triples_map_element,
+                                                                        predicate_object_map.object_map)
                                     if sublist(predicate_object_map.object_map.child, row.keys()):
                                         if child_list_value(predicate_object_map.object_map.child, row) in \
                                                 join_table[triples_map_element.triples_map_id + "_" + child_list(
