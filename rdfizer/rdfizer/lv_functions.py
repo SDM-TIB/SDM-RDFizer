@@ -7,6 +7,35 @@ from .functions import *
 global lv_join_table
 lv_join_table = {}
 
+def list_join_keys(attr_list):
+	value_keys = ""
+	for attr in attr_list:
+		if isinstance(attr,dict):
+			value_keys += "_" + attr["value"] 
+		else:
+			value_keys += "_" + attr 
+	return value_keys[1:]
+
+def join_view_values(attr_list, row, new_row):
+	values_list = ""
+	for attr in attr_list:
+		if isinstance(attr,dict):
+			if attr["type"] == "template":
+				value = string_substitution_json(attr["value"], "{(.+?)}", row, "subject", "yes", "")
+				if value == None:
+					value = string_substitution_json(attr["value"], "{(.+?)}", new_row, "subject", "yes", "")
+				values_list = "_" + value
+			else:
+				values_list += "_" + attr["value"]
+		else:
+			if attr in row:
+				values_list += "_" + row[attr]
+			elif attr in new_row:
+				values_list += "_" + new_row[attr]
+	return values_list[1:]
+
+
+
 def flatten_inner_dict(lst, parent_key='', sep='.'):
     """Flatten a list of dictionaries and inner dictionaries."""
     flat_list = []
@@ -70,6 +99,47 @@ def flatten_nested_json(data):
 
 	return flattened
 
+def hash_maker_lv_list(parent_data, parent_value, parent_id, parent, child):
+	ignore = "yes"
+	duplicate = "yes"
+	global blank_message
+	hash_table = {}
+	for row in parent_data:
+		parent_values = ""
+		for parent_attr in parent:
+			if isinstance(parent,dict):
+				if parent_attr["type"] == "template":
+					value  = string_substitution_json(parent_attr["value"], "{(.+?)}", row, "subject", "yes", "")
+					if value != None:
+						parent_values += "_" + value
+				else:
+					parent_values += "_" + parent_attr["value"]
+			else:
+				if parent_attr in row.keys():
+					parent_values += "_" + row[parent_attr]
+
+		if parent_values[1:] in hash_table:
+			if parent_value in row:
+				value = row[parent_value]
+			else:
+				value = ""
+			if duplicate == "yes":
+				if value not in hash_table[parent_values[1:]]:
+					hash_table[parent_values[1:]].update({value: "object"})
+			else:
+				hash_table[parent_values[1:]].update({value: "object"})
+
+
+		else:
+			if parent_value in row:
+				value = row[parent_value]
+			else:
+				value = ""
+			hash_table.update({parent_values[1:]: {value: "object"}})
+
+
+	child_keys = list_join_keys(child)
+	lv_join_table.update({parent_id + "_" + child_keys : hash_table})
 
 def hash_maker_lv(parent_data, parent_value, parent_id, parent, child):
 	ignore = "yes"
@@ -77,21 +147,51 @@ def hash_maker_lv(parent_data, parent_value, parent_id, parent, child):
 	global blank_message
 	hash_table = {}
 	for row in parent_data:
-		if parent in row.keys():
-			if row[parent] != "" and row[parent] != None:
-				if row[parent] in hash_table:
+		if isinstance(parent,dict):
+			if parent["type"] == "template":
+				join_parent  = string_substitution_json(parent["value"], "{(.+?)}", row, "subject", "yes", "")
+				if join_parent != None:
+					if join_parent in hash_table:
+						value = row[parent_value]
+						if duplicate == "yes":
+							if value not in hash_table[join_parent]:
+								hash_table[join_parent].update({value: "object"})
+						else:
+							hash_table[join_parent].update({value: "object"})
+
+					else:
+						value = row[parent_value]
+						hash_table.update({join_parent: {value: "object"}})
+			else:
+				if parent["value"] in hash_table:
 					value = row[parent_value]
 					if duplicate == "yes":
-						if value not in hash_table[row[parent]]:
-							hash_table[row[parent]].update({value: "object"})
+						if value not in hash_table[parent["value"]]:
+							hash_table[parent["value"]].update({value: "object"})
 					else:
-						hash_table[row[parent]].update({value: "object"})
+						hash_table[parent["value"]].update({value: "object"})
 
 				else:
 					value = row[parent_value]
-					hash_table.update({row[parent]: {value: "object"}})
+					hash_table.update({parent["value"]: {value: "object"}})
+		else:
+			if parent in row.keys():
+				if row[parent] != "" and row[parent] != None:
+					if row[parent] in hash_table:
+						value = row[parent_value]
+						if duplicate == "yes":
+							if value not in hash_table[row[parent]]:
+								hash_table[row[parent]].update({value: "object"})
+						else:
+							hash_table[row[parent]].update({value: "object"})
 
-	lv_join_table.update({parent_id + "_" + child : hash_table})
+					else:
+						value = row[parent_value]
+						hash_table.update({row[parent]: {value: "object"}})
+	if isinstance(child,dict):
+		lv_join_table.update({parent_id + "_" + child["value"] : hash_table})
+	else:
+		lv_join_table.update({parent_id + "_" + child : hash_table})
 
 def view_iterable(row,attr,iter_attr_maps):
 	iterable_rows = []
@@ -234,20 +334,55 @@ def view_projection(view_map, view_map_list, internal_maps):
 					elif attr["type"] == "inner_join" or attr["type"] == "left_join":
 						for parent_view in view_map_list:
 							if parent_view == attr["parent_view"]:
-								if parent_view + "_" + attr["child_condition"] not in lv_join_table:
-									parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
-									hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
-								if row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
-									iterable = True
-									if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())) == 1:
-										new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())[0]
+								if isinstance(attr["child_condition"],list):
+									child_values = join_view_values(attr["child_condition"],row,new_row)
+									child_keys = list_join_keys(attr["child_condition"])
+									if parent_view + "_" + child_keys not in lv_join_table:
+										parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+										hash_maker_lv_list(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									if child_values  in lv_join_table[parent_view + "_" + child_keys]:
+										iterable = True
+										if len(list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())) == 1:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())[0]
+											new_row[attr["name"]+".#"] = 0
+										else:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())
 									else:
-										new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())
+										if attr["type"] == "inner_join":
+											inner_join_success = False
+										else:
+											new_row[attr["name"]] = None
 								else:
-									if attr["type"] == "inner_join":
-										inner_join_success = False
+									if isinstance(attr["child_condition"],dict):
+										if parent_view + "_" + attr["child_condition"]["value"] not in lv_join_table:
+											parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+											hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									elif parent_view + "_" + attr["child_condition"] not in lv_join_table:
+										parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+										hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									
+									if isinstance(attr["child_condition"],dict):
+										if attr["child_condition"]["type"] == "template":
+											value = string_substitution_json(attr["child_condition"]["value"], "{(.+?)}", row, "subject", "yes", "")
+										else:
+											value = attr["child_condition"]["value"]
+										if value in lv_join_table[parent_view + "_" + attr["child_condition"]["value"]]:
+											iterable = True
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][row[attr["child_condition"]]].keys())) == 1:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())[0]
+											else:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())
+									elif row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
+										iterable = True
+										if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())) == 1:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())[0]
+										else:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())
 									else:
-										new_row[attr["name"]] = None
+										if attr["type"] == "inner_join":
+											inner_join_success = False
+										else:
+											new_row[attr["name"]] = None
 				if inner_join_success:
 					view_source.append(new_row)
 				else:
@@ -307,21 +442,66 @@ def view_projection(view_map, view_map_list, internal_maps):
 					elif attr["type"] == "inner_join" or attr["type"] == "left_join":
 						for parent_view in view_map_list:
 							if parent_view == attr["parent_view"]:
-								if parent_view + "_" + attr["child_condition"] not in lv_join_table:
-									parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
-									hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
-								if row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
-									iterable = True
-									if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())) == 1:
-										new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())[0]
-										new_row[attr["name"]+".#"] = 0
+								if isinstance(attr["child_condition"],list):
+									child_values = join_view_values(attr["child_condition"],row,new_row)
+									child_keys = list_join_keys(attr["child_condition"])
+									if parent_view + "_" + child_keys not in lv_join_table:
+										parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+										hash_maker_lv_list(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									if child_values  in lv_join_table[parent_view + "_" + child_keys]:
+										iterable = True
+										if len(list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())) == 1:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())[0]
+											new_row[attr["name"]+".#"] = 0
+										else:
+											new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + child_keys][child_values].keys())
 									else:
-										new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())
+										if attr["type"] == "inner_join":
+											inner_join_success = False
+										else:
+											new_row[attr["name"]] = None
 								else:
-									if attr["type"] == "inner_join":
-										inner_join_success = False
+									if isinstance(attr["child_condition"],dict):
+										if parent_view + "_" + attr["child_condition"]["value"] not in lv_join_table:
+											parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+											hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									elif parent_view + "_" + attr["child_condition"] not in lv_join_table:
+										parent_source = view_projection(view_map_list[parent_view], view_map_list, internal_maps)
+										hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
+									if isinstance(attr["child_condition"],dict):
+										if attr["child_condition"]["type"] == "template":
+											value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", row, "subject", "yes","")
+											if value == None:
+												value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", new_row, "subject", "yes","")
+										else:
+											value = attr["child_condition"]["value"]
+										if value in lv_join_table[parent_view + "_" + attr["child_condition"]["value"]]:
+											iterable = True
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][row[attr["child_condition"]]].keys())) == 1:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())[0]
+											else:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())
+									elif attr["child_condition"] in row:
+										if row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
+											iterable = True
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())) == 1:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())[0]
+												new_row[attr["name"]+".#"] = 0
+											else:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())
+									elif attr["child_condition"] in new_row:
+										if new_row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
+											iterable = True
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][new_row[attr["child_condition"]]].keys())) == 1:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][new_row[attr["child_condition"]]].keys())[0]
+												new_row[attr["name"]+".#"] = 0
+											else:
+												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][new_row[attr["child_condition"]]].keys())
 									else:
-										new_row[attr["name"]] = None
+										if attr["type"] == "inner_join":
+											inner_join_success = False
+										else:
+											new_row[attr["name"]] = None
 				if inner_join_success:
 					view_source.append(new_row)
 				else:

@@ -1844,8 +1844,16 @@ def mapping_parser(mapping_file):
                 ?_source rml:leftJoin ?left_join .
                 ?left_join rml:parentLogicalView ?left_join_parent .
                 ?left_join rml:joinCondition ?left_join_condition .
-                ?left_join_condition rml:parent ?left_parent .
-                ?left_join_condition rml:child ?left_child .
+                    OPTIONAL{?left_join_condition rml:parent ?left_parent .}
+                    OPTIONAL{?left_join_condition rml:parentMap ?left_parent_map .
+                                OPTIONAL{?left_parent_map rml:reference ?left_parent_reference}
+                                OPTIONAL{?left_parent_map rml:template ?left_parent_template}
+                                OPTIONAL{?left_parent_map rml:constant ?left_parent_constant}}
+                    OPTIONAL{?left_join_condition rml:child ?left_child .}
+                    OPTIONAL{?left_join_condition rml:childMap ?left_child_map .
+                                OPTIONAL{?left_child_map rml:reference ?left_child_reference}
+                                OPTIONAL{?left_child_map rml:template ?left_child_template}
+                                OPTIONAL{?left_child_map rml:constant ?left_child_constant}}
                 ?left_join rml:field ?left_join_field .
                 ?left_join_field rml:fieldName ?left_join_name .
                 ?left_join_field rml:reference ?left_join_value .
@@ -1855,8 +1863,16 @@ def mapping_parser(mapping_file):
                 ?_source rml:innerJoin ?inner_join .
                 ?inner_join rml:parentLogicalView ?inner_join_parent .
                 ?inner_join rml:joinCondition ?inner_join_condition .
-                ?inner_join_condition rml:parent ?inner_parent .
-                ?inner_join_condition rml:child ?inner_child .
+                    OPTIONAL{?inner_join_condition rml:parent ?inner_parent .}
+                    OPTIONAL{?inner_join_condition rml:parentMap ?inner_parent_map .
+                                OPTIONAL{?inner_parent_map rml:reference ?inner_parent_reference}
+                                OPTIONAL{?inner_parent_map rml:template ?inner_parent_template}
+                                OPTIONAL{?inner_parent_map rml:constant ?inner_parent_constant}}
+                    OPTIONAL{?inner_join_condition rml:child ?inner_child .}
+                    OPTIONAL{?inner_join_condition rml:childMap ?inner_child_map .
+                                OPTIONAL{?inner_child_map rml:reference ?inner_child_reference}
+                                OPTIONAL{?inner_child_map rml:template ?inner_child_template}
+                                OPTIONAL{?inner_child_map rml:constant ?inner_child_constant}}
                 ?inner_join rml:field ?inner_join_field .
                 ?inner_join_field rml:fieldName ?inner_join_name .
                 ?inner_join_field rml:reference ?inner_join_value .
@@ -2636,21 +2652,64 @@ def mapping_parser(mapping_file):
                     attr_row["type"] = "inner_join"
                     attr_row["value"] = str(attr_view.inner_join_value)
                     attr_row["parent_view"] = str(attr_view.inner_join_parent)
-                    attr_row["parent_condition"] = str(attr_view.inner_parent)
-                    attr_row["child_condition"] = str(attr_view.inner_child)
+
+                    if str(attr_view.inner_parent_reference) != "None":
+                        attr_row["parent_condition"] = str(attr_view.inner_parent_reference)
+                    elif str(attr_view.inner_parent_template) != "None":
+                        attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_template), "type":"template"}
+                    elif str(attr_view.inner_parent_constant) != "None":
+                        attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_constant), "type":"constant"}
+                    else:
+                        attr_row["parent_condition"] = str(attr_view.inner_parent)
+
+                    if str(attr_view.inner_child_reference) != "None":
+                        attr_row["child_condition"] = str(attr_view.inner_child_reference)
+                    elif str(attr_view.inner_child_template) != "None":
+                        attr_row["child_condition"] = {"value":str(attr_view.inner_child_template), "type":"template"}
+                    elif str(attr_view.inner_child_constant) != "None":
+                        attr_row["child_condition"] = {"value":str(attr_view.inner_child_constant), "type":"constant"}
+                    else:
+                        attr_row["child_condition"] = str(attr_view.inner_child)
+
                     attr_row["name"] = str(attr_view.inner_join_name)
                 elif attr_view.left_join is not None:
                     attr_row["type"] = "left_join"
                     attr_row["value"] = str(attr_view.left_join_value)
                     attr_row["parent_view"] = str(attr_view.left_join_parent)
-                    attr_row["parent_condition"] = str(attr_view.left_parent)
-                    attr_row["child_condition"] = str(attr_view.left_child)
+
+                    if str(attr_view.left_parent_reference) != "None":
+                        attr_row["parent_condition"] = str(attr_view.left_parent_reference)
+                    elif str(attr_view.left_parent_template) != "None":
+                        attr_row["parent_condition"] = {"value":str(attr_view.left_parent_template), "type":"template"}
+                    elif str(attr_view.left_parent_constant) != "None":
+                        attr_row["parent_condition"] = {"value":str(attr_view.left_parent_constant), "type":"constant"}
+                    else:
+                        attr_row["parent_condition"] = str(attr_view.left_parent)
+
+                    if str(attr_view.left_child_reference) != "None":
+                        attr_row["child_condition"] = str(attr_view.left_child_reference)
+                    elif str(attr_view.left_child_template) != "None":
+                        attr_row["child_condition"] = {"value":str(attr_view.left_child_template), "type":"template"}
+                    elif str(attr_view.left_child_constant) != "None":
+                        attr_row["child_condition"] = {"value":str(attr_view.left_child_constant), "type":"constant"}
+                    else:
+                        attr_row["child_condition"] = str(attr_view.left_child)
+
                     attr_row["name"] = str(attr_view.left_join_name)
 
                 if attr_row != {}:
                     if attr_row["name"] not in seen_view:
                         attr_list.append(attr_row)
                         seen_view.append(attr_row["name"])
+                    else:
+                        for attr in attr_list:
+                            if attr_row["name"] == attr["name"]:
+                                if isinstance(attr["parent_condition"],list):
+                                    attr["parent_condition"].append(attr_row["parent_condition"])
+                                    attr["child_condition"].append(attr_row["child_condition"])
+                                else:
+                                    attr["parent_condition"] = [attr["parent_condition"],attr_row["parent_condition"]]
+                                    attr["child_condition"] = [attr["child_condition"],attr_row["child_condition"]]
                     
             if result_triples_map.data_view is not None:
                 if result_triples_map.ref_form is None:
