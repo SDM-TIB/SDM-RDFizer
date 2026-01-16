@@ -1508,8 +1508,8 @@ def mappings_expansion(triples_map_list):
                             if po.object_map.child != None:
                                 if str(triples_map.file_format).lower() == "csv":
                                     if triples_map.data_source == triples_map_element.data_source:
-                                        if po.object_map.child[0] == po.object_map.parent[0] and type_join(triples_map_element.data_source, triples_map.data_source, 
-                                                po.object_map.parent[0], po.object_map.child[0]):
+                                        if po.object_map.child[0] == po.object_map.parent[0]:# and type_join(triples_map_element.data_source, triples_map.data_source, 
+                                                #po.object_map.parent[0], po.object_map.child[0]):
                                             if triples_map_element.subject_map.subject_mapping_type == "template":
                                                 object_map = tm.ObjectMap("template",
                                                                           triples_map_element.subject_map.value, "None",
