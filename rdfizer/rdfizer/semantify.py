@@ -5016,7 +5016,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 object_list[i] = "<" + object_list[i] + ">"
                             elif "BlankNode" in predicate_object_map.object_map.term:
                                 object_list[i] = "_:" + object_list[i]
-                                if "/" in object:
+                                if "/" in object_list[i]:
                                     object_list[i] = object_list[i].replace("/", "2F")
                                     print("Incorrect format for Blank Nodes. \"/\" will be replace with \"-\".")
                                 if "." in object_list[i]:
