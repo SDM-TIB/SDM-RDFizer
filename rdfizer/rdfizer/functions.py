@@ -1256,7 +1256,7 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 							return None
 					else:
 						return None
-			
+
 			if value is not None:
 				if (type(value).__name__) != "str":
 					if (type(value).__name__) != "float":
@@ -1346,8 +1346,8 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						value = row[match]
 					else:
 						return None
-
-				if match is not None:
+						
+				if value is not None:
 					if (type(value).__name__) == "int":
 							value = str(value)
 					if (type(value).__name__) == "float":
