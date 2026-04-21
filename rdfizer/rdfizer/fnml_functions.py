@@ -21,12 +21,15 @@ functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "array_join":"","controls_if":"","string_md5":"","string_contains":"",
                 "slugify":"","trueCondition":"","isNull":"",
                 "notEqual":"","equal":"","normalizeDateTime":"","normalizeDate":"",
-                "listContainsElement":""}
+                "listContainsElement":"","alwaysReturnsABC":"","string_length":""}
 
 
 ## Define your functions here following examples below, the column "names" from the csv files 
 ## that you aim to use as the input parameters of functions are only required to be provided 
 ## as the keys of "global_dic"
+def alwaysReturnsABC():
+    return "ABC"
+
 def listContainsElement():
     if str(global_dic["str"]) in global_dic["list"]:
         return True
@@ -44,10 +47,16 @@ def normalizeDateTime():
     return str(datetime.strptime(str(global_dic["strDate"]), str(global_dic["pattern"])))
 
 def equal():
-    if str(global_dic["valueParameter"]) == str(global_dic["valueParameter2"]):
-        return True
+    if "valueParam" in global_dic:
+        if str(global_dic["valueParam"]) == str(global_dic["valueParam2"]):
+            return True
+        else:
+            return False
     else:
-        return False
+        if str(global_dic["valueParameter"]) == str(global_dic["valueParameter2"]):
+            return True
+        else:
+            return False
 
 def notEqual():
     if str(global_dic["valueParameter"]) != str(global_dic["valueParameter2"]):
@@ -75,7 +84,10 @@ def slugify():
     return slugify(str(global_dic["str"]))
 
 def string_replace():
-    return str(global_dic["valueParameter"]).replace(str(global_dic["p_string_find"]),str(global_dic["p_string_replace"]))
+    if "valueParam" in global_dic:
+        return str(global_dic["valueParam"]).replace(str(global_dic["param_find"]),str(global_dic["param_replace"]))
+    else:
+        return str(global_dic["valueParameter"]).replace(str(global_dic["p_string_find"]),str(global_dic["p_string_replace"]))
 
 def string_contains():
     if str(global_dic["string_sub"]) in str(global_dic["valueParameter"]):
@@ -113,11 +125,22 @@ def array_join():
             output += str(global_dic["p_string_sep"])    
     return output
 
-def string_substring(): 
-    if int(global_dic["param_int_i_from"]) > len(str(global_dic["valueParameter"])) or int(global_dic["param_int_i_opt_to"]) > len(str(global_dic["valueParameter"])):
-        return None
-    else:
-        return str(global_dic["valueParameter"])[int(global_dic["param_int_i_from"]):int(global_dic["param_int_i_opt_to"])]
+def string_substring():
+    if "p_int_i_from" in global_dic:
+        if int(global_dic["p_int_i_from"]) == len(str(global_dic["valueParam"])):
+            return ""
+        elif int(global_dic["p_int_i_from"]) > len(str(global_dic["valueParam"])):
+            return None
+        else:
+            return str(global_dic["valueParam"])[int(global_dic["p_int_i_from"]):]
+    else: 
+        if int(global_dic["param_int_i_from"]) >= len(str(global_dic["valueParameter"])) or int(global_dic["param_int_i_opt_to"]) >= len(str(global_dic["valueParameter"])):
+            return None
+        else:
+            return str(global_dic["valueParameter"])[int(global_dic["param_int_i_from"]):int(global_dic["param_int_i_opt_to"])]
+
+def string_length(): 
+    return str(len(str(global_dic["valueParam"])))
 
 def length(): 
     return str(len(str(global_dic["valueParam"])))

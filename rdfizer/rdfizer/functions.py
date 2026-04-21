@@ -1027,19 +1027,34 @@ def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
 
 def sublist(part_list, full_list):
 	for part in part_list:
-		if "$." in part:
-			if part[2:] not in full_list:
-				return False
+		if isinstance(part,dict):
+			if part["type"] == "template":
+				template_references = re.finditer("{(.+?)}", part["value"])
+				for reference_match in template_references:
+					if "$." in reference_match.group(1):
+						if reference_match.group(1)[2:].split(".")[0] not in full_list:
+							return False 
+					else:
+						if reference_match.group(1) not in full_list:
+							return False 
 		else:
-			if part not in full_list:
-				return False
+			if "$." in part:
+				if part[2:] not in full_list:
+					return False
+			else:
+				if part not in full_list:
+					return False
 	return True
 
 def child_list(childs):
 	value = ""
 	for child in childs:
-		if child not in value:
-			value += child + "_"
+		if isinstance(child,dict):
+			if child["value"] not in value:
+				value += child["value"] + "_"
+		else:
+			if child not in value:
+				value += child + "_"
 	return value[:-1]
 
 def child_list_value(childs,row):
@@ -1047,14 +1062,28 @@ def child_list_value(childs,row):
 	v = []
 	for child in childs:
 		if child not in v:
-			if "$." in child:
-				if row[child[2:]] != None:
-					value += str(row[child[2:]]) + "_"
-					v.append(child[2:])
+			if isinstance(child,dict):
+				if child["type"] == "template":
+					if "$." in child["value"]:
+						inter_value = string_substitution_json(child["value"], "{(.+?)}",row, "object", "yes", "")
+					else:
+						inter_value = string_substitution(child["value"], "{(.+?)}",row, "object", "yes", "")
+					if inter_value != None:
+						value += inter_value + "_"
+						v.append(child["value"])
+				else:
+					value += child["value"] + "_"
+					v.append(child["value"])
 			else:
-				if row[child] != None:
-					value += str(row[child]) + "_"
-					v.append(child)
+				if "$." in child:
+					inter_value = string_substitution_json(child, ".+",row, "object", "yes", "")
+					if inter_value != None:
+						value += inter_value[1:-1] + "_"
+						v.append(child[2:])
+				else:
+					if row[child] != None:
+						value += str(row[child]) + "_"
+						v.append(child)
 	return value[:-1]
 
 def child_list_value_array(childs,row,row_headers):
@@ -1095,10 +1124,54 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						match = temp_match[2:-2]
 					else:
 						match = reference_match.group(1)[2:]
+				elif "$" == reference_match.group(1)[:1]:
+					if "['\\{" in reference_match.group(1) or "[\"\\{" in reference_match.group(1):
+						match = reference_match.group(1).split("[")[1]
+						match = match.split("]")[0]
+						match = match.replace("\\","")
+						match = match.replace("{","")
+						match = match.replace("}","")
+						match = match.replace("'","")
+						match = match.replace("\"","")
+						match = "{" + match + "}"
+					elif "[" in reference_match.group(1)[1:]:
+						match = reference_match.group(1)[3:-2]
+					else:
+						match = reference_match.group(1)[2:]
+				elif "\\{" in reference_match.group(1):
+					if "['\\{" in reference_match.group(1) or "[\"\\{" in reference_match.group(1):
+						match = reference_match.group(1).split("[")[1]
+						match = match.split("]")[0]
+						match = match.replace("\\","")
+						match = match.replace("{","")
+						match = match.replace("}","")
+						match = match.replace("'","")
+						match = match.replace("\"","")
+						match = "{" + match + "}"
+					else:
+						match = reference_match.group(1).replace("\\{","").replace("\\}","")
+						match = match.replace("{","").replace("}","")
+						if match[0] == " ":
+							match = match[1:]
+						if "$." == match[:2]:
+							if "[" in match[1:]:
+								match = match[3:-2]
+							else:
+								match = match[2:]
+						elif "$" == match[:1]:
+							if "[" in match[1:]:
+								match = match[3:-2]
+							else:
+								match = match[2:]
 				else:
 					match = reference_match.group(1)
 			else:
 				if "$." == reference_match.group(1)[:2]:
+					if "[" in reference_match.group(1)[2:]:
+						match = reference_match.group(1)[2:]
+					else:
+						match = reference_match.group(1)[2:]
+				elif "$" == reference_match.group(1)[:1]:
 					if "[" in reference_match.group(1)[2:]:
 						match = reference_match.group(1)[2:]
 					else:
@@ -1771,7 +1844,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 			if row == None:
 				return None
 			if match in row.keys():
-				if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None":
+				if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None" and row[match] != "NULL":
 					if (type(row[match]).__name__) != "str" and row[match] != None:
 						if (type(row[match]).__name__) == "float":
 							row[match] = repr(row[match])
@@ -1834,7 +1907,7 @@ def string_substitution(string, pattern, row, term, ignore, iterator):
 					print("The index needs to be indicated.\n")
 					return None
 				else:
-					if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None":
+					if row[match] != None and row[match] != "nan" and row[match] != "N/A" and row[match] != "None" and row[match] != "NULL":
 						if re.search("^[\s|\t]*$", row[match]) is None:
 							new_string = new_string[:start] + row[match].strip().replace("\"", "'") + new_string[end:]
 							new_string = "\"" + new_string + "\"" if new_string[0] != "\"" and new_string[-1] != "\"" else new_string
@@ -2135,7 +2208,9 @@ def clean_URL_suffix(URL_suffix):
 	return cleaned_URL
 
 def string_separetion(string):
-	if ("{" in string) and ("[" in string):
+	if "\\{" in string:
+		return "", ""
+	elif ("{" in string) and ("[" in string):
 		prefix = string.split("{")[0]
 		condition = string.split("{")[1].split("}")[0]
 		postfix = string.split("{")[1].split("}")[1]

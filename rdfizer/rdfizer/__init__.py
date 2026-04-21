@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import rdflib
+from rdflib import Literal
 from rdflib.plugins.sparql import prepareQuery
 from configparser import ConfigParser, ExtendedInterpolation
 from mysql import connector
@@ -29,6 +30,7 @@ from .cc_functions import *
 import logging
 from uuid import uuid4
 import pyodbc
+from urllib.parse import unquote
 
 try:
     from triples_map import TriplesMap as tm
@@ -341,18 +343,112 @@ def join_iterator(data, iterator, parent, child, triples_map_list):
                     executed = False
                     break
     else:
-        if parent.triples_map_id + "_" + child.child[0] not in join_table:
+        if parent.triples_map_id + "_" + child_list(child.child) not in join_table:
             hash_maker([data], parent, child, "", triples_map_list)
         else:
-            hash_update([data], parent, child, parent.triples_map_id + "_" + child.child[0])
+            hash_update([data], parent, child, parent.triples_map_id + "_" + child_list(child.child))
 
 
 def hash_update(parent_data, parent_subject, child_object, join_id):
     hash_table = {}
     for row in parent_data:
-        if child_object.parent[0] in row.keys():
-            if row[child_object.parent[0]] in hash_table:
-                if duplicate == "yes":
+        if isinstance(child_object.parent[0],dict):
+            if child_object.parent[0]["type"] == "template":
+                if "$" in child_object.parent[0]["value"]:
+                    parent_value = string_substitution_json(child_object.parent[0]["value"], "{(.+?)}", row, "object", ignore, "")
+                else:
+                    parent_value = string_substitution(child_object.parent[0]["value"], "{(.+?)}", row, "object", ignore, "")
+            else:
+                parent_value = child_object.parent[0]["value"]
+            if parent_value != None and parent_value != "None":
+                if parent_value in hash_table:
+                    if duplicate == "yes":
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
+                            if value != None:
+                                if "http" in value and "<" not in value:
+                                    value = "<" + value[1:-1] + ">"
+                                elif "http" in value and "<" in value:
+                                    value = value[1:-1]
+                            if value not in hash_table[parent_value]:
+                                hash_table[parent_value].update({value: "object"})
+                        else:
+                            if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   "") is not None:
+                                if "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                             ignore, "") + ">" not in hash_table[parent_value]:
+                                    hash_table[parent_value].update({"<" + string_substitution_json(
+                                        parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                        "") + ">": "object"})
+                    else:
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore)
+                            if "http" in value and "<" not in value:
+                                value = "<" + value[1:-1] + ">"
+                            elif "http" in value and "<" in value:
+                                value = value[1:-1]
+                            hash_table[parent_value].update({value: "object"})
+                        else:
+                            if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   "") is not None:
+                                hash_table[parent_value].update({"<" + string_substitution_json(
+                                    parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") + ">": "object"})
+                else:
+                    if parent_subject.subject_map.subject_mapping_type == "reference":
+                        value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
+                        if "http" in value and "<" not in value:
+                            value = "<" + value[1:-1] + ">"
+                        elif "http" in value and "<" in value:
+                            value = value[1:-1]
+                        hash_table.update({parent_value: {value: "object"}})
+                    else:
+                        if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") is not None:
+                            if parent_value in join_table[join_id]:
+                                join_table[join_id][parent_value].update({"<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"})
+                            else:
+                                hash_table.update({parent_value: {
+                                 "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"}})
+                                join_table[join_id].update(hash_table)
+
+        else:
+            if child_object.parent[0] in row.keys():
+                if row[child_object.parent[0]] in hash_table:
+                    if duplicate == "yes":
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                        parent_subject.iterator)
+                            if value != None:
+                                if "http" in value and "<" not in value:
+                                    value = "<" + value[1:-1] + ">"
+                                elif "http" in value and "<" in value:
+                                    value = value[1:-1]
+                            if value not in hash_table[row[child_object.parent[0]]]:
+                                hash_table[row[child_object.parent[0]]].update({value: "object"})
+                        else:
+                            if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   parent_subject.iterator) is not None:
+                                if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                             ignore, parent_subject.iterator) + ">" not in hash_table[
+                                    row[child_object.parent[0]]]:
+                                    hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(
+                                        parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                        parent_subject.iterator) + ">": "object"})
+                    else:
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore)
+                            if "http" in value and "<" not in value:
+                                value = "<" + value[1:-1] + ">"
+                            elif "http" in value and "<" in value:
+                                value = value[1:-1]
+                            hash_table[row[child_object.parent[0]]].update({value: "object"})
+                        else:
+                            if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   parent_subject.iterator) is not None:
+                                hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(
+                                    parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                    parent_subject.iterator) + ">": "object"})
+
+                else:
                     if parent_subject.subject_map.subject_mapping_type == "reference":
                         value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
                                                     parent_subject.iterator)
@@ -361,101 +457,67 @@ def hash_update(parent_data, parent_subject, child_object, join_id):
                                 value = "<" + value[1:-1] + ">"
                             elif "http" in value and "<" in value:
                                 value = value[1:-1]
-                        if value not in hash_table[row[child_object.parent[0]]]:
-                            hash_table[row[child_object.parent[0]]].update({value: "object"})
+                        hash_table.update({row[child_object.parent[0]]: {value: "object"}})
                     else:
                         if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
                                                parent_subject.iterator) is not None:
-                            if "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
-                                                         ignore, parent_subject.iterator) + ">" not in hash_table[
-                                row[child_object.parent[0]]]:
-                                hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(
-                                    parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                    parent_subject.iterator) + ">": "object"})
-                else:
-                    if parent_subject.subject_map.subject_mapping_type == "reference":
-                        value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore)
-                        if "http" in value and "<" not in value:
-                            value = "<" + value[1:-1] + ">"
-                        elif "http" in value and "<" in value:
-                            value = value[1:-1]
-                        hash_table[row[child_object.parent[0]]].update({value: "object"})
-                    else:
-                        if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                               parent_subject.iterator) is not None:
-                            hash_table[row[child_object.parent[0]]].update({"<" + string_substitution(
-                                parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                parent_subject.iterator) + ">": "object"})
+                            hash_table.update({row[child_object.parent[0]]: {
+                                "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                          ignore, parent_subject.iterator) + ">": "object"}})
+                join_table[join_id].update(hash_table)
 
-            else:
-                if parent_subject.subject_map.subject_mapping_type == "reference":
-                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                parent_subject.iterator)
-                    if value != None:
-                        if "http" in value and "<" not in value:
-                            value = "<" + value[1:-1] + ">"
-                        elif "http" in value and "<" in value:
-                            value = value[1:-1]
-                    hash_table.update({row[child_object.parent[0]]: {value: "object"}})
-                else:
-                    if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                           parent_subject.iterator) is not None:
-                        hash_table.update({row[child_object.parent[0]]: {
-                            "<" + string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
-                                                      ignore, parent_subject.iterator) + ">": "object"}})
-            join_table[join_id].update(hash_table)
-        elif "$." in child_object.parent[0]:
-            parent = child_object.parent[0][2:]
-            if row[parent] in hash_table:
-                if duplicate == "yes":
-                    if parent_subject.subject_map.subject_mapping_type == "reference":
-                        value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
-                        if value != None:
+            elif "$." in child_object.parent[0]:
+                parent = child_object.parent[0][2:]
+                if str(row[parent]) in hash_table:
+                    if duplicate == "yes":
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
+                            if value != None:
+                                if "http" in value and "<" not in value:
+                                    value = "<" + value[1:-1] + ">"
+                                elif "http" in value and "<" in value:
+                                    value = value[1:-1]
+                            if value not in hash_table[str(row[parent])]:
+                                hash_table[str(row[parent])].update({value: "object"})
+                        else:
+                            if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   "") is not None:
+                                if "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                             ignore, "") + ">" not in hash_table[
+                                    str(row[parent])]:
+                                    hash_table[str(row[parent])].update({"<" + string_substitution_json(
+                                        parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                        "") + ">": "object"})
+                    else:
+                        if parent_subject.subject_map.subject_mapping_type == "reference":
+                            value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore)
                             if "http" in value and "<" not in value:
                                 value = "<" + value[1:-1] + ">"
                             elif "http" in value and "<" in value:
                                 value = value[1:-1]
-                        if value not in hash_table[row[parent]]:
-                            hash_table[row[parent]].update({value: "object"})
-                    else:
-                        if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                               "") is not None:
-                            if "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",
-                                                         ignore, "") + ">" not in hash_table[
-                                row[parent]]:
-                                hash_table[row[parent]].update({"<" + string_substitution_json(
-                                    parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                    "") + ">": "object"})
+                            hash_table[str(row[parent])].update({value: "object"})
+                        else:
+                            if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                   "") is not None:
+                                hash_table[str(row[parent])].update({"<" + string_substitution_json(
+                                    parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") + ">": "object"})
+
                 else:
                     if parent_subject.subject_map.subject_mapping_type == "reference":
-                        value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore)
+                        value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
                         if "http" in value and "<" not in value:
                             value = "<" + value[1:-1] + ">"
                         elif "http" in value and "<" in value:
                             value = value[1:-1]
-                        hash_table[row[parent]].update({value: "object"})
+                        hash_table.update({str(row[parent]): {value: "object"}})
                     else:
-                        if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                               "") is not None:
-                            hash_table[row[parent]].update({"<" + string_substitution_json(
-                                parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") + ">": "object"})
-
-            else:
-                if parent_subject.subject_map.subject_mapping_type == "reference":
-                    value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
-                    if "http" in value and "<" not in value:
-                        value = "<" + value[1:-1] + ">"
-                    elif "http" in value and "<" in value:
-                        value = value[1:-1]
-                    hash_table.update({row[parent]: {value: "object"}})
-                else:
-                    if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") is not None:
-                        if row[parent] in join_table[join_id]:
-                            join_table[join_id][row[parent]].update({"<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"})
-                        else:
-                            hash_table.update({row[parent]: {
-                             "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"}})
-                            join_table[join_id].update(hash_table)
+                        if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") is not None:
+                            if str(row[parent]) in join_table[join_id]:
+                                join_table[join_id][str(row[parent])].update({"<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"})
+                            else:
+                                hash_table.update({str(row[parent]): {
+                                 "<" + string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object",ignore,"") + ">": "object"}})
+                                join_table[join_id].update(hash_table)
 
 
 def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_list):
@@ -463,25 +525,66 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
     hash_table = {}
     for row in parent_data:
         if quoted == "":
-            if child_object.parent[0] in row.keys():
-                if row[child_object.parent[0]] != "" and row[child_object.parent[0]] != None:
-                    if row[child_object.parent[0]] in hash_table:
-                        if duplicate == "yes":
-                            if parent_subject.subject_map.subject_mapping_type == "reference":
-                                value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                            parent_subject.iterator)
-                                if value != None:
+            if isinstance(child_object.parent[0],dict):
+                if child_object.parent[0]["type"] == "template":
+                    if "$" in child_object.parent[0]["value"]:
+                        parent_value = string_substitution_json(child_object.parent[0]["value"], "{(.+?)}", row, "object", ignore, "")
+                    else:
+                        parent_value = string_substitution(child_object.parent[0]["value"], "{(.+?)}", row, "object", ignore, "")
+                else:
+                    parent_value = child_object.parent[0]["value"]
+
+                if parent_value != None or parent_value != "None":
+                    if duplicate == "yes":
+                        if parent_value in hash_table:
+                            if duplicate == "yes":
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                                parent_subject.iterator)
+                                    if value != None:
+                                        if "http" in value and "<" not in value:
+                                            value = "<" + value[1:-1] + ">"
+                                        elif "http" in value and "<" in value:
+                                            value = value[1:-1]
+                                    if value not in hash_table[row[child_object.parent[0]]]:
+                                        hash_table[parent_value].update({value: "object"})
+                                else:
+                                    if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                           parent_subject.iterator) != None:
+                                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                                    ignore, parent_subject.iterator)
+                                        if value != None:
+                                            if parent_subject.subject_map.term_type != None:
+                                                if "BlankNode" in parent_subject.subject_map.term_type:
+                                                    if "/" in value:
+                                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                                        if blank_message:
+                                                            logger.warning(
+                                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                            blank_message = False
+                                                    else:
+                                                        value = "_:" + encode_char(value).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                                else:
+                                                    value = "<" + value + ">"
+                                            else:
+                                                value = "<" + value + ">"
+                                            hash_table[parent_value].update({value: "object"})
+                            else:
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                                parent_subject.iterator)
                                     if "http" in value and "<" not in value:
                                         value = "<" + value[1:-1] + ">"
                                     elif "http" in value and "<" in value:
                                         value = value[1:-1]
-                                if value not in hash_table[row[child_object.parent[0]]]:
-                                    hash_table[row[child_object.parent[0]]].update({value: "object"})
-                            else:
-                                if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                       parent_subject.iterator) != None:
-                                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
-                                                                ignore, parent_subject.iterator)
+                                    hash_table[parent_value].update({value: "object"})
+                                else:
+                                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                                parent_subject.iterator)
                                     if value != None:
                                         if parent_subject.subject_map.term_type != None:
                                             if "BlankNode" in parent_subject.subject_map.term_type:
@@ -497,12 +600,49 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                                     value = "_:" + encode_char(value).replace("%", "")
                                                     if "." in value:
                                                         value = value.replace(".", "2E")
-                                            else:
-                                                value = "<" + value + ">"
                                         else:
                                             value = "<" + value + ">"
-                                        hash_table[row[child_object.parent[0]]].update({value: "object"})
+                                        hash_table[parent_value].update({value: "object"})
                         else:
+                            if parent_subject.subject_map.subject_mapping_type == "reference":
+                                if "$" in parent_subject.subject_map.value:
+                                    value = string_substitution_json(parent_subject.subject_map.value, ".+", row, "object", ignore,"")
+                                else:
+                                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                hash_table.update({parent_value: {value: "object"}})
+                            else:
+                                if "$" in parent_subject.subject_map.value:
+                                    value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
+                                else:
+                                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if parent_subject.subject_map.term_type != None:
+                                        if "BlankNode" in parent_subject.subject_map.term_type:
+                                            if "/" in value:
+                                                value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                                if blank_message:
+                                                    logger.warning(
+                                                        "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                    blank_message = False
+                                            else:
+                                                value = "_:" + encode_char(value).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                    else:
+                                        value = "<" + value + ">"
+                                    hash_table.update({parent_value: {value: "object"}})
+
+                    else:
+                        if parent_value in hash_table:
                             if parent_subject.subject_map.subject_mapping_type == "reference":
                                 value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
                                                             parent_subject.iterator)
@@ -510,7 +650,7 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                     value = "<" + value[1:-1] + ">"
                                 elif "http" in value and "<" in value:
                                     value = value[1:-1]
-                                hash_table[row[child_object.parent[0]]].update({value: "object"})
+                                hash_table[parent_value].update({value: "object"})
                             else:
                                 value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
                                                             parent_subject.iterator)
@@ -531,56 +671,186 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                                     value = value.replace(".", "2E")
                                     else:
                                         value = "<" + value + ">"
-                                    hash_table[row[child_object.parent[0]]].update({value: "object"})
-
-                    else:
-                        if parent_subject.subject_map.subject_mapping_type == "reference":
-                            value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
-                                                        parent_subject.iterator)
-                            if value != None:
-                                if "http" in value and "<" not in value:
-                                    value = "<" + value[1:-1] + ">"
-                                elif "http" in value and "<" in value:
-                                    value = value[1:-1]
-                            hash_table.update({row[child_object.parent[0]]: {value: "object"}})
+                                    hash_table[parent_value].update({value: "object"})
                         else:
-                            value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
-                                                        parent_subject.iterator)
-                            if value != None:
-                                if parent_subject.subject_map.term_type != None:
-                                    if "BlankNode" in parent_subject.subject_map.term_type:
-                                        if "/" in value:
-                                            value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                            if "." in value:
-                                                value = value.replace(".", "2E")
-                                            if blank_message:
-                                                logger.warning(
-                                                    "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                                blank_message = False
-                                        else:
-                                            value = "_:" + encode_char(value).replace("%", "")
-                                            if "." in value:
-                                                value = value.replace(".", "2E")
-                                else:
-                                    value = "<" + value + ">"
-                                hash_table.update({row[child_object.parent[0]]: {value: "object"}})
-
-            elif "$." in child_object.parent[0]:
-                parent = child_object.parent[0].replace("$.","")
-                if row[parent] != "" and row[parent] != None:
-                    if str(row[parent]) in hash_table:
-                        if duplicate == "yes":
                             if parent_subject.subject_map.subject_mapping_type == "reference":
-                                value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
+                                value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                            parent_subject.iterator)
                                 if value != None:
                                     if "http" in value and "<" not in value:
                                         value = "<" + value[1:-1] + ">"
                                     elif "http" in value and "<" in value:
                                         value = value[1:-1]
-                                if value not in hash_table[str(row[parent])]:
-                                    hash_table[str(row[parent])].update({value: "object"})
+                                hash_table.update({parent_value: {value: "object"}})
                             else:
-                                if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") != None:
+                                value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if parent_subject.subject_map.term_type != None:
+                                        if "BlankNode" in parent_subject.subject_map.term_type:
+                                            if "/" in value:
+                                                value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                                if blank_message:
+                                                    logger.warning(
+                                                        "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                    blank_message = False
+                                            else:
+                                                value = "_:" + encode_char(value).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                    else:
+                                        value = "<" + value + ">"
+                                    hash_table.update({parent_value: {value: "object"}})
+
+            else:
+                if child_object.parent[0] in row.keys():
+                    if row[child_object.parent[0]] != "" and row[child_object.parent[0]] != None:
+                        if row[child_object.parent[0]] in hash_table:
+                            if duplicate == "yes":
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                                parent_subject.iterator)
+                                    if value != None:
+                                        if "http" in value and "<" not in value:
+                                            value = "<" + value[1:-1] + ">"
+                                        elif "http" in value and "<" in value:
+                                            value = value[1:-1]
+                                    if value not in hash_table[row[child_object.parent[0]]]:
+                                        hash_table[str(row[child_object.parent[0]])].update({value: "object"})
+                                else:
+                                    if string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                           parent_subject.iterator) != None:
+                                        value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object",
+                                                                    ignore, parent_subject.iterator)
+                                        if value != None:
+                                            if parent_subject.subject_map.term_type != None:
+                                                if "BlankNode" in parent_subject.subject_map.term_type:
+                                                    if "/" in value:
+                                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                                        if blank_message:
+                                                            logger.warning(
+                                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                            blank_message = False
+                                                    else:
+                                                        value = "_:" + encode_char(value).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                                else:
+                                                    value = "<" + value + ">"
+                                            else:
+                                                value = "<" + value + ">"
+                                            hash_table[str(row[child_object.parent[0]])].update({value: "object"})
+                            else:
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                                parent_subject.iterator)
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                    hash_table[str(row[child_object.parent[0]])].update({value: "object"})
+                                else:
+                                    value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                                parent_subject.iterator)
+                                    if value != None:
+                                        if parent_subject.subject_map.term_type != None:
+                                            if "BlankNode" in parent_subject.subject_map.term_type:
+                                                if "/" in value:
+                                                    value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                    if "." in value:
+                                                        value = value.replace(".", "2E")
+                                                    if blank_message:
+                                                        logger.warning(
+                                                            "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                        blank_message = False
+                                                else:
+                                                    value = "_:" + encode_char(value).replace("%", "")
+                                                    if "." in value:
+                                                        value = value.replace(".", "2E")
+                                        else:
+                                            value = "<" + value + ">"
+                                        hash_table[str(row[child_object.parent[0]])].update({value: "object"})
+
+                        else:
+                            if parent_subject.subject_map.subject_mapping_type == "reference":
+                                value = string_substitution(parent_subject.subject_map.value, ".+", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                hash_table.update({str(row[child_object.parent[0]]): {value: "object"}})
+                            else:
+                                value = string_substitution(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,
+                                                            parent_subject.iterator)
+                                if value != None:
+                                    if parent_subject.subject_map.term_type != None:
+                                        if "BlankNode" in parent_subject.subject_map.term_type:
+                                            if "/" in value:
+                                                value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                                if blank_message:
+                                                    logger.warning(
+                                                        "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                    blank_message = False
+                                            else:
+                                                value = "_:" + encode_char(value).replace("%", "")
+                                                if "." in value:
+                                                    value = value.replace(".", "2E")
+                                    else:
+                                        value = "<" + value + ">"
+                                    hash_table.update({str(row[child_object.parent[0]]): {value: "object"}})
+
+                elif "$." in child_object.parent[0]:
+                    parent = child_object.parent[0].replace("$.","")
+                    if row[parent] != "" and row[parent] != None:
+                        if str(row[parent]) in hash_table:
+                            if duplicate == "yes":
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
+                                    if value != None:
+                                        if "http" in value and "<" not in value:
+                                            value = "<" + value[1:-1] + ">"
+                                        elif "http" in value and "<" in value:
+                                            value = value[1:-1]
+                                    if value not in hash_table[str(row[parent])]:
+                                        hash_table[str(row[parent])].update({value: "object"})
+                                else:
+                                    if string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"") != None:
+                                        value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
+                                        if value != None:
+                                            if parent_subject.subject_map.term_type != None:
+                                                if "BlankNode" in parent_subject.subject_map.term_type:
+                                                    if "/" in value:
+                                                        value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                                        if blank_message:
+                                                            logger.warning(
+                                                                "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                                            blank_message = False
+                                                    else:
+                                                        value = "_:" + encode_char(value).replace("%", "")
+                                                        if "." in value:
+                                                            value = value.replace(".", "2E")
+                                            else:
+                                                value = "<" + value + ">"
+                                            hash_table[str(row[parent])].update({value: "object"})
+                            else:
+                                if parent_subject.subject_map.subject_mapping_type == "reference":
+                                    value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                    hash_table[str(row[parent])].update({value: "object"})
+                                else:
                                     value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
                                     if value != None:
                                         if parent_subject.subject_map.term_type != None:
@@ -603,11 +873,12 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                         else:
                             if parent_subject.subject_map.subject_mapping_type == "reference":
                                 value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
-                                if "http" in value and "<" not in value:
-                                    value = "<" + value[1:-1] + ">"
-                                elif "http" in value and "<" in value:
-                                    value = value[1:-1]
-                                hash_table[str(row[parent])].update({value: "object"})
+                                if value != None:
+                                    if "http" in value and "<" not in value:
+                                        value = "<" + value[1:-1] + ">"
+                                    elif "http" in value and "<" in value:
+                                        value = value[1:-1]
+                                hash_table.update({str(row[parent]): {value: "object"}})
                             else:
                                 value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
                                 if value != None:
@@ -627,36 +898,7 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                                                     value = value.replace(".", "2E")
                                     else:
                                         value = "<" + value + ">"
-                                    hash_table[str(row[parent])].update({value: "object"})
-                    else:
-                        if parent_subject.subject_map.subject_mapping_type == "reference":
-                            value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
-                            if value != None:
-                                if "http" in value and "<" not in value:
-                                    value = "<" + value[1:-1] + ">"
-                                elif "http" in value and "<" in value:
-                                    value = value[1:-1]
-                            hash_table.update({str(row[parent]): {value: "object"}})
-                        else:
-                            value = string_substitution_json(parent_subject.subject_map.value, "{(.+?)}", row, "object", ignore,"")
-                            if value != None:
-                                if parent_subject.subject_map.term_type != None:
-                                    if "BlankNode" in parent_subject.subject_map.term_type:
-                                        if "/" in value:
-                                            value = "_:" + encode_char(value.replace("/", "2F")).replace("%", "")
-                                            if "." in value:
-                                                value = value.replace(".", "2E")
-                                            if blank_message:
-                                                logger.warning(
-                                                    "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                                blank_message = False
-                                        else:
-                                            value = "_:" + encode_char(value).replace("%", "")
-                                            if "." in value:
-                                                value = value.replace(".", "2E")
-                                else:
-                                    value = "<" + value + ">"
-                                hash_table.update({str(row[parent]): {value: "object"}})
+                                    hash_table.update({str(row[parent]): {value: "object"}})
         else:
             for triples in inner_semantify_file(parent_subject, triples_map_list, ",", row, base):
                 if triples != None:
@@ -674,11 +916,17 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
                         hash_table.update({row[parent] : {triples : "subject"}})
     if isinstance(child_object.child,list):
         if quoted == "":
-            join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
+            if isinstance(child_object.child[0],dict):
+                join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0]["value"] : hash_table})
+            else:
+                join_table.update({parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
         else:
             join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child[0] : hash_table})
     else:
-        join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child : hash_table})
+        if isinstance(child_object.child,dict):
+            join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child["value"] : hash_table})
+        else:
+            join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child : hash_table})
 
 def hash_maker_list(parent_data, parent_subject, child_object):
     hash_table = {}
@@ -1856,7 +2104,9 @@ def mapping_parser(mapping_file):
                                 OPTIONAL{?left_child_map rml:constant ?left_child_constant}}
                 ?left_join rml:field ?left_join_field .
                 ?left_join_field rml:fieldName ?left_join_name .
-                ?left_join_field rml:reference ?left_join_value .
+                OPTIONAL{?left_join_field rml:reference ?left_join_value .}
+                OPTIONAL{?left_join_field rml:template ?left_join_value .}
+                OPTIONAL{?left_join_field rml:constant ?left_join_constant .}
             }
             UNION
             {
@@ -1875,7 +2125,9 @@ def mapping_parser(mapping_file):
                                 OPTIONAL{?inner_child_map rml:constant ?inner_child_constant}}
                 ?inner_join rml:field ?inner_join_field .
                 ?inner_join_field rml:fieldName ?inner_join_name .
-                ?inner_join_field rml:reference ?inner_join_value .
+                OPTIONAL {?inner_join_field rml:reference ?inner_join_value .}
+                OPTIONAL {?inner_join_field rml:template ?inner_join_value .}
+                OPTIONAL {?inner_join_field rml:constant ?inner_join_constant .}
             }
         }
         """
@@ -1941,8 +2193,11 @@ def mapping_parser(mapping_file):
             OPTIONAL { ?_source rr:tableName ?tablename .}
             OPTIONAL { ?_source rml:query ?query .}
 
-            ?triples_map_id rml:subjectMap ?_subject_map .
+            OPTIONAL {?triples_map_id rml:subject ?subject_constant_shortcut}
+            OPTIONAL {?triples_map_id rml:subjectMap ?_subject_map .
             OPTIONAL {?_subject_map rml:template ?subject_template .}
+            OPTIONAL {?_subject_map rml:condition ?subject_condition .
+                      ?subject_condition rml:functionExecution ?function_condition.}
             OPTIONAL {?_subject_map rml:reference ?subject_reference .}
             OPTIONAL {?_subject_map rml:constant ?subject_constant}
             OPTIONAL {?_subject_map rml:logicalTarget ?output.
@@ -2007,7 +2262,7 @@ def mapping_parser(mapping_file):
                       ?dump rml:path ?subject_dump.
                       OPTIONAL {?output rml:serialization ?subject_serialization.} 
                       OPTIONAL {?output rml:encoding ?subject_encoding.}
-                    }         
+                    }}         
 
     # Predicate -----------------------------------------------------------------------
             OPTIONAL {
@@ -2059,6 +2314,7 @@ def mapping_parser(mapping_file):
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
+                          OPTIONAL {?language_map rml:template ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
                           OPTIONAL {?language_map rml:logicalTarget ?lan_obj_output .
                                  ?lan_obj_output rml:target ?lan_dump.
@@ -2068,6 +2324,7 @@ def mapping_parser(mapping_file):
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
+                          OPTIONAL {?datatype_map rml:reference ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?dan_obj_output .
                                  ?dan_obj_output rml:target ?data_dump.
@@ -2102,6 +2359,8 @@ def mapping_parser(mapping_file):
                 OPTIONAL { ?_object_map rml:language ?language .}
                 OPTIONAL {?_object_map rml:languageMap ?language_map.
                           OPTIONAL {?language_map rml:reference ?language_value.}
+                          OPTIONAL {?language_map rml:template ?language_value.}
+                          OPTIONAL {?language_map rml:functionExecution ?language_value.}
                           OPTIONAL {?language_map rml:constant ?language.}
                           OPTIONAL {?language_map rml:logicalTarget ?language_object_output .
                                  ?language_object_output rml:target ?lan_dump.
@@ -2111,6 +2370,8 @@ def mapping_parser(mapping_file):
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
+                          OPTIONAL {?datatype_map rml:reference ?datatype_value.}
+                          OPTIONAL {?datatype_map rml:functionExecution ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?object_datatype.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?data_object_output .
                                  ?data_object_output rml:target ?dump.
@@ -2130,10 +2391,14 @@ def mapping_parser(mapping_file):
                     ?_object_map rml:joinCondition ?join_condition .
                     OPTIONAL{?join_condition rml:child ?child_value.}
                     OPTIONAL{?join_condition rml:parent ?parent_value.}
-                    OPTIONAL{?join_condition rml:childMap ?childMap.
-                             OPTIONAL{?childMap rml:reference ?child_reference.}
-                             OPTIONAL{?childMap rml:template ?child_template.}
-                             OPTIONAL{?childMap rml:constant ?child_constant.}}
+                    OPTIONAL{?join_condition rml:parentMap ?join_parentMap.
+                             OPTIONAL{?join_parentMap rml:reference ?parent_reference.}
+                             OPTIONAL{?join_parentMap rml:template ?parent_template.}
+                             OPTIONAL{?join_parentMap rml:constant ?parent_constant.}}
+                    OPTIONAL{?join_condition rml:childMap ?join_childMap.
+                             OPTIONAL{?join_childMap rml:reference ?child_reference.}
+                             OPTIONAL{?join_childMap rml:template ?child_template.}
+                             OPTIONAL{?join_childMap rml:constant ?child_constant.}}
                     OPTIONAL{?parent_value rml:functionExecution ?executed_parent .
                             ?executed_parent rml:function ?parent_function .}
                     OPTIONAL{?child_value rml:functionExecution ?executed_child .
@@ -2176,6 +2441,7 @@ def mapping_parser(mapping_file):
                          }
                 OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           OPTIONAL {?datatype_map rml:template ?datatype_value.}
+                          OPTIONAL {?datatype_map rml:reference ?datatype_value.}
                           OPTIONAL {?datatype_map rml:constant ?datatype_value.}
                           OPTIONAL {?datatype_map rml:logicalTarget ?data_output .
                                  ?data_output rml:target ?dump.
@@ -2269,7 +2535,7 @@ def mapping_parser(mapping_file):
                 OPTIONAL { ?_source rml:iterator ?iterator . }
                 OPTIONAL { ?_source rr:tableName ?tablename .}
                 OPTIONAL { ?_source rml:query ?query .}
-
+                OPTIONAL {?triples_map_id rr:subject ?subject_constant_shortcut .}
                 OPTIONAL {?triples_map_id rr:subjectMap ?_subject_map .}
                 OPTIONAL {?triples_map_id rml:subjectMap ?_subject_map .}
                 OPTIONAL {?_subject_map rr:template ?subject_template .}
@@ -2349,8 +2615,16 @@ def mapping_parser(mapping_file):
                     ?_object_map rr:parentTriplesMap ?object_parent_triples_map .
                     OPTIONAL {
                         ?_object_map rr:joinCondition ?join_condition .
-                        ?join_condition rr:child ?child_value;
-                                     rr:parent ?parent_value.
+                        OPTIONAL {?join_condition rr:child ?child_value.}
+                        OPTIONAL {?join_condition rr:parent ?parent_value.}
+                        OPTIONAL{?join_condition rml:parentMap ?join_parentMap.
+                             OPTIONAL{?join_parentMap rml:reference ?parent_reference.}
+                             OPTIONAL{?join_parentMap rr:template ?parent_template.}
+                             OPTIONAL{?join_parentMap rr:constant ?parent_constant.}}
+                        OPTIONAL{?join_condition rml:childMap ?join_childMap.
+                                 OPTIONAL{?join_childMap rml:reference ?child_reference.}
+                                 OPTIONAL{?join_childMap rr:template ?child_template.}
+                                 OPTIONAL{?join_childMap rr:constant ?child_constant.}}
                         OPTIONAL{?parent_value fnml:functionValue ?parent_function.}
                         OPTIONAL{?child_value fnml:functionValue ?child_function.}
                         OPTIONAL {?_object_map rr:termType ?term .}
@@ -2580,136 +2854,155 @@ def mapping_parser(mapping_file):
             mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
             attr_list = []
             seen_view = []
+            no_same_name = True
             for attr_view in mapping_query_view_results:
-                attr_row = {}
-                if attr_view.constant_field_value is not None:
-                    attr_row["type"] = "constant"
-                    attr_row["value"] = str(attr_view.constant_field_value)
-                elif attr_view.reference_field_value is not None:
-                    attr_row["type"] = "reference"
-                    attr_row["value"] = str(attr_view.reference_field_value)
-                    if attr_view.inner_ref_form is not None:
-                        attr_row["ref_form"] = str(attr_view.inner_ref_form)
-                        if attr_view.inner_iterator is not None:
-                            attr_row["iterator"] = str(attr_view.inner_iterator)
-                        attr_row["inner_name"] = str(attr_view.inner_field_name)
-                elif attr_view.template_field_value is not None:
-                    attr_row["type"] = "template"
-                    attr_row["value"] = str(attr_view.template_field_value)
-                elif attr_view.field_iterator is not None:
-                    attr_row["type"] = "iterable"
-                    attr_row["iterator"] = str(attr_view.field_iterator)
-                    mapping_iterable_results = prepareQuery(view_query)
-                    mapping_query_iterable_results = mapping_graph.query(mapping_iterable_results, initBindings={'field_iterator': attr_view.field_iterator})
-                    global inner_view
-                    if inner_view == {}:
-                        mapping_inner_iterable_results = prepareQuery(inner_view_query)
-                        mapping_query_inner_iterable_results = mapping_graph.query(mapping_inner_iterable_results)
-                        inner_rml_view(str(result_triples_map._source),mapping_query_inner_iterable_results)
-                    iterable_fields = []
-                    seen_field = []
-                    for attr_iter in mapping_query_iterable_results:
-                        if attr_iter.iterable_field_name is not None:
-                            iter_row = {}
-                            if attr_iter.iterable_constant_field_value is not None:
-                                iter_row["type"] = "constant"
-                                iter_row["value"] = str(attr_iter.iterable_constant_field_value)
-                            elif attr_iter.iterable_reference_field_value is not None:
-                                iter_row["type"] = "reference"
-                                iter_row["value"] = str(attr_iter.iterable_reference_field_value)
-                            elif attr_iter.iterable_template_field_value is not None:
-                                iter_row["type"] = "template"
-                                iter_row["value"] = str(attr_iter.iterable_template_field_value)
-                            elif attr_iter.iterable_iterable_field is not None:
-                                iter_row["type"] = "iterable"
-                                for value in inner_view[str(result_triples_map._source)]:
-                                    if "value" in value:
-                                        if str(attr_iter.iterable_iterable_field) == value["value"] and value["name"] not in seen_field:
-                                            field_name = value["name"]
-                                for value in inner_view[str(result_triples_map._source)]:
-                                    if value["name"] == field_name and "attr_list" in value:
-                                        iter_row["attr_list"] = value["attr_list"]
-                                        iter_row["iterator"] = value["iterator"]
-                                        
-                            iter_row["name"] = str(attr_iter.iterable_field_name)
-                            if iter_row["name"] not in seen_field:
-                                iterable_fields.append(iter_row)
-                                seen_field.append(iter_row["name"])
-                        
-                    attr_row["attr_list"] = iterable_fields
+                if no_same_name:
+                    attr_row = {}
+                    if attr_view.constant_field_value is not None:
+                        attr_row["type"] = "constant"
+                        attr_row["value"] = str(attr_view.constant_field_value)
+                    elif attr_view.reference_field_value is not None:
+                        attr_row["type"] = "reference"
+                        attr_row["value"] = str(attr_view.reference_field_value)
+                        if attr_view.inner_ref_form is not None:
+                            attr_row["ref_form"] = str(attr_view.inner_ref_form)
+                            if attr_view.inner_iterator is not None:
+                                attr_row["iterator"] = str(attr_view.inner_iterator)
+                            attr_row["inner_name"] = str(attr_view.inner_field_name)
+                    elif attr_view.template_field_value is not None:
+                        attr_row["type"] = "template"
+                        attr_row["value"] = str(attr_view.template_field_value)
+                    elif attr_view.field_iterator is not None:
+                        attr_row["type"] = "iterable"
+                        attr_row["iterator"] = str(attr_view.field_iterator)
+                        mapping_iterable_results = prepareQuery(view_query)
+                        mapping_query_iterable_results = mapping_graph.query(mapping_iterable_results, initBindings={'field_iterator': attr_view.field_iterator})
+                        global inner_view
+                        if inner_view == {}:
+                            mapping_inner_iterable_results = prepareQuery(inner_view_query)
+                            mapping_query_inner_iterable_results = mapping_graph.query(mapping_inner_iterable_results)
+                            inner_rml_view(str(result_triples_map._source),mapping_query_inner_iterable_results)
+                        iterable_fields = []
+                        seen_field = []
+                        for attr_iter in mapping_query_iterable_results:
+                            if attr_iter.iterable_field_name is not None:
+                                iter_row = {}
+                                if attr_iter.iterable_constant_field_value is not None:
+                                    iter_row["type"] = "constant"
+                                    iter_row["value"] = str(attr_iter.iterable_constant_field_value)
+                                elif attr_iter.iterable_reference_field_value is not None:
+                                    iter_row["type"] = "reference"
+                                    iter_row["value"] = str(attr_iter.iterable_reference_field_value)
+                                elif attr_iter.iterable_template_field_value is not None:
+                                    iter_row["type"] = "template"
+                                    iter_row["value"] = str(attr_iter.iterable_template_field_value)
+                                elif attr_iter.iterable_iterable_field is not None:
+                                    iter_row["type"] = "iterable"
+                                    for value in inner_view[str(result_triples_map._source)]:
+                                        if "value" in value:
+                                            if str(attr_iter.iterable_iterable_field) == value["value"] and value["name"] not in seen_field:
+                                                field_name = value["name"]
+                                    for value in inner_view[str(result_triples_map._source)]:
+                                        if value["name"] == field_name and "attr_list" in value:
+                                            iter_row["attr_list"] = value["attr_list"]
+                                            iter_row["iterator"] = value["iterator"]
+                                            
+                                iter_row["name"] = str(attr_iter.iterable_field_name)
+                                if iter_row["name"] not in seen_field:
+                                    iterable_fields.append(iter_row)
+                                    seen_field.append(iter_row["name"])
+                            
+                        attr_row["attr_list"] = iterable_fields
 
-                attr_row["name"] = str(attr_view.field_name)
+                    if str(attr_view.field_name)!= "None":
+                        attr_row["name"] = str(attr_view.field_name)
 
-                if attr_row["name"] not in seen_view:
-                    attr_list.append(attr_row)
-                    seen_view.append(attr_row["name"])
+                        if attr_row["name"] not in seen_view:
+                            attr_list.append(attr_row)
+                            seen_view.append(attr_row["name"])
+                        else:
+                            for attr in attr_list:
+                                if attr_row["name"] == attr["name"]:
+                                    if attr_row["value"] != attr["value"]:
+                                        attr_list = []
+                                        no_same_name = False
 
-            mapping_view_results = prepareQuery(join_view_query)
-            mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
-            for attr_view in mapping_query_view_results:
-                attr_row = {}
-                if attr_view.inner_join is not None:
-                    attr_row["type"] = "inner_join"
-                    attr_row["value"] = str(attr_view.inner_join_value)
-                    attr_row["parent_view"] = str(attr_view.inner_join_parent)
+                mapping_view_results = prepareQuery(join_view_query)
+                mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
+                for attr_view in mapping_query_view_results:
+                    attr_row = {}
+                    if attr_view.inner_join is not None:
+                        attr_row["type"] = "inner_join"
+                        if attr_view.inner_join_value is not None:
+                            attr_row["value"] = str(attr_view.inner_join_value)
+                        else:
+                            attr_row["value"] = {"value":str(attr_view.inner_join_constant),"type":"constant"}
+                        attr_row["parent_view"] = str(attr_view.inner_join_parent)
 
-                    if str(attr_view.inner_parent_reference) != "None":
-                        attr_row["parent_condition"] = str(attr_view.inner_parent_reference)
-                    elif str(attr_view.inner_parent_template) != "None":
-                        attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_template), "type":"template"}
-                    elif str(attr_view.inner_parent_constant) != "None":
-                        attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_constant), "type":"constant"}
-                    else:
-                        attr_row["parent_condition"] = str(attr_view.inner_parent)
+                        if str(attr_view.inner_parent_reference) != "None":
+                            attr_row["parent_condition"] = str(attr_view.inner_parent_reference)
+                        elif str(attr_view.inner_parent_template) != "None":
+                            attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_template), "type":"template"}
+                        elif str(attr_view.inner_parent_constant) != "None":
+                            attr_row["parent_condition"] = {"value":str(attr_view.inner_parent_constant), "type":"constant"}
+                        else:
+                            attr_row["parent_condition"] = str(attr_view.inner_parent)
 
-                    if str(attr_view.inner_child_reference) != "None":
-                        attr_row["child_condition"] = str(attr_view.inner_child_reference)
-                    elif str(attr_view.inner_child_template) != "None":
-                        attr_row["child_condition"] = {"value":str(attr_view.inner_child_template), "type":"template"}
-                    elif str(attr_view.inner_child_constant) != "None":
-                        attr_row["child_condition"] = {"value":str(attr_view.inner_child_constant), "type":"constant"}
-                    else:
-                        attr_row["child_condition"] = str(attr_view.inner_child)
+                        if str(attr_view.inner_child_reference) != "None":
+                            attr_row["child_condition"] = str(attr_view.inner_child_reference)
+                        elif str(attr_view.inner_child_template) != "None":
+                            attr_row["child_condition"] = {"value":str(attr_view.inner_child_template), "type":"template"}
+                        elif str(attr_view.inner_child_constant) != "None":
+                            attr_row["child_condition"] = {"value":str(attr_view.inner_child_constant), "type":"constant"}
+                        else:
+                            attr_row["child_condition"] = str(attr_view.inner_child)
 
-                    attr_row["name"] = str(attr_view.inner_join_name)
-                elif attr_view.left_join is not None:
-                    attr_row["type"] = "left_join"
-                    attr_row["value"] = str(attr_view.left_join_value)
-                    attr_row["parent_view"] = str(attr_view.left_join_parent)
+                        attr_row["name"] = str(attr_view.inner_join_name)
+                    elif attr_view.left_join is not None:
+                        attr_row["type"] = "left_join"
+                        if attr_view.left_join_value is not None:
+                            attr_row["value"] = str(attr_view.left_join_value)
+                        else:
+                            attr_row["value"] = {"value":str(attr_view.left_join_constant),"type":"constant"}
+                        attr_row["parent_view"] = str(attr_view.left_join_parent)
 
-                    if str(attr_view.left_parent_reference) != "None":
-                        attr_row["parent_condition"] = str(attr_view.left_parent_reference)
-                    elif str(attr_view.left_parent_template) != "None":
-                        attr_row["parent_condition"] = {"value":str(attr_view.left_parent_template), "type":"template"}
-                    elif str(attr_view.left_parent_constant) != "None":
-                        attr_row["parent_condition"] = {"value":str(attr_view.left_parent_constant), "type":"constant"}
-                    else:
-                        attr_row["parent_condition"] = str(attr_view.left_parent)
+                        if str(attr_view.left_parent_reference) != "None":
+                            attr_row["parent_condition"] = str(attr_view.left_parent_reference)
+                        elif str(attr_view.left_parent_template) != "None":
+                            attr_row["parent_condition"] = {"value":str(attr_view.left_parent_template), "type":"template"}
+                        elif str(attr_view.left_parent_constant) != "None":
+                            attr_row["parent_condition"] = {"value":str(attr_view.left_parent_constant), "type":"constant"}
+                        else:
+                            attr_row["parent_condition"] = str(attr_view.left_parent)
 
-                    if str(attr_view.left_child_reference) != "None":
-                        attr_row["child_condition"] = str(attr_view.left_child_reference)
-                    elif str(attr_view.left_child_template) != "None":
-                        attr_row["child_condition"] = {"value":str(attr_view.left_child_template), "type":"template"}
-                    elif str(attr_view.left_child_constant) != "None":
-                        attr_row["child_condition"] = {"value":str(attr_view.left_child_constant), "type":"constant"}
-                    else:
-                        attr_row["child_condition"] = str(attr_view.left_child)
+                        if str(attr_view.left_child_reference) != "None":
+                            attr_row["child_condition"] = str(attr_view.left_child_reference)
+                        elif str(attr_view.left_child_template) != "None":
+                            attr_row["child_condition"] = {"value":str(attr_view.left_child_template), "type":"template"}
+                        elif str(attr_view.left_child_constant) != "None":
+                            attr_row["child_condition"] = {"value":str(attr_view.left_child_constant), "type":"constant"}
+                        else:
+                            attr_row["child_condition"] = str(attr_view.left_child)
 
-                    attr_row["name"] = str(attr_view.left_join_name)
+                        attr_row["name"] = str(attr_view.left_join_name)
 
-                if attr_row != {}:
-                    if attr_row["name"] not in seen_view:
-                        attr_list.append(attr_row)
-                        seen_view.append(attr_row["name"])
-                    else:
-                        for attr in attr_list:
-                            if attr_row["name"] == attr["name"]:
-                                if isinstance(attr["parent_condition"],list):
-                                    attr["parent_condition"].append(attr_row["parent_condition"])
-                                    attr["child_condition"].append(attr_row["child_condition"])
-                                else:
-                                    attr["parent_condition"] = [attr["parent_condition"],attr_row["parent_condition"]]
-                                    attr["child_condition"] = [attr["child_condition"],attr_row["child_condition"]]
+                    if attr_row != {}:
+                        if attr_row["name"] not in seen_view:
+                            attr_list.append(attr_row)
+                            seen_view.append(attr_row["name"])
+                        else:
+                            for attr in attr_list:
+                                if attr_row["name"] == attr["name"]:
+                                    if attr_row["value"] == attr["value"]:
+                                        if isinstance(attr["parent_condition"],list):
+                                            attr["parent_condition"].append(attr_row["parent_condition"])
+                                            attr["child_condition"].append(attr_row["child_condition"])
+                                        else:
+                                            attr["parent_condition"] = [attr["parent_condition"],attr_row["parent_condition"]]
+                                            attr["child_condition"] = [attr["child_condition"],attr_row["child_condition"]]
+                                    else:
+                                        attr_list = []
+                                        break
                     
             if result_triples_map.data_view is not None:
                 if result_triples_map.ref_form is None:
@@ -2854,7 +3147,7 @@ def mapping_parser(mapping_file):
                 global base
                 if str(result_triples_map.triples_map_id) not in base_iri_list:
                     base_iri_list[str(result_triples_map.triples_map_id)] = str(result_triples_map.baseIRI)
-                base = str(result_triples_map.baseIRI)
+                #base = str(result_triples_map.baseIRI)
         triples_map_exists = False
         for triples_map in triples_map_list:
             triples_map_exists = triples_map_exists or (
@@ -2953,6 +3246,18 @@ def mapping_parser(mapping_file):
                     subject_map = tm.SubjectMap(str(result_triples_map.subject_constant), condition, "constant","None","None",
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype,
                                                 [graph],"None")
+            elif result_triples_map.subject_constant_shortcut != None:
+                gather = False
+                if result_triples_map.rdf_class is None:
+                    reference, condition = string_separetion(str(result_triples_map.subject_constant_shortcut))
+                    subject_map = tm.SubjectMap(str(result_triples_map.subject_constant_shortcut), condition, "constant","None","None",
+                                                [result_triples_map.rdf_class], result_triples_map.termtype,
+                                                [graph],"None")
+                else:
+                    reference, condition = string_separetion(str(result_triples_map.subject_constant_shortcut))
+                    subject_map = tm.SubjectMap(str(result_triples_map.subject_constant_shortcut), condition, "constant","None","None",
+                                                [str(result_triples_map.rdf_class)], result_triples_map.termtype,
+                                                [graph],"None")
             elif result_triples_map.subject_function != None:
                 gather = False
                 func_output = "None"
@@ -2986,6 +3291,21 @@ def mapping_parser(mapping_file):
                                                 result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
                                                 [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
                                                 [graph],"None")
+            elif "BlankNode" in str(result_triples_map.termtype):
+                gather = False
+                if result_triples_map.rdf_class is None:
+                    subject_map = tm.SubjectMap("", "", "blank", 
+                                                result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
+                                                [result_triples_map.rdf_class], result_triples_map.termtype, 
+                                                [graph],"None")
+                else:
+                    subject_map = tm.SubjectMap("", "", "blank", 
+                                                result_triples_map.subject_parent_value, result_triples_map.subject_child_value, 
+                                                [str(result_triples_map.rdf_class)], result_triples_map.termtype, 
+                                                [graph],"None")
+            if new_formulation == "yes":
+                if result_triples_map.function_condition is not None:
+                    subject_map.condition = str(result_triples_map.function_condition)
             if gather:
                 if result_triples_map.subject_gather_list != None:
                     if result_triples_map.subject_gather_list not in gather_map_seen:
@@ -3081,7 +3401,11 @@ def mapping_parser(mapping_file):
                     function = True
 
                 if result_predicate_object_map.object_constant != None:
-                    object_map = tm.ObjectMap("constant", str(result_predicate_object_map.object_constant),
+                    constant = str(result_predicate_object_map.object_constant)
+                    if isinstance(result_predicate_object_map.object_constant, Literal):
+                        if result_predicate_object_map.object_constant.language is not None:
+                            constant = constant + "@" + result_predicate_object_map.object_constant.language
+                    object_map = tm.ObjectMap("constant", constant,
                                               str(result_predicate_object_map.object_datatype), "None", "None",
                                               result_predicate_object_map.term, result_predicate_object_map.language,
                                               result_predicate_object_map.language_value,
@@ -3132,64 +3456,78 @@ def mapping_parser(mapping_file):
                                                           result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_parent_triples_map != None:
                     if predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map) not in join_predicate:
-                        if (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
-                                "predicate":predicate_map, 
-                                "childs":[str(result_predicate_object_map.child_value)], 
-                                "parents":[str(result_predicate_object_map.parent_function)], 
-                                "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
-                        elif (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is None):
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
-                                "predicate":predicate_map, 
-                                "childs":[str(result_predicate_object_map.child_function)], 
-                                "parents":[str(result_predicate_object_map.parent_value)], 
-                                "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
-                        elif (result_predicate_object_map.child_function is None) and (result_predicate_object_map.parent_function is not None):
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
-                                "predicate":predicate_map, 
-                                "childs":[str(result_predicate_object_map.child_function)], 
-                                "parents":[str(result_predicate_object_map.parent_function)], 
-                                "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
+                        join_dict = {
+                        "predicate":predicate_map,
+                        "triples_map":str(result_predicate_object_map.object_parent_triples_map)
+                        }
+                        if result_predicate_object_map.child_function is not None:
+                            join_dict["childs"] = [str(result_predicate_object_map.child_function)]
+                        elif result_predicate_object_map.child_reference is not None:
+                            join_dict["childs"] = [str(result_predicate_object_map.child_reference)]
+                        elif result_predicate_object_map.child_template is not None:
+                            join_dict["childs"] = [{"type":"template","value":str(result_predicate_object_map.child_template)}]
+                        elif result_predicate_object_map.child_constant is not None:
+                            join_dict["childs"] = [{"type":"constant","value":str(result_predicate_object_map.child_constant)}]
                         else:
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = {
-                                "predicate":predicate_map, 
-                                "childs":[str(result_predicate_object_map.child_value)], 
-                                "parents":[str(result_predicate_object_map.parent_value)], 
-                                "triples_map":str(result_predicate_object_map.object_parent_triples_map)}
+                            join_dict["childs"] = [str(result_predicate_object_map.child_value)]
+
+                        if result_predicate_object_map.parent_function is not None:
+                            join_dict["parents"] = [str(result_predicate_object_map.parent_function)]
+                        elif result_predicate_object_map.parent_reference is not None:
+                            join_dict["parents"] = [str(result_predicate_object_map.parent_reference)]
+                        elif result_predicate_object_map.parent_template is not None:
+                            join_dict["parents"] = [{"type":"template","value":str(result_predicate_object_map.parent_template)}]
+                        elif result_predicate_object_map.parent_constant is not None:
+                            join_dict["parents"] = [{"type":"constant","value":str(result_predicate_object_map.parent_constant)}]
+                        else:
+                            join_dict["parents"] = [str(result_predicate_object_map.parent_value)]
+
+                        join_predicate[
+                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)] = join_dict
                     else:
-                        if (result_predicate_object_map.child_function is None) and (result_predicate_object_map.parent_function is not None):
+                        if result_predicate_object_map.child_function is not None:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
                                 "childs"].append(str(result_predicate_object_map.child_function))
+                        elif result_predicate_object_map.child_reference is not None:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
-                                "parents"].append(str(result_predicate_object_map.parent_value))
-                        elif (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is None):
+                                "childs"].append(str(result_predicate_object_map.child_reference))
+                        elif result_predicate_object_map.child_template is not None:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
-                                "childs"].append(str(result_predicate_object_map.child_function))
+                                "childs"].append({"type":"template","value":str(result_predicate_object_map.child_template)})
+                        elif result_predicate_object_map.child_constant is not None:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
-                                "parents"].append(str(result_predicate_object_map.parent_value))
-                        elif (result_predicate_object_map.child_function is not None) and (result_predicate_object_map.parent_function is not None):
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
-                                "childs"].append(str(result_predicate_object_map.child_function))
-                            join_predicate[
-                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
-                                "parents"].append(str(result_predicate_object_map.parent_function))
+                                "childs"].append({"type":"constant","value":str(result_predicate_object_map.child_constant)})
                         else:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
                                 "childs"].append(str(result_predicate_object_map.child_value))
+
+                        if result_predicate_object_map.parent_function is not None:
+                            join_predicate[
+                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
+                                "parents"].append(str(result_predicate_object_map.parent_function))
+                        elif result_predicate_object_map.parent_reference is not None:
+                            join_predicate[
+                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
+                                "parents"].append(str(result_predicate_object_map.parent_reference))
+                        elif result_predicate_object_map.parent_template is not None:
+                            join_predicate[
+                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
+                                "parents"].append({"type":"template","value":str(result_predicate_object_map.parent_template)})
+                        elif result_predicate_object_map.parent_constant is not None:
+                            join_predicate[
+                                predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
+                                "parents"].append({"type":"constant","value":str(result_predicate_object_map.parent_constant)})
+                        else:
                             join_predicate[
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
                                 "parents"].append(str(result_predicate_object_map.parent_value))
                     join = False
+
                 elif result_predicate_object_map.function is not None:
                     #for var, val in zip(mapping_query_prepared_results.vars, result_predicate_object_map):
                         #print(f"{var} -> {val}")
@@ -3213,8 +3551,12 @@ def mapping_parser(mapping_file):
                                             result_predicate_object_map.language_value,
                                             result_predicate_object_map.datatype_value, "None")
                 elif result_predicate_object_map.object_constant_shortcut != None:
+                    constant = str(result_predicate_object_map.object_constant_shortcut)
+                    if isinstance(result_predicate_object_map.object_constant_shortcut, Literal):
+                        if result_predicate_object_map.object_constant_shortcut.language is not None:
+                            constant = constant + "@" + result_predicate_object_map.object_constant_shortcut.language
                     object_map = tm.ObjectMap("constant shortcut",
-                                              str(result_predicate_object_map.object_constant_shortcut), "None", "None",
+                                              constant, "None", "None",
                                               "None", result_predicate_object_map.term,
                                               result_predicate_object_map.language,
                                               result_predicate_object_map.language_value,
@@ -3427,6 +3769,8 @@ def mapping_parser(mapping_file):
                         subject_value = str(result_triples_map.subject_function)
                     elif result_triples_map.subject_quoted != None:
                         subject_value = str(result_triples_map.subject_quoted)
+                    elif "BlankNode" in result_triples_map.termtype:
+                        subject_value = ""
 
                     if triples_map.subject_map.value == subject_value:
                         if str(result_triples_map.rdf_class) not in triples_map.subject_map.rdf_class:
@@ -3663,7 +4007,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         except:
                             subject = None
                 else:
-                    if "IRI" in triples_map.subject_map.term_type:
+                    if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
                         if triples_map.subject_map.condition == "":
 
                             try:
@@ -3718,7 +4062,11 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 
                     elif "Literal" in triples_map.subject_map.term_type:
                         subject = None
-
+                    elif "Unsafe" in triples_map.subject_map.term_type:
+                        try:
+                            subject = "<" + unquote(subject_value) + ">"
+                        except:
+                            subject = None
                     else:
                         if triples_map.subject_map.condition == "":
 
@@ -3788,7 +4136,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
                 subject = "<" + triples_map.subject_map.value + ">"
-
+            elif "blank" in triples_map.subject_map.subject_mapping_type:
+                subject = "_:" + str(uuid4())
             else:
                 if triples_map.subject_map.condition == "":
 
@@ -3899,12 +4248,21 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                 if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
-                    object = "\"" + predicate_object_map.object_map.value + "\""
+                    if "@" in predicate_object_map.object_map.value:
+                        object = "\"" + predicate_object_map.object_map.value.split("@")[0] + "\"@" + predicate_object_map.object_map.value.split("@")[1]
+                    else:
+                        object = "\"" + predicate_object_map.object_map.value + "\""
+                    if ("true" in object or "false" in object) and "@" not in object:
+                        object += "^^<http://www.w3.org/2001/XMLSchema#boolean>"
                 if predicate_object_map.object_map.datatype != None:
                     object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
                 elif predicate_object_map.object_map.datatype_map != None:
-                    datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
-                                                        "object", triples_map.iterator, parent_map, namespace)
+                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                        datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
+                                                            "object", triples_map.iterator, parent_map, namespace)
+                    else:
+                        datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, ".+", child,
+                                                            "object", triples_map.iterator, parent_map, namespace)[1:-1]
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
@@ -3919,11 +4277,14 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                     else:
                         object = None
                 elif predicate_object_map.object_map.language_map != None:
-                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                    if "{" in predicate_object_map.object_map.language_map:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                               ignore, triples_map.iterator)
+                    else:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                ignore, triples_map.iterator)
                     if lang != None:
-                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                            "object", ignore, triples_map.iterator)[1:-1]
+                        object += "@" + lang
             elif predicate_object_map.object_map.mapping_type == "template":
                 object = string_substitution_xml(predicate_object_map.object_map.value, "{(.+?)}", child, "object",
                                                  triples_map.iterator, parent_map, namespace)
@@ -3939,8 +4300,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(
                                     predicate_object_map.object_map.datatype)
                             elif predicate_object_map.object_map.datatype_map != None:
-                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
+                                if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                    datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
                                                                     "object", triples_map.iterator, parent_map, namespace)
+                                else:
+                                    datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, ".+", child,
+                                                                    "object", triples_map.iterator, parent_map, namespace)[1:-1]
                                 if "http" in datatype_value:
                                    object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
@@ -3955,13 +4320,16 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 else:
                                     object[i] = None
                             elif predicate_object_map.object_map.language_map != None:
-                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
+                                if "{" in predicate_object_map.object_map.language_map:
+                                    lang = string_substitution_xml(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                               child, "object", triples_map.iterator, parent_map,
+                                                               namespace)
+                                else:
+                                    lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
                                                                child, "object", triples_map.iterator, parent_map,
                                                                namespace)
                                 if lang != None:
-                                    object[i] += "@" + string_substitution_xml(
-                                        predicate_object_map.object_map.language_map, ".+", child, "object",
-                                        triples_map.iterator, parent_map, namespace)[1:-1]
+                                    object[i] += "@" + lang
                 else:
                     if predicate_object_map.object_map.term is None:
                         object = "<" + object + ">"
@@ -3973,8 +4341,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                 predicate_object_map.object_map.datatype)
                         elif predicate_object_map.object_map.datatype_map != None:
-                            datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
+                            if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
                                                                 "object", triples_map.iterator, parent_map, namespace)
+                            else:
+                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, ".+", child,
+                                                                "object", triples_map.iterator, parent_map, namespace)[1:-1]
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
@@ -3989,13 +4361,16 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             else:
                                 object = None
                         elif predicate_object_map.object_map.language_map != None:
-                            lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
+                            if "{" in predicate_object_map.object_map.language_map:
+                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                           child, "object", triples_map.iterator, parent_map,
+                                                           namespace)
+                            else:
+                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
                                                            child, "object", triples_map.iterator, parent_map,
                                                            namespace)
                             if lang != None:
-                                object += "@" + string_substitution_xml(
-                                    predicate_object_map.object_map.language_map, ".+", child, "object",
-                                    triples_map.iterator, parent_map, namespace)[1:-1]
+                                object += "@" + lang
             elif predicate_object_map.object_map.mapping_type == "reference":
                 object = string_substitution_xml(predicate_object_map.object_map.value, ".+", child, "object",
                                                  triples_map.iterator, parent_map, namespace)
@@ -4013,8 +4388,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if predicate_object_map.object_map.datatype != None:
                                 object[i] += "^^<{}>".format(predicate_object_map.object_map.datatype)
                             elif predicate_object_map.object_map.datatype_map != None:
-                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
+                                if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                    datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
                                                                     "object", triples_map.iterator, parent_map, namespace)
+                                else:
+                                    datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, ".+", child,
+                                                                    "object", triples_map.iterator, parent_map, namespace)[1:-1]
                                 if "http" in datatype_value:
                                    object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
@@ -4029,13 +4408,16 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 else:
                                     object[i] = None
                             elif predicate_object_map.object_map.language_map != None:
-                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
+                                if "{" in predicate_object_map.object_map.language_map:
+                                    lang = string_substitution_xml(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                               child, "object", triples_map.iterator, parent_map,
+                                                               namespace)
+                                else:
+                                    lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
                                                                child, "object", triples_map.iterator, parent_map,
                                                                namespace)
                                 if lang != None:
-                                    object[i] += "@" + string_substitution_xml(
-                                        predicate_object_map.object_map.language_map, ".+", child, "object",
-                                        triples_map.iterator, parent_map, namespace)[1:-1]
+                                    object[i] += "@" + lang
                             elif predicate_object_map.object_map.term != None:
                                 if "IRI" in predicate_object_map.object_map.term:
                                     if " " not in object:
@@ -4043,6 +4425,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                         object[i] = "<" + encode_char(object[i][1:-1]) + ">"
                                     else:
                                         object[i] = None
+                            elif is_convertible_to_int(object[i][1:-1]):
+                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                            elif is_convertible_to_double(object[i][1:-1]):
+                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                     else:
                         if "\\" in object[1:-1]:
                             object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
@@ -4055,8 +4441,12 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         if predicate_object_map.object_map.datatype != None:
                             object += "^^<{}>".format(predicate_object_map.object_map.datatype)
                         elif predicate_object_map.object_map.datatype_map != None:
-                            datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
+                            if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, "{(.+?)}", child,
                                                                 "object", triples_map.iterator, parent_map, namespace)
+                            else:
+                                datatype_value = string_substitution_xml(predicate_object_map.object_map.datatype_map, ".+", child,
+                                                                "object", triples_map.iterator, parent_map, namespace)[1:-1]
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
@@ -4071,13 +4461,20 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             else:
                                 object = None
                         elif predicate_object_map.object_map.language_map != None:
-                            lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
+                            if "{" in predicate_object_map.object_map.language_map:
+                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                           child, "object", triples_map.iterator, parent_map,
+                                                           namespace)
+                            else:
+                                lang = string_substitution_xml(predicate_object_map.object_map.language_map, ".+",
                                                            child, "object", triples_map.iterator, parent_map,
                                                            namespace)
                             if lang != None:
-                                object += "@" + string_substitution_xml(
-                                    predicate_object_map.object_map.language_map, ".+", child, "object",
-                                    triples_map.iterator, parent_map, namespace)[1:-1]
+                                object += "@" + lang
+                        elif is_convertible_to_int(object[1:-1]):
+                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                        elif is_convertible_to_double(object[1:-1]):
+                            object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
@@ -4374,6 +4771,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                                 i += 1
                                     else:
                                         output_file_descriptor.write(triple)
+                                elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
                         else:
                             triple = subject + " " + predicate + " " + object + ".\n"
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
@@ -4519,6 +4919,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 else:
                                     output_file_descriptor.write(triple)
                                     i += 1
+                            elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                output_file_descriptor.write(triple)
+                                i += 1
                     object_list = []
                 else:
                     continue
@@ -4659,6 +5062,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     if isinstance(subject_value,list):
                         subject_list = []
                         for subject_val in subject_value:
+                            if "']}" in subject_val:
+                                subject_val = subject_val.replace("']}","")
                             subject_list.append("<" + subject_val + ">")
                         subject = None
                     else:
@@ -4672,6 +5077,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                         subject = "<" + base + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + "base/" + subject_value + ">"
+                                    elif is_valid_url_syntax("http://example.com/base/" + subject_value):
+                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
                                     else:
                                         subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                                 else:
@@ -4684,6 +5091,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             subject = "<" + base + subject_value + ">"
                                         else:
                                             subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                if "']}" in subject:
+                                    subject = subject.replace("']}","")
                             except:
                                 subject = None
 
@@ -4708,10 +5117,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             subject = "<" + base + subject_value + ">"
                                         else:
                                             subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                if "']}" in subject:
+                                    subject = subject.replace("']}","")
                             except:
                                 subject = None
                 else:
-                    if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
+                    if "URI" in triples_map.subject_map.term_type:
                         if triples_map.subject_map.condition == "":
 
                             try:
@@ -4732,6 +5143,29 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                         subject = "<" + base + subject_value + ">"
                                     else:
                                         subject = "<" + "http://example.com/base/" + encode_char(subject_value).replace(":","%3A") + ">"
+                            except:
+                                subject = None
+                    if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
+                        if triples_map.subject_map.condition == "":
+
+                            try:
+                                if "http" not in subject_value:
+                                    if triples_map.triples_map_id in base_iri_list:
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    elif base != "" and base != None:
+                                        subject = "<" + base + subject_value + ">"
+                                    else:
+                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                else:
+                                    if is_valid_url_syntax(subject_value):
+                                        subject = "<" + unquote(subject_value).replace(" ","%20") + ">"
+                                    else:
+                                        if triples_map.triples_map_id in base_iri_list:
+                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        elif base != "" and base != None:
+                                            subject = "<" + base + subject_value + ">"
+                                        else:
+                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value).replace(":","%3A") + ">"
                             except:
                                 subject = None
 
@@ -4785,6 +5219,11 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 subject = None
                     elif "Literal" in triples_map.subject_map.term_type:
                         subject = None
+                    elif "Unsafe" in triples_map.subject_map.term_type:
+                        try:
+                            subject = "<" + unquote(subject_value) + ">"
+                        except:
+                            subject = None
                     else:
                         if triples_map.subject_map.condition == "":
 
@@ -4867,6 +5306,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     subject = None
                 else:
                     subject = "<" + triples_map.subject_map.value + ">"
+            elif "blank" in triples_map.subject_map.subject_mapping_type:
+                subject = "_:" + str(uuid4())
             elif "Literal" in triples_map.subject_map.subject_mapping_type:
                 subject = None
             elif triples_map.subject_map.subject_mapping_type == "gather map":
@@ -4976,12 +5417,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                 if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
-                    object = "\"" + predicate_object_map.object_map.value + "\""
+                    if "@" in predicate_object_map.object_map.value:
+                        object = "\"" + predicate_object_map.object_map.value.split("@")[0] + "\"@" + predicate_object_map.object_map.value.split("@")[1]
+                    else:
+                        object = "\"" + predicate_object_map.object_map.value + "\""
+                    if ("true" in object or "false" in object) and "@" in object:
+                        object += "^^<http://www.w3.org/2001/XMLSchema#boolean>"
                 if predicate_object_map.object_map.datatype != None:
                     object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
                 elif predicate_object_map.object_map.datatype_map != None:
-                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
                                                         "object", ignore, iterator)
+                    else:
+                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, ".+", data,
+                                                        "object", ignore, iterator)[1:-1]
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
@@ -4996,11 +5446,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     else:
                         object = None
                 elif predicate_object_map.object_map.language_map != None:
-                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                    if "{" in predicate_object_map.object_map.language_map:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                               ignore, triples_map.iterator)
+                    else:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                ignore, triples_map.iterator)
                     if lang != None:
-                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                            "object", ignore, triples_map.iterator)[1:-1]
+                        object += "@" + lang
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
                     object = string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",
@@ -5010,6 +5463,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = None
                         i = 0
                         while i < len(object_list):
+                            if "']}" in object_list[i]:
+                                object_list[i] = object_list[i].replace("']}","")
                             if predicate_object_map.object_map.term is None:
                                 object_list[i] = "<" + object_list[i] + ">"
                             elif "IRI" in predicate_object_map.object_map.term:
@@ -5027,8 +5482,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(
                                         predicate_object_map.object_map.datatype)
                                 elif predicate_object_map.object_map.datatype_map != None:
-                                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
                                                                         "object", ignore, iterator)
+                                    else:
+                                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, ".+", data,
+                                                                        "object", ignore, iterator)[1:-1]
                                     if "http" in datatype_value:
                                        object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                     else:
@@ -5043,14 +5502,18 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     else:
                                         object[i] = None
                                 elif predicate_object_map.object_map.language_map != None:
-                                    lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
+                                    if "{" in predicate_object_map.object_map.language_map:
+                                        lang = string_substitution_json(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                                    data, "object", ignore, iterator)
+                                    else:
+                                        lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
                                                                     data, "object", ignore, iterator)
                                     if lang != None:
-                                        object[i] += "@" + string_substitution_json(
-                                            predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
-                                            iterator)[1:-1]
+                                        object[i] += "@" + lang
                             i += 1
                     else:
+                        if "']}" in object:
+                            object = object.replace("']}","")
                         if predicate_object_map.object_map.term is None:
                             if object is not None:
                                 object = "<" + object.replace(" ","%20") + ">"
@@ -5071,8 +5534,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                     predicate_object_map.object_map.datatype)
                             elif predicate_object_map.object_map.datatype_map != None:
-                                datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                                if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
                                                                     "object", ignore, iterator)
+                                else:
+                                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, ".+", data,
+                                                                    "object", ignore, iterator)[1:-1]
                                 if "http" in datatype_value:
                                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
@@ -5087,12 +5554,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 else:
                                     object = None
                             elif predicate_object_map.object_map.language_map != None:
-                                lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
+                                if "{" in predicate_object_map.object_map.language_map:
+                                    lang = string_substitution_json(predicate_object_map.object_map.language_map, "{(.+?)}",
+                                                                data, "object", ignore, iterator)
+                                else:
+                                    lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
                                                                 data, "object", ignore, iterator)
                                 if lang != None:
-                                    object += "@" + string_substitution_json(
-                                        predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
-                                        iterator)[1:-1]
+                                    object += "@" + lang
                 except TypeError:
                     object = None
             elif predicate_object_map.object_map.mapping_type == "reference":
@@ -5102,7 +5571,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     object_list = object
                     object = None
                     if object_list:
-                        if predicate_object_map.object_map.value[-3:] == "[*]":
+                        if predicate_object_map.object_map.value[-3:] == "[*]" or "[*]" in predicate_object_map.object_map.value:
                             i = 0
                             while i < len(object_list):
                                 object_list[i] = "\"" + str(object_list[i]) + "\""
@@ -5118,8 +5587,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(
                                         predicate_object_map.object_map.datatype)
                                 elif predicate_object_map.object_map.datatype_map != None:
-                                    datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
-                                                                        "object", ignore, iterator)
+                                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                                                                            "object", ignore, iterator)
+                                    else:
+                                        datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, ".+", data,
+                                                                            "object", ignore, iterator)[1:-1]
                                     if "http" in datatype_value:
                                        object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                     else:
@@ -5134,9 +5607,16 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     else:
                                         object_list[i] = None
                                 elif predicate_object_map.object_map.language_map != None:
-                                    object_list[i] += "@" + string_substitution_json(
-                                        predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
-                                        iterator)[1:-1]
+                                    if "{" in predicate_object_map.object_map.language_map:
+                                        lang = string_substitution_json(
+                                            predicate_object_map.object_map.language_map, "{(.+?)}", data, "object", ignore,
+                                            iterator)[1:-1]
+                                    else:
+                                        lang = string_substitution_json(
+                                            predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
+                                            iterator)[1:-1]
+                                    if lang != None:
+                                        object_list[i] += "@" + lang
                                 elif predicate_object_map.object_map.term != None:
                                     if "IRI" in predicate_object_map.object_map.term:
                                         if " " not in object_list[i]:
@@ -5144,6 +5624,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
                                         else:
                                             object_list[i] = None
+                                elif is_convertible_to_int(object_list[i][1:-1]):
+                                    object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                                elif is_convertible_to_double(object_list[i][1:-1]):
+                                    object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                                 i += 1
 
                             if None in object_list:
@@ -5169,8 +5653,12 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                 predicate_object_map.object_map.datatype)
                         elif predicate_object_map.object_map.datatype_map != None:
-                            datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
-                                                                "object", ignore, iterator)
+                            if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, "{(.+?)}", data,
+                                                                    "object", ignore, iterator)
+                            else:
+                                datatype_value = string_substitution_json(predicate_object_map.object_map.datatype_map, ".+", data,
+                                                                    "object", ignore, iterator)[1:-1]
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
@@ -5185,11 +5673,14 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 object = None
                         elif predicate_object_map.object_map.language_map != None:
-                            lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data,
-                                                            "object", ignore, iterator)
+                            if "{" in predicate_object_map.object_map.language_map:
+                                lang = string_substitution_json(predicate_object_map.object_map.language_map, "{(.+?)}", data,
+                                                                "object", ignore, iterator)
+                            else:
+                                lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data,
+                                                                "object", ignore, iterator)
                             if lang != None:
-                                object += "@" + string_substitution_json(predicate_object_map.object_map.language_map,
-                                                                         ".+", data, "object", ignore, iterator)[1:-1]
+                                object += "@" + lang
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
@@ -5197,13 +5688,17 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     object = "<" + encode_char(object[1:-1]) + ">"
                                 else:
                                     object = None
+                        elif is_convertible_to_int(object[1:-1]):
+                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                        elif is_convertible_to_double(object[1:-1]):
+                            object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
+
             elif predicate_object_map.object_map.mapping_type == "parent triples map":
                 if subject != None:
                     for triples_map_element in triples_map_list:
                         if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
                             if triples_map_element.data_source != triples_map.data_source:
-                                if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[
-                                    0] not in join_table:
+                                if triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child) not in join_table:
                                     if str(triples_map_element.file_format).lower() == "csv" or triples_map_element.file_format == "JSONPath":
                                         if "http" in triples_map_element.data_source:
                                             if triples_map_element.file_format == "JSONPath":
@@ -5259,6 +5754,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                         for query in query_list:
                                             cursor.execute(query)
                                         hash_maker_array(cursor, triples_map_element, predicate_object_map.object_map)
+
                                 if sublist(predicate_object_map.object_map.child, data.keys()):
                                     if child_list_value(predicate_object_map.object_map.child, data) in join_table[
                                         triples_map_element.triples_map_id + "_" + child_list(predicate_object_map.object_map.child)]:
@@ -5373,6 +5869,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
                                     if "http" in graph:
                                         graph = "<" + graph + ">"
+                                    elif base is None:
+                                        graph = " <http://example.com/base/" + graph + ">"
                                     else:
                                         graph = "<" + base + graph + ">"
                             gather_object_values.append(object)
@@ -5385,6 +5883,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 graph = string_substitution_json(predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", data, "subject", ignore, iterator)
                                 if "http" in graph:
                                     graph = "<" + graph + ">"
+                                elif base is None:
+                                    graph = " <http://example.com/base/" + graph + ">"
                                 else:
                                     graph = "<" + base + graph + ">"
                         gather_triples_generation(data,sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator,triples_map_list,gather_map_list,graph)
@@ -5482,6 +5982,9 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 output_file_descriptor.write(triple)
                                 i += 1
+                        elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                            output_file_descriptor.write(triple)
+                            i += 1
                 elif predicate != None and subject != None and object_list:
                     dictionary_table_update(subject)
                     for obj in object_list:
@@ -5594,13 +6097,16 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 else:
                                     output_file_descriptor.write(triple)
                                     i += 1
+                            elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                output_file_descriptor.write(triple)
+                                i += 1
                     object_list = []
                 elif predicate != None and subject_list:
                     for subj in subject_list:
                         dictionary_table_update(subj)
                         type_predicate = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
                         for rdf_class in triples_map.subject_map.rdf_class:
-                            if rdf_class != None and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
+                            if rdf_class != None and rdf_class != "None" and ("str" == type(rdf_class).__name__ or "URIRef" == type(rdf_class).__name__):
                                 for graph in triples_map.subject_map.graph:
                                     obj = "<{}>".format(rdf_class)
                                     dictionary_table_update(obj)
@@ -5816,129 +6322,96 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                 subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject", ignore,
                                                     triples_map.iterator)
                 if triples_map.subject_map.term_type is None:
-                    if triples_map.subject_map.condition == "":
-
-                        try:
-                            subject = "<" + subject_value + ">"
-                        except:
-                            subject = None
-
-                    else:
-                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #   if row[field] == condition:
-                        try:
-                            subject = "<" + subject_value + ">"
-                        except:
-                            subject = None
+                    try:
+                        subject = "<" + subject_value + ">"
+                    except:
+                        subject = None
                 else:
-                    if "IRI" in triples_map.subject_map.term_type:
+                    if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
                         subject_value = string_substitution(triples_map.subject_map.value, "{(.+?)}", row, "subject",
                                                             ignore, triples_map.iterator)
-                        if triples_map.subject_map.condition == "":
-
-                            try:
-                                if "http" not in subject_value:
+                        try:
+                            if "http" not in subject_value:
+                                if base != "" and base != None:
+                                    subject = "<" + base + subject_value + ">"
+                                else:
+                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            else:
+                                if is_valid_url_syntax(subject_value):
+                                    subject = "<" + subject_value + ">"
+                                else:
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
                                         subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
-                                else:
-                                    if is_valid_url_syntax(subject_value):
-                                        subject = "<" + subject_value + ">"
-                                    else:
-                                        if base != "" and base != None:
-                                            subject = "<" + base + subject_value + ">"
-                                        else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
-                            except:
-                                subject = None
-
-                        else:
-                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #   if row[field] == condition:
-                            try:
-                                if "http" not in subject_value:
-                                    if base != "" and base != None:
-                                        subject = "<" + base + subject_value + ">"
-                                    else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
-                                else:
-                                    if is_valid_url_syntax(subject_value):
-                                        subject = "<" + subject_value + ">"
-                                    else:
-                                        if base != "" and base != None:
-                                            subject = "<" + base + subject_value + ">"
-                                        else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
-                            except:
-                                subject = None
+                        except:
+                            subject = None
 
                     elif "BlankNode" in triples_map.subject_map.term_type:
-                        if triples_map.subject_map.condition == "":
-                            try:
-                                if "/" in subject_value:
-                                    subject = "_:" + encode_char(subject_value.replace("/", "2F")).replace("%", "")
-                                    if "." in subject:
-                                        subject = subject.replace(".", "2E")
-                                    if blank_message:
-                                        logger.warning(
-                                            "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
-                                        blank_message = False
-                                else:
-                                    subject = "_:" + encode_char(subject_value).replace("%", "")
-                                    if "." in subject:
-                                        subject = subject.replace(".", "2E")
-                            except:
-                                subject = None
-
-                        else:
-                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #   if row[field] == condition:
-                            try:
-                                subject = "_:" + subject_value
-                            except:
-                                subject = None
+                        try:
+                            if "/" in subject_value:
+                                subject = "_:" + encode_char(subject_value.replace("/", "2F")).replace("%", "")
+                                if "." in subject:
+                                    subject = subject.replace(".", "2E")
+                                if blank_message:
+                                    logger.warning(
+                                        "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
+                                    blank_message = False
+                            else:
+                                subject = "_:" + encode_char(subject_value).replace("%", "")
+                                if "." in subject:
+                                    subject = subject.replace(".", "2E")
+                        except:
+                            subject = None
                     elif "Literal" in triples_map.subject_map.term_type:
                         subject = None
+                    elif "Unsafe" in triples_map.subject_map.term_type:
+                        try:
+                            subject = "<" + unquote(subject_value) + ">"
+                        except:
+                            subject = None
                     else:
-                        if triples_map.subject_map.condition == "":
+                        try:
+                            subject = "<" + subject_value + ">"
+                        except:
+                            subject = None
 
-                            try:
-                                subject = "<" + subject_value + ">"
-                            except:
-                                subject = None
+                if triples_map.subject_map.condition != "":
+                    if triples_map.func_map_list != []:
+                        func = None
+                        for func_map in triples_map.func_map_list:
+                            if func_map.func_map_id == triples_map.subject_map.condition:
+                                #print(func_map.parameters)
+                                current_func = {"inputs":func_map.parameters, 
+                                                "function":func_map.name}
+                                #print("HOla")
+                                inner_func = False
+                                for param in func_map.parameters:
+                                    if isinstance(func_map.parameters[param],list):
+                                        for elem in func_map.parameters[param]:
+                                            if "function" in elem["type"]:
+                                                inner_func = True
+                                    else:
+                                        if "function" in func_map.parameters[param]["type"]:
+                                            inner_func = True
+                                if inner_func:
+                                    condition = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                                else:
+                                    condition = execute_function(row,None,current_func)
 
-                        else:
-                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #   if row[field] == condition:
-                            try:
-                                subject = "<" + subject_value + ">"
-                            except:
-                                subject = None
+                        if not condition:
+                            subject = None
+
+
             elif "reference" in triples_map.subject_map.subject_mapping_type:
                 subject_value = string_substitution(triples_map.subject_map.value, ".+", row, "subject", ignore,
                                                     triples_map.iterator)
                 if subject_value != None:
                     subject_value = subject_value[1:-1]
-                    if triples_map.subject_map.condition == "":
-                        if " " not in subject_value:
-                            if triples_map.subject_map.term_type != None:
-                                if "BlankNode" in triples_map.subject_map.term_type:
-                                    subject = "_:" + subject_value
-                                else:
-                                    if "http" not in subject_value:
-                                        if base != "" and base != None:
-                                            subject = "<" + base + subject_value + ">"
-                                        else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
-                                    else:
-                                        if is_valid_url_syntax(subject_value):
-                                            subject = "<" + subject_value + ">"
-                                        else:
-                                            if base != "" and base != None:
-                                                subject = "<" + base + subject_value + ">"
-                                            else:
-                                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                    if " " not in subject_value:
+                        if triples_map.subject_map.term_type != None:
+                            if "BlankNode" in triples_map.subject_map.term_type:
+                                subject = "_:" + subject_value
                             else:
                                 if "http" not in subject_value:
                                     if base != "" and base != None:
@@ -5954,14 +6427,53 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                         else:
                                             subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
                         else:
-                            subject = None
+                            if "http" not in subject_value:
+                                if base != "" and base != None:
+                                    subject = "<" + base + subject_value + ">"
+                                else:
+                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            else:
+                                if is_valid_url_syntax(subject_value):
+                                    subject = "<" + subject_value + ">"
+                                else:
+                                    if base != "" and base != None:
+                                        subject = "<" + base + subject_value + ">"
+                                    else:
+                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+
+                        if triples_map.subject_map.condition != "":
+                            if triples_map.func_map_list != []:
+                                func = None
+                                for func_map in triples_map.func_map_list:
+                                    if func_map.func_map_id == triples_map.subject_map.condition:
+                                        #print(func_map.parameters)
+                                        current_func = {"inputs":func_map.parameters, 
+                                                        "function":func_map.name}
+                                        #print("HOla")
+                                        inner_func = False
+                                        for param in func_map.parameters:
+                                            if isinstance(func_map.parameters[param],list):
+                                                for elem in func_map.parameters[param]:
+                                                    if "function" in elem["type"]:
+                                                        inner_func = True
+                                            else:
+                                                if "function" in func_map.parameters[param]["type"]:
+                                                    inner_func = True
+                                        if inner_func:
+                                            condition = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                                        else:
+                                            condition = execute_function(row,None,current_func)
+
+                                if not condition:
+                                    subject = None
 
                 else:
                     subject = None
 
             elif "constant" in triples_map.subject_map.subject_mapping_type:
                 subject = "<" + triples_map.subject_map.value + ">"
-
+            elif "blank" in triples_map.subject_map.subject_mapping_type:
+                subject = "_:" + str(uuid4())
             elif "function" in triples_map.subject_map.subject_mapping_type:
                 subject = None
                 func = None
@@ -6158,7 +6670,12 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                 if "http" in predicate_object_map.object_map.value:
                     object = "<" + predicate_object_map.object_map.value + ">"
                 else:
-                    object = "\"" + predicate_object_map.object_map.value + "\""
+                    if "@" in predicate_object_map.object_map.value:
+                        object = "\"" + predicate_object_map.object_map.value.split("@")[0] + "\"@" + predicate_object_map.object_map.value.split("@")[1]
+                    else:
+                        object = "\"" + predicate_object_map.object_map.value + "\""
+                    if ("true" in object or "false" in object) and "@" not in object:
+                        object += "^^<http://www.w3.org/2001/XMLSchema#boolean>"
                 if predicate_object_map.object_map.datatype != None:
                     if output_format.lower() == "n-triples":
                         object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
@@ -6166,7 +6683,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         object = "\"" + object[1:-1] + "\"" + "^^{}".format(
                             determine_prefix(predicate_object_map.object_map.datatype))
                 elif predicate_object_map.object_map.datatype_map != None:
-                    datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                        datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                           "object", ignore, triples_map.iterator)
+                    else:
+                        datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, ".+", row,
                                                            "object", ignore, triples_map.iterator)
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -6182,11 +6703,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     else:
                         object = None
                 elif predicate_object_map.object_map.language_map != None:
-                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                    if "{" in predicate_object_map.object_map.language_map:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                               ignore, triples_map.iterator)
+                    else:
+                        lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                ignore, triples_map.iterator)
                     if lang != None:
-                        object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                            "object", ignore, triples_map.iterator)[1:-1]
+                        object += "@" + lang
 
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
@@ -6214,7 +6738,11 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                 predicate_object_map.object_map.datatype)
                         elif predicate_object_map.object_map.datatype_map != None:
-                            datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                            if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                                datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                                   "object", ignore, triples_map.iterator)
+                            else:
+                                datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, ".+", row,
                                                                    "object", ignore, triples_map.iterator)
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -6230,11 +6758,14 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 object = None
                         elif predicate_object_map.object_map.language_map != None:
-                            lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row,
+                            if "{" in predicate_object_map.object_map.language_map:
+                                lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row,
+                                                       "object", ignore, triples_map.iterator)
+                            else:
+                                lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row,
                                                        "object", ignore, triples_map.iterator)
                             if lang != None:
-                                object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+",
-                                                                    row, "object", ignore, triples_map.iterator)[1:-1]
+                                object += "@" + lang
                 except TypeError:
                     object = None
             elif predicate_object_map.object_map.mapping_type == "reference":
@@ -6272,7 +6803,34 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 object = "\"" + object[1:-1].replace(" ","T") + "\"" + "^^{}".format(
                                     determine_prefix(predicate_object_map.object_map.datatype))
                     elif predicate_object_map.object_map.datatype_map != None:
-                        datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                        datatype_value = ""
+                        if triples_map.func_map_list != []:
+                            datatype_value = ""
+                            func = None
+                            for func_map in triples_map.func_map_list:
+                                if func_map.func_map_id == str(predicate_object_map.object_map.datatype_map):
+                                    #print(func_map.parameters)
+                                    current_func = {"inputs":func_map.parameters, 
+                                                    "function":func_map.name}
+                                    #print("HOla")
+                                    inner_func = False
+                                    for param in func_map.parameters:
+                                        if isinstance(func_map.parameters[param],list):
+                                            for elem in func_map.parameters[param]:
+                                                if "function" in elem["type"]:
+                                                    inner_func = True
+                                        else:
+                                            if "function" in func_map.parameters[param]["type"]:
+                                                inner_func = True
+                                    if inner_func:
+                                        datatype_value = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                                    else:
+                                        datatype_value = execute_function(row,None,current_func)
+                        if ("{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map) and datatype_value == "":
+                            datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                               "object", ignore, triples_map.iterator)
+                        elif datatype_value == "":
+                            datatype_value = string_substitution(predicate_object_map.object_map.datatype_map, ".+", row,
                                                                "object", ignore, triples_map.iterator)
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -6288,11 +6846,37 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         else:
                             object = None
                     elif predicate_object_map.object_map.language_map != None:
-                        lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                        lang = ""
+                        if triples_map.func_map_list != []:
+                            datatype_value = ""
+                            func = None
+                            for func_map in triples_map.func_map_list:
+                                if func_map.func_map_id == str(predicate_object_map.object_map.language_map):
+                                    #print(func_map.parameters)
+                                    current_func = {"inputs":func_map.parameters, 
+                                                    "function":func_map.name}
+                                    #print("HOla")
+                                    inner_func = False
+                                    for param in func_map.parameters:
+                                        if isinstance(func_map.parameters[param],list):
+                                            for elem in func_map.parameters[param]:
+                                                if "function" in elem["type"]:
+                                                    inner_func = True
+                                        else:
+                                            if "function" in func_map.parameters[param]["type"]:
+                                                inner_func = True
+                                    if inner_func:
+                                        lang = new_inner_function(row,predicate_object_map.object_map.value,triples_map)
+                                    else:
+                                        lang = execute_function(row,None,current_func)
+                        if "{" in predicate_object_map.object_map.language_map and lang == "":
+                            lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                                   ignore, triples_map.iterator)
+                        elif lang == "":
+                            lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                    ignore, triples_map.iterator)
                         if lang != None:
-                            object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                                "object", ignore, triples_map.iterator)[1:-1]
+                            object += "@" + lang
                     elif predicate_object_map.object_map.term != None:
                         if "IRI" in predicate_object_map.object_map.term:
                             if " " not in object:
@@ -6960,6 +7544,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                   generated)
                                     i += 1
                                     generated += 1
+                        elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                            output_file_descriptor.write(triple)
+                            i += 1
+                            generated += 1
                 elif predicate != None and subject != None and object_list:
                     for obj in object_list:
                         if obj != None:
@@ -7138,6 +7726,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                       output_file_descriptor, generated)
                                         i += 1
                                         generated += 1
+                            elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                output_file_descriptor.write(triple)
+                                i += 1
+                                generated += 1
                     object_list = []
                 elif predicate != None and subject_list and object != None:
                     dictionary_table_update(object)
@@ -7314,6 +7906,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                       output_file_descriptor, generated)
                                         i += 1
                                         generated += 1
+                                elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
                     subject_list = []
                 elif predicate != None and subject_list and object_list:
                     for subj in subject_list:
@@ -7494,6 +8089,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                           output_file_descriptor, generated)
                                             i += 1
                                             generated += 1
+                                elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
                     object_list = []
                     subject_list = []
                 else:
@@ -7577,7 +8175,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     except:
                         subject = None
             else:
-                if "IRI" in triples_map.subject_map.term_type:
+                if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
                     if triples_map.subject_map.condition == "":
 
                         try:
@@ -7644,6 +8242,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             subject = None
                 elif "Literal" in triples_map.subject_map.term_type:
                     subject = None
+                elif "Unsafe" in triples_map.subject_map.term_type:
+                    try:
+                        subject = "<" + unquote(subject_value) + ">"
+                    except:
+                        subject = None
                 else:
                     if triples_map.subject_map.condition == "":
 
@@ -7729,7 +8332,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 
         elif "constant" in triples_map.subject_map.subject_mapping_type:
             subject = "<" + triples_map.subject_map.value + ">"
-
+        elif "blank" in triples_map.subject_map.subject_mapping_type:
+            subject = "_:" + str(uuid4())
         else:
             if triples_map.subject_map.condition == "":
 
@@ -7818,11 +8422,20 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
             if "http" in predicate_object_map.object_map.value:
                 object = "<" + predicate_object_map.object_map.value + ">"
             else:
-                object = "\"" + predicate_object_map.object_map.value + "\""
+                if "@" in predicate_object_map.object_map.value:
+                    object = "\"" + predicate_object_map.object_map.value.split("@")[0] + "\"@" + predicate_object_map.object_map.value.split("@")[1]
+                else:
+                    object = "\"" + predicate_object_map.object_map.value + "\""
+                if ("true" in object or "false" in object) and "@" not in object:
+                    object += "^^<http://www.w3.org/2001/XMLSchema#boolean>"
             if predicate_object_map.object_map.datatype != None:
                 object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
             elif predicate_object_map.object_map.datatype_map != None:
-                datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                    datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                       row_headers, "object", ignore)
+                else:
+                    datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, ".+", row,
                                                        row_headers, "object", ignore)
                 if "http" in datatype_value:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -7838,11 +8451,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                 else:
                     object = None
             elif predicate_object_map.object_map.language_map != None:
-                lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                if "{" in predicate_object_map.object_map.language_map:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                           ignore, triples_map.iterator)
+                else:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                            ignore, triples_map.iterator)
                 if lang != None:
-                    object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                        "object", ignore, triples_map.iterator)[1:-1] 
+                    object += "@" + lang
         elif predicate_object_map.object_map.mapping_type == "template":
             try:
                 if predicate_object_map.object_map.term is None:
@@ -7868,7 +8484,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     if predicate_object_map.object_map.datatype != None:
                         object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
                     elif predicate_object_map.object_map.datatype_map != None:
-                        datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                        if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                            datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                               row_headers, "object", ignore)
+                        else:
+                            datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, ".+", row,
                                                                row_headers, "object", ignore)
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -7884,11 +8504,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                         else:
                             object = None
                     elif predicate_object_map.object_map.language_map != None:
-                        lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row,
+                        if "{" in predicate_object_map.object_map.language_map:
+                            lang = string_substitution_array(predicate_object_map.object_map.language_map, "{(.+?)}", row,
+                                                         row_headers, "object", ignore)
+                        else:
+                            lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row,
                                                          row_headers, "object", ignore)
                         if lang != None:
-                            object += "@" + string_substitution_array(predicate_object_map.object_map.language_map,
-                                                                      ".+", row, row_headers, "object", ignore)[1:-1]
+                            object += "@" + lang
             except TypeError:
                 object = None
         elif predicate_object_map.object_map.mapping_type == "reference":
@@ -7922,7 +8545,11 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                 elif is_datetime(object[1:-1]):
                     object += "^^<http://www.w3.org/2001/XMLSchema#dateTime>"
                 elif predicate_object_map.object_map.datatype_map != None:
-                    datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                        datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                           row_headers, "object", ignore)
+                    else:
+                        datatype_value = string_substitution_array(predicate_object_map.object_map.datatype_map, ".+", row,
                                                            row_headers, "object", ignore)
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -7938,11 +8565,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     else:
                         object = None
                 elif predicate_object_map.object_map.language_map != None:
-                    lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row,
+                    if "{" in predicate_object_map.object_map.language_map:
+                        lang = string_substitution_array(predicate_object_map.object_map.language_map, "{(.+?)}", row,
+                                                     row_headers, "object", ignore)
+                    else:
+                        lang = string_substitution_array(predicate_object_map.object_map.language_map, ".+", row,
                                                      row_headers, "object", ignore)
                     if lang != None:
-                        object += "@" + string_substitution_array(predicate_object_map.object_map.language_map, ".+",
-                                                                  row, row_headers, "object", ignore)[1:-1]
+                        object += "@" + lang
                 elif predicate_object_map.object_map.term != None:
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
@@ -8292,6 +8922,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             except:
                                 output_file_descriptor.write(triple.encode("utf-8"))
                             i += 1
+                    elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                        output_file_descriptor.write(triple)
+                        i += 1
             elif predicate != None and subject != None and object_list:
                 dictionary_table_update(subject)
                 for obj in object_list:
@@ -8407,6 +9040,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                 except:
                                     output_file_descriptor.write(triple.encode("utf-8"))
                                 i += 1
+                        elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                            output_file_descriptor.write(triple)
+                            i += 1
                 object_list = []
             else:
                 continue
@@ -8490,7 +9126,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     except:
                         subject = None
             else:
-                if "IRI" in triples_map.subject_map.term_type:
+                if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
                     if triples_map.subject_map.condition == "":
 
                         try:
@@ -8560,7 +9196,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 
                 elif "Literal" in triples_map.subject_map.term_type:
                     subject = None
-
+                elif "Unsafe" in triples_map.subject_map.term_type:
+                    try:
+                        subject = "<" + unquote(subject_value) + ">"
+                    except:
+                        subject = None
                 else:
                     if triples_map.subject_map.condition == "":
 
@@ -8636,7 +9276,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
 
         elif "constant" in triples_map.subject_map.subject_mapping_type:
             subject = "<" + triples_map.subject_map.value + ">"
-
+        elif "blank" in triples_map.subject_map.subject_mapping_type:
+            subject = "_:" + str(uuid4())
         else:
             if triples_map.subject_map.condition == "":
 
@@ -8739,11 +9380,20 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
             if "http" in predicate_object_map.object_map.value:
                 object = "<" + predicate_object_map.object_map.value + ">"
             else:
-                object = "\"" + predicate_object_map.object_map.value + "\""
+                if "@" in predicate_object_map.object_map.value:
+                    object = "\"" + predicate_object_map.object_map.value.split("@")[0] + "\"@" + predicate_object_map.object_map.value.split("@")[1]
+                else:
+                    object = "\"" + predicate_object_map.object_map.value + "\""
+                if ("true" in object or "false" in object) and "@" not in object:
+                    object += "^^<http://www.w3.org/2001/XMLSchema#boolean>"
             if predicate_object_map.object_map.datatype != None:
                 object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
             elif predicate_object_map.object_map.datatype_map != None:
-                datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                    datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                       row_headers, "object", ignore)
+                else:
+                    datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, ".+", row,
                                                        row_headers, "object", ignore)
                 if "http" in datatype_value:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -8759,11 +9409,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                 else:
                     object = None
             elif predicate_object_map.object_map.language_map != None:
-                lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
+                if "{" in predicate_object_map.object_map.language_map:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, "{(.+?)}", row, "object",
+                                           ignore, triples_map.iterator)
+                else:
+                    lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                            ignore, triples_map.iterator)
                 if lang != None:
-                    object += "@" + string_substitution(predicate_object_map.object_map.language_map, ".+", row,
-                                                        "object", ignore, triples_map.iterator)[1:-1]
+                    object += "@" + lang
         elif predicate_object_map.object_map.mapping_type == "template":
             try:
                 if predicate_object_map.object_map.term is None:
@@ -8789,7 +9442,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     if predicate_object_map.object_map.datatype != None:
                         object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(predicate_object_map.object_map.datatype)
                     elif predicate_object_map.object_map.datatype_map != None:
-                        datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                        if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                            datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                               row_headers, "object", ignore)
+                        else:
+                            datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, ".+", row,
                                                                row_headers, "object", ignore)
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -8805,11 +9462,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         else:
                             object = None
                     elif predicate_object_map.object_map.language_map != None:
-                        lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row,
+                        if "{" in predicate_object_map.object_map.language_map:
+                            lang = string_substitution_postgres(predicate_object_map.object_map.language_map, "{(.+?)}", row,
+                                                            row_headers, "object", ignore)
+                        else:
+                            lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row,
                                                             row_headers, "object", ignore)
                         if lang != None:
-                            object += "@" + string_substitution_postgres(predicate_object_map.object_map.language_map,
-                                                                         ".+", row, row_headers, "object", ignore)[1:-1]
+                            object += "@" + lang
             except TypeError:
                 object = None
         elif predicate_object_map.object_map.mapping_type == "reference":
@@ -8843,7 +9503,11 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     object += "^^<http://www.w3.org/2001/XMLSchema#dateTime>"
                     object = object.replace(" ","")
                 elif predicate_object_map.object_map.datatype_map != None:
-                    datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                    if "{" in predicate_object_map.object_map.datatype_map or "http" in predicate_object_map.object_map.datatype_map:
+                        datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, "{(.+?)}", row,
+                                                           row_headers, "object", ignore)
+                    else:
+                        datatype_value = string_substitution_postgres(predicate_object_map.object_map.datatype_map, ".+", row,
                                                            row_headers, "object", ignore)
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
@@ -8859,11 +9523,14 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     else:
                         object = None
                 elif predicate_object_map.object_map.language_map != None:
-                    lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row,
+                    if "{" in predicate_object_map.object_map.language_map:
+                        lang = string_substitution_postgres(predicate_object_map.object_map.language_map, "{(.+?)}", row,
+                                                        row_headers, "object", ignore)
+                    else:
+                        lang = string_substitution_postgres(predicate_object_map.object_map.language_map, ".+", row,
                                                         row_headers, "object", ignore)
                     if lang != None:
-                        object += "@" + string_substitution_postgres(predicate_object_map.object_map.language_map, ".+",
-                                                                     row, row_headers, "object", ignore)[1:-1]
+                        object += "@" + lang
                 elif predicate_object_map.object_map.term != None:
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
@@ -9105,6 +9772,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                 output_file_descriptor.write(triple)
                             except:
                                 output_file_descriptor.write(triple.encode("utf-8"))
+                    elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                        output_file_descriptor.write(triple)
+                        i += 1
             elif predicate != None and subject != None and object_list:
                 dictionary_table_update(subject)
                 for obj in object_list:
@@ -9220,6 +9890,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                 except:
                                     output_file_descriptor.write(triple.encode("utf-8"))
                                 i += 1
+                        elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                            output_file_descriptor.write(triple)
+                            i += 1
                 object_list = []
             else:
                 continue

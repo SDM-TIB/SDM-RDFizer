@@ -107,7 +107,7 @@ def hash_maker_lv_list(parent_data, parent_value, parent_id, parent, child):
 	for row in parent_data:
 		parent_values = ""
 		for parent_attr in parent:
-			if isinstance(parent,dict):
+			if isinstance(parent_attr,dict):
 				if parent_attr["type"] == "template":
 					value  = string_substitution_json(parent_attr["value"], "{(.+?)}", row, "subject", "yes", "")
 					if value != None:
@@ -119,8 +119,14 @@ def hash_maker_lv_list(parent_data, parent_value, parent_id, parent, child):
 					parent_values += "_" + row[parent_attr]
 
 		if parent_values[1:] in hash_table:
-			if parent_value in row:
+			if isinstance(parent_value,dict):
+				value = parent_value["value"]
+			elif parent_value in row:
 				value = row[parent_value]
+			elif "{" in parent_value:
+				value  = string_substitution_json(parent_value, "{(.+?)}", row, "subject", "yes", "")
+				if value == None:
+					value = ""
 			else:
 				value = ""
 			if duplicate == "yes":
@@ -131,8 +137,14 @@ def hash_maker_lv_list(parent_data, parent_value, parent_id, parent, child):
 
 
 		else:
-			if parent_value in row:
+			if isinstance(parent_value,dict):
+				value = parent_value["value"]
+			elif parent_value in row:
 				value = row[parent_value]
+			elif "{" in parent_value:
+				value  = string_substitution_json(parent_value, "{(.+?)}", row, "subject", "yes", "")
+				if value == None:
+					value = ""
 			else:
 				value = ""
 			hash_table.update({parent_values[1:]: {value: "object"}})
@@ -489,6 +501,11 @@ def view_projection(view_map, view_map_list, internal_maps):
 												new_row[attr["name"]+".#"] = 0
 											else:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())
+										else:
+											if attr["type"] == "inner_join":
+												inner_join_success = False
+											else:
+												new_row[attr["name"]] = None
 									elif attr["child_condition"] in new_row:
 										if new_row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
 											iterable = True
@@ -497,6 +514,11 @@ def view_projection(view_map, view_map_list, internal_maps):
 												new_row[attr["name"]+".#"] = 0
 											else:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]][new_row[attr["child_condition"]]].keys())
+										else:
+											if attr["type"] == "inner_join":
+												inner_join_success = False
+											else:
+												new_row[attr["name"]] = None
 									else:
 										if attr["type"] == "inner_join":
 											inner_join_success = False
