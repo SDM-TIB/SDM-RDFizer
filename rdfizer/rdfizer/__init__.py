@@ -927,6 +927,7 @@ def hash_maker(parent_data, parent_subject, child_object, quoted, triples_map_li
             join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child["value"] : hash_table})
         else:
             join_table.update({"quoted_" + parent_subject.triples_map_id + "_" + child_object.child : hash_table})
+    
 
 def hash_maker_list(parent_data, parent_subject, child_object):
     hash_table = {}
@@ -3527,6 +3528,9 @@ def mapping_parser(mapping_file):
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
                                 "parents"].append(str(result_predicate_object_map.parent_value))
                     join = False
+                    if len(list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"]))) == 1 and len(list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"]))) == 1:
+                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"] = list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"]))
+                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"] = list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"]))
 
                 elif result_predicate_object_map.function is not None:
                     #for var, val in zip(mapping_query_prepared_results.vars, result_predicate_object_map):
@@ -7107,6 +7111,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                             hash_maker_list(data[list(data.keys())[0]],
                                                                             triples_map_element,
                                                                             predicate_object_map.object_map)
+
 
                                         elif "RMLView" in triples_map_element.file_format:
                                             if triples_map_element.data_source in inner_view:
@@ -13527,6 +13532,7 @@ def semantify(config_path, log_path='error.log'):
                             for source_type in sorted_sources:
                                 if source_type == "csv":
                                     for source in sorted_sources[source_type]:
+                                        print(source)
                                         if ".nt" in source:
                                             g = rdflib.Graph()
                                             g.parse(source, format="nt")
@@ -13974,9 +13980,9 @@ def semantify(config_path, log_path='error.log'):
                                                                     sorted_sources[source_type][source][triples_map],
                                                                     generated_subjects)
                                             else:
-                                                with open(source, "r", encoding="utf-8") as input_file_descriptor:
-                                                    data = csv.DictReader(input_file_descriptor, delimiter=',')
-                                                    for triples_map in sorted_sources[source_type][source]:
+                                                for triples_map in sorted_sources[source_type][source]:
+                                                    with open(source, "r", encoding="utf-8") as input_file_descriptor:
+                                                        data = csv.DictReader(input_file_descriptor, delimiter=',')
                                                         if "NonAssertedTriplesMap" not in sorted_sources[source_type][source][triples_map].mappings_type:
                                                             if (len(sorted_sources[source_type][source][
                                                                         triples_map].predicate_object_maps_list) > 0 and
@@ -14064,6 +14070,7 @@ def semantify(config_path, log_path='error.log'):
                                                                                 zip.close()
                                                                         else:
                                                                             os.system("cp " + repeat_output + " " + dump_output)
+                                                                print(data)
                                                                 number_triple += executor.submit(semantify_file,
                                                                                                  sorted_sources[source_type][
                                                                                                      source][triples_map],
