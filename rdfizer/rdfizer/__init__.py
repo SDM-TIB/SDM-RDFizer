@@ -6385,10 +6385,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         func = None
                         for func_map in triples_map.func_map_list:
                             if func_map.func_map_id == triples_map.subject_map.condition:
-                                #print(func_map.parameters)
                                 current_func = {"inputs":func_map.parameters, 
                                                 "function":func_map.name}
-                                #print("HOla")
                                 inner_func = False
                                 for param in func_map.parameters:
                                     if isinstance(func_map.parameters[param],list):
@@ -6450,10 +6448,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 func = None
                                 for func_map in triples_map.func_map_list:
                                     if func_map.func_map_id == triples_map.subject_map.condition:
-                                        #print(func_map.parameters)
                                         current_func = {"inputs":func_map.parameters, 
                                                         "function":func_map.name}
-                                        #print("HOla")
                                         inner_func = False
                                         for param in func_map.parameters:
                                             if isinstance(func_map.parameters[param],list):
@@ -6813,10 +6809,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             func = None
                             for func_map in triples_map.func_map_list:
                                 if func_map.func_map_id == str(predicate_object_map.object_map.datatype_map):
-                                    #print(func_map.parameters)
                                     current_func = {"inputs":func_map.parameters, 
                                                     "function":func_map.name}
-                                    #print("HOla")
                                     inner_func = False
                                     for param in func_map.parameters:
                                         if isinstance(func_map.parameters[param],list):
@@ -6856,10 +6850,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             func = None
                             for func_map in triples_map.func_map_list:
                                 if func_map.func_map_id == str(predicate_object_map.object_map.language_map):
-                                    #print(func_map.parameters)
                                     current_func = {"inputs":func_map.parameters, 
                                                     "function":func_map.name}
-                                    #print("HOla")
                                     inner_func = False
                                     for param in func_map.parameters:
                                         if isinstance(func_map.parameters[param],list):
@@ -7207,10 +7199,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                 func = None
                 for func_map in triples_map.func_map_list:
                     if func_map.func_map_id == predicate_object_map.object_map.value:
-                        #print(func_map.parameters)
                         current_func = {"inputs":func_map.parameters, 
                                         "function":func_map.name}
-                        #print("HOla")
                         inner_func = False
                         for param in func_map.parameters:
                             if isinstance(func_map.parameters[param],list):
@@ -13532,7 +13522,6 @@ def semantify(config_path, log_path='error.log'):
                             for source_type in sorted_sources:
                                 if source_type == "csv":
                                     for source in sorted_sources[source_type]:
-                                        print(source)
                                         if ".nt" in source:
                                             g = rdflib.Graph()
                                             g.parse(source, format="nt")
@@ -14070,7 +14059,6 @@ def semantify(config_path, log_path='error.log'):
                                                                                 zip.close()
                                                                         else:
                                                                             os.system("cp " + repeat_output + " " + dump_output)
-                                                                print(data)
                                                                 number_triple += executor.submit(semantify_file,
                                                                                                  sorted_sources[source_type][
                                                                                                      source][triples_map],

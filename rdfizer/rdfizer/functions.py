@@ -125,7 +125,6 @@ def is_current_output_valid(triples_map_id,po_map,current_output,output_list):
 	else:
 		if triples_map_id in output_list:
 			if current_output in output_list[triples_map_id]:
-				#print(output_list[triples_map_id][current_output])
 				if output_list[triples_map_id][current_output] == "subject":
 					return True
 				elif po_map.object_map.datatype != None:
@@ -1206,15 +1205,51 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 						child_list = row[match.split("[*]")[0]]
 						object_list = []
 						for child in child_list:
-							print(match.replace(match.split(".")[0]+".",""))
-							if "[*]" in match.replace(match.split(".")[0]+".",""):
-								print(child)
-								if ".*" in match.split(".")[0]+".":
-									jsonpath_expr = parse(match.replace(match.split(".")[0]+".","").replace(".*",".[*]"))
+							if "." in match:
+								if "[*]" in match.replace(match.split(".")[0]+".",""):
+									if ".*" in match.split(".")[0]+".":
+										jsonpath_expr = parse(match.replace(match.split(".")[0]+".","").replace(".*",".[*]"))
+									else:
+										jsonpath_expr = parse(match.replace(match.split(".")[0]+".",""))
+									matches = [match.value for match in jsonpath_expr.find(child)]
+									for value in matches:
+										if value is not None:
+											if (type(value).__name__) != "str":
+												if (type(value).__name__) != "float":
+													value = str(value)
+												else:
+													value = str(math.ceil(value))
+											else:
+												if re.match(r'^-?\d+(?:\.\d+)$', value) is not None:
+													value = str(math.ceil(float(value))) 
+											if re.search("^[\s|\t]*$", value) is None:
+												if "http" not in value:
+													value = encode_char(value)
+												new_string = new_string[:start + offset_current_substitution] + value.strip() + new_string[ end + offset_current_substitution:]
+												offset_current_substitution = offset_current_substitution + len(value) - (end - start)
+												if "\\" in new_string:
+													new_string = new_string.replace("\\", "")
+													count = new_string.count("}")
+													i = 0
+													new_string = " " + new_string
+													while i < count:
+														new_string = "{" + new_string
+														i += 1
+												object_list.append(new_string)
+												new_string = string
+												offset_current_substitution = 0
 								else:
-									jsonpath_expr = parse(match.replace(match.split(".")[0]+".",""))
-								matches = [match.value for match in jsonpath_expr.find(child)]
-								for value in matches:
+									match = match.split(".")[1:]
+									if len(match) > 1:
+										value = child[match[0]]
+										for element in match:
+											if element in value:
+												value = value[element]
+									else:
+										if match[0] in child:
+											value = child[match[0]]
+										else:
+											value = None
 									if value is not None:
 										if (type(value).__name__) != "str":
 											if (type(value).__name__) != "float":
@@ -1241,17 +1276,10 @@ def string_substitution_json(string, pattern, row, term, ignore, iterator):
 											new_string = string
 											offset_current_substitution = 0
 							else:
-								match = match.split(".")[1:]
-								if len(match) > 1:
+								if match[0] in child:
 									value = child[match[0]]
-									for element in match:
-										if element in value:
-											value = value[element]
 								else:
-									if match[0] in child:
-										value = child[match[0]]
-									else:
-										value = None
+									value = None
 								if value is not None:
 									if (type(value).__name__) != "str":
 										if (type(value).__name__) != "float":
