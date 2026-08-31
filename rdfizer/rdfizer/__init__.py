@@ -6259,7 +6259,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
             List of triples-maps parsed from current mapping being used for the semantification of a
             dataset (mainly used to perform rr:joinCondition mappings)
         delimiter : string
-            Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
+            Delimiter value for the CSV or TSV file ("\\s" and "\\t" respectively)
         output_file_descriptor : file object
             Descriptor to the output file (refer to the Python 3 documentation)
 
@@ -7219,22 +7219,40 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         func = None
                 if predicate_object_map.object_map.func_result != None and func != None and isinstance(func,dict):
                     func = func[predicate_object_map.object_map.func_result]
-                if predicate_object_map.object_map.term is not None:
-                    if func != None:
-                        if "IRI" in predicate_object_map.object_map.term:
-                            if "http://" in func.lower() or "https://" in func.lower():
-                                object = "<" + func + ">"
-                            else:
-                                object = "<" + encode_char(func) + ">"
+                if not isinstance(func,list):
+                    if predicate_object_map.object_map.term is not None:
+                        if func != None:
+                            if "IRI" in predicate_object_map.object_map.term:
+                                if "http://" in func.lower() or "https://" in func.lower():
+                                    object = "<" + func + ">"
+                                else:
+                                    object = "<" + encode_char(func) + ">"
+                        else:
+                            object = None
                     else:
-                        object = None
+                        if None != func:
+                            object = "\"" + func + "\""
+                            if is_convertible_to_int(func):
+                                object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
+                        else:
+                            object = None
                 else:
-                    if None != func:
-                        object = "\"" + func + "\""
-                        if is_convertible_to_int(func):
-                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                    else:
-                        object = None
+                    object_list = []
+                    for elem in func:
+                        if predicate_object_map.object_map.term is not None:
+                            if elem != None:
+                                if "IRI" in predicate_object_map.object_map.term:
+                                    if "http://" in func.lower() or "https://" in func.lower():
+                                        object_list.append("<" + elem + ">")
+                                    else:
+                                        object_list.append("<" + encode_char(elem) + ">")
+                        else:
+                            if None != elem:
+                                if is_convertible_to_int(elem):
+                                    object_list.append("\"" + elem + "\"" + "^^<http://www.w3.org/2001/XMLSchema#integer>")
+                                else:
+                                    object_list.append("\"" + elem + "\"")
+
             elif "quoted triples map" in predicate_object_map.object_map.mapping_type:
                 for triples_map_element in triples_map_list:
                     if triples_map_element.triples_map_id == predicate_object_map.object_map.value:
@@ -8110,8 +8128,6 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
     triples_map_list : list of TriplesMap objects
         List of triples-maps parsed from current mapping being used for the semantification of a
         dataset (mainly used to perform rr:joinCondition mappings)
-    delimiter : string
-        Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
     output_file_descriptor : file object
         Descriptor to the output file (refer to the Python 3 documentation)
 
@@ -9061,8 +9077,6 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
     triples_map_list : list of TriplesMap objects
         List of triples-maps parsed from current mapping being used for the semantification of a
         dataset (mainly used to perform rr:joinCondition mappings)
-    delimiter : string
-        Delimiter value for the CSV or TSV file ("\s" and "\t" respectively)
     output_file_descriptor : file object
         Descriptor to the output file (refer to the Python 3 documentation)
 

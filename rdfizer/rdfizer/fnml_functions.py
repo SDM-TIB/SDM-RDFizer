@@ -21,12 +21,15 @@ functions_pool = {"toLowerCase":"","toUpperCase":"","toUpperCaseURL":"",
                 "array_join":"","controls_if":"","string_md5":"","string_contains":"",
                 "slugify":"","trueCondition":"","isNull":"",
                 "notEqual":"","equal":"","normalizeDateTime":"","normalizeDate":"",
-                "listContainsElement":"","alwaysReturnsABC":"","string_length":""}
+                "listContainsElement":"","alwaysReturnsABC":"","string_length":"","string_split":""}
 
 
 ## Define your functions here following examples below, the column "names" from the csv files 
 ## that you aim to use as the input parameters of functions are only required to be provided 
 ## as the keys of "global_dic"
+def string_split():
+    return str(global_dic["valueParameter"]).split(str(global_dic["p_string_sep"]))
+
 def alwaysReturnsABC():
     return "ABC"
 
