@@ -6732,8 +6732,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             object = object.replace(".", "2E")
                         object = encode_char(object)
                     else:
-                        object = "\"" + string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row,
-                                                            "object", ignore, triples_map.iterator) + "\""
+                        object =  string_substitution(predicate_object_map.object_map.value, "{(.+?)}", row,
+                                                            "object", ignore, triples_map.iterator)
+                        if object != None:
+                            object = "\"" + object.replace("\"","\\\"") + "\"" 
                         if predicate_object_map.object_map.datatype != None:
                             object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(
                                 predicate_object_map.object_map.datatype)

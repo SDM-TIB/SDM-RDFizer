@@ -123,7 +123,13 @@ def controls_if():
 def array_join():
     output = ""
     for elem in global_dic["p_array_a"]:
-        output += str(elem)
+        if "http" in str(global_dic["p_array_a"][0]):
+            if elem != str(global_dic["p_array_a"][0]):
+                output += encode_char(str(elem))
+            else:
+                output += str(elem)
+        else:
+            output += str(elem)
         if elem != global_dic["p_array_a"][len(global_dic["p_array_a"])-1]:
             output += str(global_dic["p_string_sep"])    
     return output
