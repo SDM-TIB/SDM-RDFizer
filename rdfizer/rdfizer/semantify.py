@@ -5915,34 +5915,38 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 triple = triple[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
-                        if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
-                            if duplicate == "yes":
-                                if predicate in general_predicates:
-                                    if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-                                        output_file_descriptor.write(triple)
-                                        g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value]: {
-                                            dic_table[subject] + "_" + dic_table[object]: ""}})
-                                        i += 1
-                                    elif dic_table[subject] + "_" + dic_table[object] not in g_triples[
-                                        dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-                                        output_file_descriptor.write(triple)
-                                        g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
-                                            {dic_table[subject] + "_" + dic_table[object]: ""})
-                                        i += 1
+                        if predicate[1:-1] in predicate_object_map.graph:
+                            if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
+                                if duplicate == "yes":
+                                    if predicate in general_predicates:
+                                        if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value]: {
+                                                dic_table[subject] + "_" + dic_table[object]: ""}})
+                                            i += 1
+                                        elif dic_table[subject] + "_" + dic_table[object] not in g_triples[
+                                            dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                                {dic_table[subject] + "_" + dic_table[object]: ""})
+                                            i += 1
+                                    else:
+                                        if dic_table[predicate] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update(
+                                                {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[object]: ""}})
+                                            i += 1
+                                        elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[dic_table[predicate]].update(
+                                                {dic_table[subject] + "_" + dic_table[object]: ""})
+                                            i += 1
                                 else:
-                                    if dic_table[predicate] not in g_triples:
-                                        output_file_descriptor.write(triple)
-                                        g_triples.update(
-                                            {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[object]: ""}})
-                                        i += 1
-                                    elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
-                                        output_file_descriptor.write(triple)
-                                        g_triples[dic_table[predicate]].update(
-                                            {dic_table[subject] + "_" + dic_table[object]: ""})
-                                        i += 1
-                            else:
-                                output_file_descriptor.write(triple)
-                                i += 1
+                                    output_file_descriptor.write(triple)
+                                    i += 1
+                        else:
+                            output_file_descriptor.write(triple)
+                            i += 1
                     if predicate[1:-1] in predicate_object_map.graph:
                         triple = subject + " " + predicate + " " + object + ".\n"
                         if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
@@ -6012,36 +6016,40 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 else:
                                     triple = triple[:-2] + " <" + graph + ">.\n"
                                     dictionary_table_update("<" + graph + ">")
-                            if predicate_object_map.graph[predicate[1:-1]] == None or graph != None:
-                                if duplicate == "yes":
-                                    if predicate in general_predicates:
-                                        if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-                                            output_file_descriptor.write(triple)
-                                            g_triples.update({dic_table[
-                                                                  predicate + "_" + predicate_object_map.object_map.value]: {
-                                                dic_table[subject] + "_" + dic_table[obj]: ""}})
-                                            i += 1
-                                        elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[
-                                            dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-                                            output_file_descriptor.write(triple)
-                                            g_triples[
-                                                dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
-                                                {dic_table[subject] + "_" + dic_table[obj]: ""})
-                                            i += 1
+                            if predicate[1:-1] in predicate_object_map.graph:
+                                if predicate_object_map.graph[predicate[1:-1]] == None or graph != None:
+                                    if duplicate == "yes":
+                                        if predicate in general_predicates:
+                                            if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                                output_file_descriptor.write(triple)
+                                                g_triples.update({dic_table[
+                                                                      predicate + "_" + predicate_object_map.object_map.value]: {
+                                                    dic_table[subject] + "_" + dic_table[obj]: ""}})
+                                                i += 1
+                                            elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[
+                                                dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                                output_file_descriptor.write(triple)
+                                                g_triples[
+                                                    dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                                    {dic_table[subject] + "_" + dic_table[obj]: ""})
+                                                i += 1
+                                        else:
+                                            if dic_table[predicate] not in g_triples:
+                                                output_file_descriptor.write(triple)
+                                                g_triples.update(
+                                                    {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[obj]: ""}})
+                                                i += 1
+                                            elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
+                                                output_file_descriptor.write(triple)
+                                                g_triples[dic_table[predicate]].update(
+                                                    {dic_table[subject] + "_" + dic_table[obj]: ""})
+                                                i += 1
                                     else:
-                                        if dic_table[predicate] not in g_triples:
-                                            output_file_descriptor.write(triple)
-                                            g_triples.update(
-                                                {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[obj]: ""}})
-                                            i += 1
-                                        elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
-                                            output_file_descriptor.write(triple)
-                                            g_triples[dic_table[predicate]].update(
-                                                {dic_table[subject] + "_" + dic_table[obj]: ""})
-                                            i += 1
-                                else:
-                                    output_file_descriptor.write(triple)
-                                    i += 1
+                                        output_file_descriptor.write(triple)
+                                        i += 1
+                            else:
+                                output_file_descriptor.write(triple)
+                                i += 1
                         if predicate[1:-1] in predicate_object_map.graph:
                             triple = subject + " " + predicate + " " + obj + ".\n"
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
