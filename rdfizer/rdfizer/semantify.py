@@ -1421,6 +1421,47 @@ def type_join(parent_source, child_source, parent, child):
     else:
         return False
 
+def subject_depends_only_on(subject_map, references):
+    """Whether the subject map is a template or a reference whose references are all
+    among the given ones: then all the rows with the same values of them give the same
+    subject, and a row without them gives none."""
+    if subject_map.subject_mapping_type == "template":
+        attributes = [attr.split("}")[0] for attr in str(subject_map.value).split("{")[1:] if "}" in attr]
+        return len(attributes) > 0 and set(attributes) <= references
+    if subject_map.subject_mapping_type == "reference":
+        return str(subject_map.value) in references
+    return False
+
+
+def is_default_graph(graph):
+    return graph is None or str(graph) == "None" or "defaultGraph" in str(graph)
+
+
+def self_join_is_row_join(triples_map, po, parent_triples_map):
+    """Whether a join of a logical source with itself, on the same references, can be
+    replaced by the parent subject of the same row. Only when all the rows with the same
+    join values give the same parent subject, or give the same child subject, with a
+    constant predicate and no graph map; otherwise a row is joined with every row with
+    the same join values (RMLTC0033a of kg-construct/rml-core)."""
+    child, parent = po.object_map.child, po.object_map.parent
+    if not child or not parent or len(child) != len(parent):
+        return False
+    if any(str(c) != str(p) for c, p in zip(child, parent)):
+        return False
+    references = set(str(c) for c in child)
+    if subject_depends_only_on(parent_triples_map.subject_map, references):
+        return True
+    if not subject_depends_only_on(triples_map.subject_map, references):
+        return False
+    if po.predicate_map.mapping_type not in ("constant", "constant shortcut"):
+        return False
+    if not all(is_default_graph(g) for g in (triples_map.subject_map.graph or [None])):
+        return False
+    if isinstance(po.graph, dict):
+        return is_default_graph(po.graph.get(str(po.predicate_map.value)))
+    return is_default_graph(po.graph)
+
+
 def mappings_expansion(triples_map_list):
     global generated_subjects
     new_list = []
@@ -1456,7 +1497,7 @@ def mappings_expansion(triples_map_list):
                                     if triples_map.file_format == "JSONPath" or triples_map.file_format == "XPath":
                                         if triples_map.data_source == triples_map_element.data_source:
                                             if triples_map.iterator == triples_map_element.iterator:
-                                                if po.object_map.child[0] == po.object_map.parent[0]:
+                                                if self_join_is_row_join(triples_map, po, triples_map_element):
                                                     if triples_map_element.subject_map.subject_mapping_type == "template":
                                                         object_map = tm.ObjectMap("template",
                                                                                   triples_map_element.subject_map.value,
@@ -1520,7 +1561,7 @@ def mappings_expansion(triples_map_list):
                                                                       triples_map.mappings_type)]
                                     elif str(triples_map.file_format).lower() == "csv":
                                         if triples_map.data_source == triples_map_element.data_source:
-                                            if po.object_map.child[0] == po.object_map.parent[0]:
+                                            if self_join_is_row_join(triples_map, po, triples_map_element):
                                                 if triples_map_element.subject_map.subject_mapping_type == "template":
                                                     object_map = tm.ObjectMap("template",
                                                                               triples_map_element.subject_map.value,
@@ -1570,7 +1611,7 @@ def mappings_expansion(triples_map_list):
                                                                       triples_map.mappings_type)]
                                     else:
                                         if triples_map.query == triples_map_element.query or triples_map.tablename == triples_map_element.tablename:
-                                            if po.object_map.child[0] == po.object_map.parent[0]:
+                                            if self_join_is_row_join(triples_map, po, triples_map_element):
                                                 if triples_map_element.subject_map.subject_mapping_type == "template":
                                                     object_map = tm.ObjectMap("template",
                                                                               triples_map_element.subject_map.value,
@@ -1757,7 +1798,7 @@ def mappings_expansion(triples_map_list):
                             if po.object_map.child != None:
                                 if str(triples_map.file_format).lower() == "csv":
                                     if triples_map.data_source == triples_map_element.data_source:
-                                        if po.object_map.child[0] == po.object_map.parent[0]:# and type_join(triples_map_element.data_source, triples_map.data_source, 
+                                        if self_join_is_row_join(triples_map, po, triples_map_element):# and type_join(triples_map_element.data_source, triples_map.data_source, 
                                                 #po.object_map.parent[0], po.object_map.child[0]):
                                             if triples_map_element.subject_map.subject_mapping_type == "template":
                                                 object_map = tm.ObjectMap("template",
@@ -1804,7 +1845,7 @@ def mappings_expansion(triples_map_list):
                                 elif (
                                         triples_map.query != "None" and triples_map_element.query != "None" and triples_map.query == triples_map_element.query) or (
                                         triples_map.tablename == triples_map_element.tablename and triples_map.tablename != "None" and triples_map_element.tablename != "None"):
-                                    if po.object_map.child[0] == po.object_map.parent[0]:
+                                    if self_join_is_row_join(triples_map, po, triples_map_element):
                                         if triples_map_element.subject_map.subject_mapping_type == "template":
                                             object_map = tm.ObjectMap("template", triples_map_element.subject_map.value,
                                                                       "None", "None", "None",
