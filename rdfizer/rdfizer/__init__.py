@@ -4098,7 +4098,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -4106,7 +4106,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
                             subject = None
@@ -4114,7 +4114,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         subject = None
                     if triples_map.subject_map.term_type == "IRI":
                         if " " not in subject_value:
-                            subject = "<" + encode_char(subject_value) + ">"
+                            subject = "<" + subject_value + ">"
                         else:
                             subject = None
 
@@ -4126,7 +4126,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -4134,7 +4134,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                     except:
                         subject = None
 
@@ -4426,7 +4426,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if "IRI" in predicate_object_map.object_map.term:
                                     if " " not in object:
                                         object[i] = "\"" + object[i][1:-1].replace("\\\\'", "'") + "\""
-                                        object[i] = "<" + encode_char(object[i][1:-1]) + ">"
+                                        object[i] = "<" + object[i][1:-1] + ">"
                                     else:
                                         object[i] = None
                             elif is_convertible_to_int(object[i][1:-1]):
@@ -4483,7 +4483,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
                                     object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                                    object = "<" + encode_char(object[1:-1]) + ">"
+                                    object = "<" + object[1:-1] + ">"
                                 else:
                                     object = None
             elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -5254,21 +5254,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         if " " not in subject_value:
                             if "http" not in subject_value:
                                 if triples_map.triples_map_id in base_iri_list:
-                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                 elif base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
                                 else:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
                             subject = None
@@ -5276,7 +5276,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
                     if triples_map.subject_map.term_type == "IRI":
                         if " " not in subject_value:
-                            subject = "<" + encode_char(subject_value) + ">"
+                            subject = "<" + subject_value + ">"
                         else:
                             subject = None
                 else:
@@ -5285,21 +5285,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     try:
                         if "http" not in subject_value:
                             if triples_map.triples_map_id in base_iri_list:
-                                subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                             elif base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
                             else:
                                 if triples_map.triples_map_id in base_iri_list:
-                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                 elif base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                     except:
                         subject = None
 
@@ -5625,7 +5625,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if "IRI" in predicate_object_map.object_map.term:
                                         if " " not in object_list[i]:
                                             object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'", "'") + "\""
-                                            object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
+                                            object_list[i] = "<" + object_list[i][1:-1] + ">"
                                         else:
                                             object_list[i] = None
                                 elif is_convertible_to_int(object_list[i][1:-1]):
@@ -5689,7 +5689,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
                                     object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                                    object = "<" + encode_char(object[1:-1]) + ">"
+                                    object = "<" + object[1:-1] + ">"
                                 else:
                                     object = None
                         elif is_convertible_to_int(object[1:-1]):
@@ -6419,7 +6419,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
@@ -6427,13 +6427,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                         if base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             if "http" not in subject_value:
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -6441,7 +6441,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
 
                         if triples_map.subject_map.condition != "":
                             if triples_map.func_map_list != []:
@@ -6879,7 +6879,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         if "IRI" in predicate_object_map.object_map.term:
                             if " " not in object:
                                 object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                                object = "<" + encode_char(object[1:-1]) + ">"
+                                object = "<" + object[1:-1] + ">"
                             else:
                                 object = None
                         elif "BlankNode" in predicate_object_map.object_map.term:
@@ -8287,7 +8287,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -8295,7 +8295,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                     else:
                         logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
                         subject = None
@@ -8331,7 +8331,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                         if base != "" and base != None:
                             subject = "<" + base + subject_value + ">"
                         else:
-                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            subject = "<" + "http://example.com/base/" + subject_value + ">"
                     else:
                         if is_valid_url_syntax(subject_value):
                             subject = "<" + subject_value + ">"
@@ -8339,7 +8339,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                 except:
                     subject = None
 
@@ -8590,7 +8590,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
                             object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                            object = "<" + encode_char(object[1:-1]) + ">"
+                            object = "<" + object[1:-1] + ">"
                         else:
                             object = None
 
@@ -9239,7 +9239,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -9247,7 +9247,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + "http://example.com/base/" + subject_value + ">"
                     else:
                         logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
                         subject = None
@@ -9255,11 +9255,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     subject = None
                 if triples_map.subject_map.term_type == "IRI":
                     if " " not in subject_value:
-                        if "http" in subject_value:
-                            temp = encode_char(subject_value.replace("http:", ""))
-                            subject = "<" + "http:" + temp + ">"
-                        else:
-                            subject = "<" + encode_char(subject_value) + ">"
+                        subject = "<" + subject_value + ">"
                     else:
                         subject = None
                 elif "BlankNode" in triples_map.subject_map.term_type:
@@ -9273,7 +9269,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         if base != "" and base != None:
                             subject = "<" + base + subject_value + ">"
                         else:
-                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            subject = "<" + "http://example.com/base/" + subject_value + ">"
                     else:
                         if is_valid_url_syntax(subject_value):
                             subject = "<" + subject_value + ">"
@@ -9281,7 +9277,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + "http://example.com/base/" + subject_value + ">"
                 except:
                     subject = None
 
@@ -9546,7 +9542,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
                             object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                            object = "<" + encode_char(object[1:-1]) + ">"
+                            object = "<" + object[1:-1] + ">"
                         else:
                             object = None
         elif predicate_object_map.object_map.mapping_type == "parent triples map":
