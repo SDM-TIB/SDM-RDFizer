@@ -566,6 +566,18 @@ def turtle_print(subject, predicate, object, object_list, duplicate_type, predic
 			output_file_descriptor.write(subject + " " + predicate + " " + object + ".\n\n")
 			return "."
 
+# The base IRI of the relative IRIs of a mapping without @base or rml:baseIRI:
+# the option base_iri of the configuration file ([datasets]), else the base of
+# the test cases of RML.
+DEFAULT_BASE_IRI = "http://example.com/base/"
+_default_base = [DEFAULT_BASE_IRI]
+
+def set_default_base(base_iri):
+	_default_base[0] = base_iri if base_iri else DEFAULT_BASE_IRI
+
+def get_default_base():
+	return _default_base[0]
+
 def extract_base(file):
 	base = ""
 	f = open(file,"r")
