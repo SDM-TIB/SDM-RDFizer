@@ -1444,7 +1444,7 @@ def mappings_expansion(triples_map_list):
                     else:
                         subject_map = tm.SubjectMap(triples_map.subject_map.value, triples_map.subject_map.condition,
                                                     triples_map.subject_map.subject_mapping_type,
-                                                    triples_map.subject_map.parent,triples_map.child, [None],
+                                                    triples_map.subject_map.parent,triples_map.child, [],
                                                     triples_map.subject_map.term_type, triples_map.subject_map.graph,
                                                     triples_map.func_result)
                     if po.object_map.mapping_type == "parent triples map":
@@ -7751,10 +7751,10 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                       output_file_descriptor, generated)
                                         i += 1
                                         generated += 1
-                            elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
-                                output_file_descriptor.write(triple)
-                                i += 1
-                                generated += 1
+                                elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
+                                    generated += 1
                     object_list = []
                 elif predicate != None and subject_list and object != None:
                     dictionary_table_update(object)
@@ -8114,9 +8114,9 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                                                           output_file_descriptor, generated)
                                             i += 1
                                             generated += 1
-                                elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
-                                    output_file_descriptor.write(triple)
-                                    i += 1
+                                    elif predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" in predicate_object_map.graph[predicate[1:-1]]:
+                                        output_file_descriptor.write(triple)
+                                        i += 1
                     object_list = []
                     subject_list = []
                 else:

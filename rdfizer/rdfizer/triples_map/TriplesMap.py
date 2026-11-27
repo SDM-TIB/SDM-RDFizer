@@ -96,7 +96,7 @@ class SubjectMap:
 		self.rdf_class = rdf_class
 		self.term_type = term_type
 		self.subject_mapping_type = subject_mapping_type
-		self.graph = graph
+		self.graph = graph if graph != [None] else []
 		self.func_result = func_result if func_result != "None" else None
 		self.child = str(child) if "None" != child else None
 		self.parent = str(parent) if "None" != parent else None
