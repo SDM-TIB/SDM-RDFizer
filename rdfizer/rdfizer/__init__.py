@@ -2924,9 +2924,14 @@ def mapping_parser(mapping_file):
                         else:
                             for attr in attr_list:
                                 if attr_row["name"] == attr["name"]:
-                                    if attr_row["value"] != attr["value"]:
-                                        attr_list = []
-                                        no_same_name = False
+                                    if "attr_list" not in attr:
+                                        if attr_row["value"] != attr["value"]:
+                                            attr_list = []
+                                            no_same_name = False
+                                    else:
+                                        if attr_row["attr_list"] != attr["attr_list"]:
+                                            attr_list = []
+                                            no_same_name = False
 
                 mapping_view_results = prepareQuery(join_view_query)
                 mapping_query_view_results = mapping_graph.query(mapping_view_results, initBindings={'_source': result_triples_map._source})
