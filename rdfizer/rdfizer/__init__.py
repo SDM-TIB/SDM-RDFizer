@@ -5449,7 +5449,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                ignore, triples_map.iterator)
                     if lang != None:
-                        object += "@" + lang
+                        object += "@" + language_tag(lang)
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
                     object = string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",
@@ -5557,7 +5557,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
                                                                 data, "object", ignore, iterator)
                                 if lang != None:
-                                    object += "@" + lang
+                                    object += "@" + language_tag(lang)
                 except TypeError:
                     object = None
             elif predicate_object_map.object_map.mapping_type == "reference":
@@ -5612,7 +5612,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
                                             iterator)[1:-1]
                                     if lang != None:
-                                        object_list[i] += "@" + lang
+                                        object_list[i] += "@" + language_tag(lang)
                                 elif predicate_object_map.object_map.term != None:
                                     if "IRI" in predicate_object_map.object_map.term:
                                         if " " not in object_list[i]:
@@ -5677,7 +5677,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data,
                                                                 "object", ignore, iterator)
                             if lang != None:
-                                object += "@" + lang
+                                object += "@" + language_tag(lang)
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
