@@ -4429,10 +4429,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                         object[i] = "<" + encode_char(object[i][1:-1]) + ">"
                                     else:
                                         object[i] = None
-                            elif is_convertible_to_int(object[i][1:-1]):
-                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                            elif is_convertible_to_double(object[i][1:-1]):
-                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                     else:
                         if "\\" in object[1:-1]:
                             object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
@@ -4475,10 +4471,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                                            namespace)
                             if lang != None:
                                 object += "@" + lang
-                        elif is_convertible_to_int(object[1:-1]):
-                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        elif is_convertible_to_double(object[1:-1]):
-                            object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
@@ -5628,9 +5620,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
                                         else:
                                             object_list[i] = None
-                                elif is_convertible_to_int(object_list[i][1:-1]):
+                                elif new_formulation == "yes" and is_convertible_to_int(object_list[i][1:-1]):
+                                    # the natural datatype of RML-Core, not in the legacy vocabulary
                                     object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                                elif is_convertible_to_double(object_list[i][1:-1]):
+                                elif new_formulation == "yes" and is_convertible_to_double(object_list[i][1:-1]):
                                     object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                                 i += 1
 
@@ -5692,9 +5685,10 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     object = "<" + encode_char(object[1:-1]) + ">"
                                 else:
                                     object = None
-                        elif is_convertible_to_int(object[1:-1]):
+                        elif new_formulation == "yes" and is_convertible_to_int(object[1:-1]):
+                            # the natural datatype of RML-Core, not in the legacy vocabulary
                             object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        elif is_convertible_to_double(object[1:-1]):
+                        elif new_formulation == "yes" and is_convertible_to_double(object[1:-1]):
                             object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
 
             elif predicate_object_map.object_map.mapping_type == "parent triples map":
