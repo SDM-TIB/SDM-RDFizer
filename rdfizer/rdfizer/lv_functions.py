@@ -380,10 +380,15 @@ def view_projection(view_map, view_map_list, internal_maps):
 											value = attr["child_condition"]["value"]
 										if value in lv_join_table[parent_view + "_" + attr["child_condition"]["value"]]:
 											iterable = True
-											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][row[attr["child_condition"]]].keys())) == 1:
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())) == 1:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())[0]
 											else:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())
+										else:
+											if attr["type"] == "inner_join":
+												inner_join_success = False
+											else:
+												new_row[attr["name"]] = None
 									elif row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
 										iterable = True
 										if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]][row[attr["child_condition"]]].keys())) == 1:
@@ -482,17 +487,22 @@ def view_projection(view_map, view_map_list, internal_maps):
 										hash_maker_lv(parent_source, attr["value"], parent_view, attr["parent_condition"], attr["child_condition"])
 									if isinstance(attr["child_condition"],dict):
 										if attr["child_condition"]["type"] == "template":
-											value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", row, "subject", "yes","")
+											value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", row, "subject", "yes","None")
 											if value == None:
-												value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", new_row, "subject", "yes","")
+												value = string_substitution(attr["child_condition"]["value"], "{(.+?)}", new_row, "subject", "yes","None")
 										else:
 											value = attr["child_condition"]["value"]
 										if value in lv_join_table[parent_view + "_" + attr["child_condition"]["value"]]:
 											iterable = True
-											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][row[attr["child_condition"]]].keys())) == 1:
+											if len(list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())) == 1:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())[0]
 											else:
 												new_row[attr["name"]] = list(lv_join_table[parent_view + "_" + attr["child_condition"]["value"]][value].keys())
+										else:
+											if attr["type"] == "inner_join":
+												inner_join_success = False
+											else:
+												new_row[attr["name"]] = None
 									elif attr["child_condition"] in row:
 										if row[attr["child_condition"]] in lv_join_table[parent_view + "_" + attr["child_condition"]]:
 											iterable = True
