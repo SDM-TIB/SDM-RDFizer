@@ -2311,18 +2311,24 @@ def condition_separetor(string):
 
 def remove_duplicate_po(po_list):
 	unique_list = []
+	unique_dict = {}
 	for po in po_list:
 		if unique_list == []:
 			unique_list.append(po)
+			unique_dict[po.predicate_map.value] = {"object":po.object_map.value,"pos":len(unique_list)-1}
 		else:
-			for po_unique in unique_list:
-				if po.predicate_map.value == po_unique.predicate_map.value and po.object_map.value == po_unique.object_map.value:
-					if  po.object_map.language != po_unique.object_map.language or po.object_map.language_map != po_unique.object_map.language_map:
-						unique_list.append(po)
-					elif  po.object_map.datatype != po_unique.object_map.datatype or po.object_map.datatype_map != po_unique.object_map.datatype_map:
-						unique_list.append(po)
-					else:
-						break
-			else:
+			if po.predicate_map.value not in unique_dict:
 				unique_list.append(po)
+				unique_dict[po.predicate_map.value] = {"object":po.object_map.value,"pos":len(unique_list)-1}
+			else:
+				if po.predicate_map.value == unique_list[unique_dict[po.predicate_map.value]["pos"]].predicate_map.value and po.object_map.value == unique_list[unique_dict[po.predicate_map.value]["pos"]].object_map.value:
+					if  po.object_map.language != unique_list[unique_dict[po.predicate_map.value]["pos"]].object_map.language or po.object_map.language_map != unique_list[unique_dict[po.predicate_map.value]["pos"]].object_map.language_map:
+						unique_list.append(po)
+						unique_dict[po.predicate_map.value] = {"object":po.object_map.value,"pos":len(unique_list)-1}
+					elif  po.object_map.datatype != unique_list[unique_dict[po.predicate_map.value]["pos"]].object_map.datatype or po.object_map.datatype_map != unique_list[unique_dict[po.predicate_map.value]["pos"]].object_map.datatype_map:
+						unique_list.append(po)
+						unique_dict[po.predicate_map.value] = {"object":po.object_map.value,"pos":len(unique_list)-1}
+				else:
+					unique_list.append(po)
+				
 	return unique_list

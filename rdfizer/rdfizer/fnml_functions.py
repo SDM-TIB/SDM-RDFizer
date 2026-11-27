@@ -206,15 +206,18 @@ def escape():
         raise ValueError("Invalid mode. Use 'html' for HTML escaping or 'url' for URL escaping.")
 
 def toUpperCaseURL():
-    url_lower = global_dic["str"].lower()
+    if "str" in global_dic:
+        url_lower = global_dic["str"].lower()
+    else:
+        url_lower = global_dic["_str"].lower()
 
     if url_lower.startswith('https://'):
-        return global_dic["str"].upper()
+        return url_lower.upper()
     elif url_lower.startswith('http://'):
-        return global_dic["str"].upper()
+        return url_lower.upper()
 
     # else:
-    return f'http://{encode_char(global_dic["str"].upper())}'
+    return f'http://{encode_char(url_lower.upper())}'
 
 def schema(): 
     return "https://schema.org/" + encode_char(global_dic["stringParameter"])

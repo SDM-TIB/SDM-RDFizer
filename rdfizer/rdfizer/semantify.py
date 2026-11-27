@@ -1707,18 +1707,18 @@ def mappings_expansion(triples_map_list):
                                                 triples_map.tablename == triples_map_element.tablename and triples_map.tablename != "None" and triples_map_element.tablename != "None"):
                                             if triples_map_element.subject_map.subject_mapping_type == "template":
                                                 object_map = tm.ObjectMap("template",
-																		  triples_map_element.subject_map.value, "None",
-																		  "None", "None",
-																		  triples_map_element.subject_map.term_type,
-																		  "None", "None")
+                                                                          triples_map_element.subject_map.value, "None",
+                                                                          "None", "None",
+                                                                          triples_map_element.subject_map.term_type,
+                                                                          "None", "None")
                                             else:
                                                 object_map = tm.ObjectMap("reference",
-																		  triples_map_element.subject_map.value, "None",
+                                                                          triples_map_element.subject_map.value, "None",
                                                                           "None", "None",
-																		  triples_map_element.subject_map.term_type,
-																		  "None", "None")
+                                                                          triples_map_element.subject_map.term_type,
+                                                                          "None", "None")
                                             predicate_object = tm.PredicateObjectMap(po.predicate_map, object_map,
-																					 po.graph)
+                                                                                     po.graph)
                                             new_list += [tm.TriplesMap(triples_map.triples_map_id + "_" + str(i),
                                                                        triples_map.data_source, subject_map,
                                                                        [predicate_object],
@@ -1843,20 +1843,20 @@ def mappings_expansion(triples_map_list):
 
 def mapping_parser(mapping_file):
     """
-	(Private function, not accessible from outside this package)
+    (Private function, not accessible from outside this package)
 
-	Takes a mapping file in Turtle (.ttl) or Notation3 (.n3) format and parses it into a list of
-	TriplesMap objects (refer to TriplesMap.py file)
+    Takes a mapping file in Turtle (.ttl) or Notation3 (.n3) format and parses it into a list of
+    TriplesMap objects (refer to TriplesMap.py file)
 
-	Parameters
-	----------
-	mapping_file : string
-		Path to the mapping file
+    Parameters
+    ----------
+    mapping_file : string
+        Path to the mapping file
 
-	Returns
-	-------
-	A list of TriplesMap objects containing all the parsed rules from the original mapping file
-	"""
+    Returns
+    -------
+    A list of TriplesMap objects containing all the parsed rules from the original mapping file
+    """
 
     mapping_graph = rdflib.Graph()
 
@@ -2505,43 +2505,43 @@ def mapping_parser(mapping_file):
 
         """
         mapping_query = """
-    		prefix rr: <http://www.w3.org/ns/r2rml#> 
-    		prefix rml: <http://semweb.mmlab.be/ns/rml#> 
-    		prefix ql: <http://semweb.mmlab.be/ns/ql#> 
-    		prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
-    		prefix td: <https://www.w3.org/2019/wot/td#>
-    		prefix htv: <http://www.w3.org/2011/http#>
-    		prefix hctl: <https://www.w3.org/2019/wot/hypermedia#>
+            prefix rr: <http://www.w3.org/ns/r2rml#> 
+            prefix rml: <http://semweb.mmlab.be/ns/rml#> 
+            prefix ql: <http://semweb.mmlab.be/ns/ql#> 
+            prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>
+            prefix td: <https://www.w3.org/2019/wot/td#>
+            prefix htv: <http://www.w3.org/2011/http#>
+            prefix hctl: <https://www.w3.org/2019/wot/hypermedia#>
             prefix fnml: <http://semweb.mmlab.be/ns/fnml#>
             prefix csvw: <http://www.w3.org/ns/csvw#>   
-    		SELECT DISTINCT *
-    		WHERE {
+            SELECT DISTINCT *
+            WHERE {
 
-    	# Subject -------------------------------------------------------------------------
-    			OPTIONAL{?triples_map_id a ?mappings_type}
+        # Subject -------------------------------------------------------------------------
+                OPTIONAL{?triples_map_id a ?mappings_type}
                 ?triples_map_id rml:logicalSource ?_source .
-    			OPTIONAL{?_source rml:source ?data_source .}
-    			OPTIONAL{
-    				?_source rml:source ?data_link .
-    				?data_link td:hasForm ?form .
-    				?form hctl:hasTarget ?url_source .
-    			}
+                OPTIONAL{?_source rml:source ?data_source .}
+                OPTIONAL{
+                    ?_source rml:source ?data_link .
+                    ?data_link td:hasForm ?form .
+                    ?form hctl:hasTarget ?url_source .
+                }
                 OPTIONAL{
                     ?_source rml:source ?data_link .
                     ?data_link csvw:url ?url_source .
                     ?data_link csvw:dialect ?dialect .
                     ?dialect csvw:delimiter ?delimiter .
                 }
-    			OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
-    			OPTIONAL { ?_source rml:iterator ?iterator . }
-    			OPTIONAL { ?_source rr:tableName ?tablename .}
-    			OPTIONAL { ?_source rml:query ?query .}
+                OPTIONAL {?_source rml:referenceFormulation ?ref_form .}
+                OPTIONAL { ?_source rml:iterator ?iterator . }
+                OPTIONAL { ?_source rr:tableName ?tablename .}
+                OPTIONAL { ?_source rml:query ?query .}
                 OPTIONAL {?triples_map_id rr:subject ?subject_constant_shortcut .}
-    			OPTIONAL {?triples_map_id rr:subjectMap ?_subject_map .}
+                OPTIONAL {?triples_map_id rr:subjectMap ?_subject_map .}
                 OPTIONAL {?triples_map_id rml:subjectMap ?_subject_map .}
-    			OPTIONAL {?_subject_map rr:template ?subject_template .}
-    			OPTIONAL {?_subject_map rml:reference ?subject_reference .}
-    			OPTIONAL {?_subject_map rr:constant ?subject_constant}
+                OPTIONAL {?_subject_map rr:template ?subject_template .}
+                OPTIONAL {?_subject_map rml:reference ?subject_reference .}
+                OPTIONAL {?_subject_map rr:constant ?subject_constant}
                 OPTIONAL {?_subject_map rml:quotedTriplesMap ?subject_quoted .
                     OPTIONAL {
                             ?_subject_map rr:joinCondition ?join_condition .
@@ -2549,70 +2549,70 @@ def mapping_parser(mapping_file):
                                          rr:parent ?subject_parent_value.
                         }
                     }
-    			OPTIONAL { ?_subject_map rr:class ?rdf_class . }
-    			OPTIONAL { ?_subject_map rr:termType ?termtype . }
-    			OPTIONAL { ?_subject_map rr:graph ?graph . }
-    			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
-    					   ?_graph_structure rr:constant ?graph . }
-    			OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
-    					   ?_graph_structure rr:template ?graph . }	
-                OPTIONAL {?_subject_map fnml:functionValue ?subject_function .}  	   
+                OPTIONAL { ?_subject_map rr:class ?rdf_class . }
+                OPTIONAL { ?_subject_map rr:termType ?termtype . }
+                OPTIONAL { ?_subject_map rr:graph ?graph . }
+                OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
+                           ?_graph_structure rr:constant ?graph . }
+                OPTIONAL { ?_subject_map rr:graphMap ?_graph_structure .
+                           ?_graph_structure rr:template ?graph . } 
+                OPTIONAL {?_subject_map fnml:functionValue ?subject_function .}        
 
-    	# Predicate -----------------------------------------------------------------------
-    			OPTIONAL {
-    			?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
+        # Predicate -----------------------------------------------------------------------
+                OPTIONAL {
+                ?triples_map_id rr:predicateObjectMap ?_predicate_object_map .
                 OPTIONAL {?_predicate_object_map rr:predicateMap ?_predicate_map .}
                 OPTIONAL {?_predicate_object_map rml:predicateMap ?_predicate_map .}
-    			OPTIONAL {
-    				?_predicate_map rr:constant ?predicate_constant .
-    			}
-    			OPTIONAL {
-    				?_predicate_map rr:template ?predicate_template .
-    			}
-    			OPTIONAL {
-    				?_predicate_map rml:reference ?predicate_reference .
-    			}
-    			OPTIONAL {
-    				?_predicate_object_map rr:predicate ?predicate_constant_shortcut .
-    			}
+                OPTIONAL {
+                    ?_predicate_map rr:constant ?predicate_constant .
+                }
+                OPTIONAL {
+                    ?_predicate_map rr:template ?predicate_template .
+                }
+                OPTIONAL {
+                    ?_predicate_map rml:reference ?predicate_reference .
+                }
+                OPTIONAL {
+                    ?_predicate_object_map rr:predicate ?predicate_constant_shortcut .
+                }
                 OPTIONAL {
                     ?_predicate_map fnml:functionValue ?predicate_function .
                 }
 
 
-    	# Object --------------------------------------------------------------------------
+        # Object --------------------------------------------------------------------------
                 OPTIONAL {?_predicate_object_map rr:objectMap ?_object_map .}
                 OPTIONAL {?_predicate_object_map rml:objectMap ?_object_map .}
-    			OPTIONAL {
-    				?_object_map rr:constant ?object_constant .
-    				OPTIONAL {
-    					?_object_map rr:datatype ?object_datatype .
-    				}
+                OPTIONAL {
+                    ?_object_map rr:constant ?object_constant .
+                    OPTIONAL {
+                        ?_object_map rr:datatype ?object_datatype .
+                    }
                     OPTIONAL { ?_object_map rr:language ?language .}
-    			}
-    			OPTIONAL {
-    				?_object_map rr:template ?object_template .
-    				OPTIONAL {?_object_map rr:termType ?term .}
+                }
+                OPTIONAL {
+                    ?_object_map rr:template ?object_template .
+                    OPTIONAL {?_object_map rr:termType ?term .}
                     OPTIONAL { ?_object_map rr:language ?language .}
-    				OPTIONAL {?_object_map rml:languageMap ?language_map.
-    						  ?language_map rml:reference ?language_value.}
-    				OPTIONAL {
-    					?_object_map rr:datatype ?object_datatype .
-    				}
-    			}
-    			OPTIONAL {
-    				?_object_map rml:reference ?object_reference .
-    				OPTIONAL { ?_object_map rr:language ?language .}
-    				OPTIONAL {?_object_map rml:languageMap ?language_map.
-    						  ?language_map rml:reference ?language_value.}
+                    OPTIONAL {?_object_map rml:languageMap ?language_map.
+                              ?language_map rml:reference ?language_value.}
+                    OPTIONAL {
+                        ?_object_map rr:datatype ?object_datatype .
+                    }
+                }
+                OPTIONAL {
+                    ?_object_map rml:reference ?object_reference .
+                    OPTIONAL { ?_object_map rr:language ?language .}
+                    OPTIONAL {?_object_map rml:languageMap ?language_map.
+                              ?language_map rml:reference ?language_value.}
                     OPTIONAL {?_object_map rml:datatypeMap ?datatype_map.
                           ?datatype_map rml:template ?datatype_value.}
-    				OPTIONAL {?_object_map rr:termType ?term .}
-    				OPTIONAL {
-    					?_object_map rr:datatype ?object_datatype .
-    				}
-    			}
-    			OPTIONAL {
+                    OPTIONAL {?_object_map rr:termType ?term .}
+                    OPTIONAL {
+                        ?_object_map rr:datatype ?object_datatype .
+                    }
+                }
+                OPTIONAL {
                     ?_object_map rr:parentTriplesMap ?object_parent_triples_map .
                     OPTIONAL {
                         ?_object_map rr:joinCondition ?join_condition .
@@ -2636,9 +2636,9 @@ def mapping_parser(mapping_file):
                                      rr:parent ?parent_value.
                     }
                 }
-    			OPTIONAL {
-    				?_predicate_object_map rr:object ?object_constant_shortcut .
-    			}
+                OPTIONAL {
+                    ?_predicate_object_map rr:object ?object_constant_shortcut .
+                }
                 OPTIONAL {
                     ?_predicate_object_map rml:object ?object_constant_shortcut .
                 }
@@ -2659,21 +2659,21 @@ def mapping_parser(mapping_file):
                     OPTIONAL {?_object_map rr:termType ?term .}
                     
                 }
-    			OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
-    			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
-    					   ?_graph_structure rr:constant ?predicate_object_graph  . }
-    			OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
-    					   ?_graph_structure rr:template ?predicate_object_graph  . }	
-    			}
-    			OPTIONAL {
+                OPTIONAL {?_predicate_object_map rr:graph ?predicate_object_graph .}
+                OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+                           ?_graph_structure rr:constant ?predicate_object_graph  . }
+                OPTIONAL { ?_predicate_object_map  rr:graphMap ?_graph_structure .
+                           ?_graph_structure rr:template ?predicate_object_graph  . }   
+                }
+                OPTIONAL {
                     ?_source rml:source ?db .
-    				?db a d2rq:Database;
-      				d2rq:jdbcDSN ?jdbcDSN; 
-      				d2rq:jdbcDriver ?jdbcDriver; 
-    			    d2rq:username ?user;
-    			    d2rq:password ?password .
-    			}
-    		} """
+                    ?db a d2rq:Database;
+                    d2rq:jdbcDSN ?jdbcDSN; 
+                    d2rq:jdbcDriver ?jdbcDriver; 
+                    d2rq:username ?user;
+                    d2rq:password ?password .
+                }
+            } """
 
     triples_map_list = []
     func_map_list = []
@@ -3364,12 +3364,14 @@ def mapping_parser(mapping_file):
                 if result_predicate_object_map.predicate_constant_shortcut != None:
                     predicate_map = tm.PredicateMap("constant shortcut",
                                                     str(result_predicate_object_map.predicate_constant_shortcut), "", "None")
-                    predicate_object_graph[
-                        str(result_predicate_object_map.predicate_constant_shortcut)] = result_predicate_object_map.predicate_object_graph
+                    if str(result_predicate_object_map.predicate_object_graph) != "None":
+                        predicate_object_graph[
+                            str(result_predicate_object_map.predicate_constant_shortcut)] = result_predicate_object_map.predicate_object_graph
                 elif result_predicate_object_map.predicate_constant != None:
                     predicate_map = tm.PredicateMap("constant", str(result_predicate_object_map.predicate_constant), "", "None")
-                    predicate_object_graph[
-                        str(result_predicate_object_map.predicate_constant)] = result_predicate_object_map.predicate_object_graph
+                    if str(result_predicate_object_map.predicate_object_graph) != "None":
+                        predicate_object_graph[
+                            str(result_predicate_object_map.predicate_constant)] = result_predicate_object_map.predicate_object_graph
                 elif result_predicate_object_map.predicate_template != None:
                     template, condition = string_separetion(str(result_predicate_object_map.predicate_template))
                     predicate_map = tm.PredicateMap("template", template, condition, "None")
@@ -3528,9 +3530,9 @@ def mapping_parser(mapping_file):
                                 predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)][
                                 "parents"].append(str(result_predicate_object_map.parent_value))
                     join = False
-                    if len(list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"]))) == 1 and len(list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"]))) == 1:
-                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"] = list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"]))
-                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"] = list(dict.fromkeys(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"]))
+                    if len(list(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"])) == 1 and len(list(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"])) == 1:
+                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"] = list(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["childs"])
+                        join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"] = list(join_predicate[predicate_map.value + " " + str(result_predicate_object_map.object_parent_triples_map)]["parents"])
 
                 elif result_predicate_object_map.function is not None:
                     #for var, val in zip(mapping_query_prepared_results.vars, result_predicate_object_map):
@@ -4004,8 +4006,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             subject = "<" + subject_value + ">"
                         except:
@@ -4020,14 +4022,15 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 subject = None
 
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 if "http" not in subject_value:
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
@@ -4035,7 +4038,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                         if base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                            subject = "<" + get_default_base() + subject_value + ">"
                             except:
                                 subject = None
 
@@ -4057,8 +4061,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 subject = None
 
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 subject = "_:" + subject_value
                             except:
@@ -4080,8 +4084,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 subject = None
 
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 subject = "<" + subject_value + ">"
                             except:
@@ -4098,7 +4102,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -4106,27 +4111,29 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         else:
-                            logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
+                            logger.error("<" + get_default_base() + subject_value + "> is an invalid URL")
                             subject = None
                     except:
                         subject = None
                     if triples_map.subject_map.term_type == "IRI":
                         if " " not in subject_value:
-                            subject = "<" + encode_char(subject_value) + ">"
+                            subject = "<" + subject_value + ">"
                         else:
                             subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         if "http" not in subject_value:
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -4134,7 +4141,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                     except:
                         subject = None
 
@@ -4151,8 +4159,8 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         subject = "\"" + triples_map.subject_map.value + "\""
                     except:
@@ -4180,10 +4188,10 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         if graph != None and "defaultGraph" not in graph:
                             if "{" in graph:
                                 rdf_type = rdf_type[:-2] + " <" + string_substitution_xml(graph, "{(.+?)}", child,
-																						  "subject",
-																						  triples_map.iterator,
-																						  parent_map,
-																						  namespace) + ">.\n"
+                                                                                          "subject",
+                                                                                          triples_map.iterator,
+                                                                                          parent_map,
+                                                                                          namespace) + ">.\n"
                                 dictionary_table_update(
                                     "<" + string_substitution_xml(graph, "{(.+?)}", child, "subject",
                                                                   triples_map.iterator, parent_map,
@@ -4222,7 +4230,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         except:
                             predicate = None
                     # else:
-                    #	predicate = None
+                    #   predicate = None
                     else:
                         try:
                             predicate = "<" + string_substitution_xml(predicate_object_map.predicate_map.value,
@@ -4239,7 +4247,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                                             "predicate", triples_map.iterator, parent_map,
                                                             namespace)
                     # else:
-                    #	predicate = None
+                    #   predicate = None
                     else:
                         predicate = string_substitution_xml(predicate_object_map.predicate_map.value, ".+", child,
                                                             "predicate", triples_map.iterator, parent_map,
@@ -4270,7 +4278,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                 elif predicate_object_map.object_map.language != None:
                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                         object += "@es"
@@ -4313,7 +4321,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if "http" in datatype_value:
                                    object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
-                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                             elif predicate_object_map.object_map.language != None:
                                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                     object[i] += "@es"
@@ -4354,7 +4362,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
-                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                         elif predicate_object_map.object_map.language != None:
                             if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                 object += "@es"
@@ -4401,7 +4409,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if "http" in datatype_value:
                                    object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
-                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                   object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                             elif predicate_object_map.object_map.language != None:
                                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                     object[i] += "@es"
@@ -4426,13 +4434,9 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if "IRI" in predicate_object_map.object_map.term:
                                     if " " not in object:
                                         object[i] = "\"" + object[i][1:-1].replace("\\\\'", "'") + "\""
-                                        object[i] = "<" + encode_char(object[i][1:-1]) + ">"
+                                        object[i] = "<" + object[i][1:-1] + ">"
                                     else:
                                         object[i] = None
-                            elif is_convertible_to_int(object[i][1:-1]):
-                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                            elif is_convertible_to_double(object[i][1:-1]):
-                                object[i] = object[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                     else:
                         if "\\" in object[1:-1]:
                             object = "\"" + object[1:-1].replace("\\", "\\\\") + "\""
@@ -4454,7 +4458,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
-                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                         elif predicate_object_map.object_map.language != None:
                             if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                 object += "@es"
@@ -4475,10 +4479,6 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                                            namespace)
                             if lang != None:
                                 object += "@" + lang
-                        elif is_convertible_to_int(object[1:-1]):
-                            object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        elif is_convertible_to_double(object[1:-1]):
-                            object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
@@ -4781,7 +4781,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                         else:
                             triple = subject + " " + predicate + " " + object + ".\n"
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
-    								predicate_object_map.graph[predicate[1:-1]]:
+                                    predicate_object_map.graph[predicate[1:-1]]:
                                 if "{" in predicate_object_map.graph[predicate[1:-1]]:
                                     triple = triple[:-2] + " <" + string_substitution_xml(
                                         predicate_object_map.graph[predicate[1:-1]], "{(.+?)}", child, "subject",
@@ -4791,7 +4791,7 @@ def semantify_xml(triples_map, triples_map_list, output_file_descriptor):
                                 if duplicate == "yes":
                                     if predicate in general_predicates:
                                         if dic_table[
-    										predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                            predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
                                             output_file_descriptor.write(triple)
                                             g_triples.update({dic_table[
                                                                   predicate + "_" + predicate_object_map.object_map.value]: {
@@ -5076,51 +5076,59 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             try:
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        #subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None and len(base_iri_list) > 0:
                                         subject = "<" + base + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + "base/" + subject_value + ">"
-                                    elif is_valid_url_syntax("http://example.com/base/" + subject_value):
-                                        subject = "<" + "http://example.com/base/" + subject_value + ">"
+                                    elif is_valid_url_syntax(get_default_base() + subject_value):
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
                                     else:
                                         if triples_map.triples_map_id in base_iri_list:
-                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            #subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                         elif base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                            subject = "<" + get_default_base() + subject_value + ">"
                                 if "']}" in subject:
                                     subject = subject.replace("']}","")
                             except:
                                 subject = None
 
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        #subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
                                     else:
                                         if triples_map.triples_map_id in base_iri_list:
-                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            #subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                         elif base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            #subject = "<" + get_default_base() + encode_char(subject_value) + ">"
+                                            subject = "<" + get_default_base() + subject_value + ">"
                                 if "']}" in subject:
                                     subject = subject.replace("']}","")
                             except:
@@ -5132,21 +5140,21 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             try:
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     #if is_valid_url_syntax(subject_value):
                                     #    subject = "<" + subject_value + ">"
                                     #else:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value).replace(":","%3A") + ">"
+                                        subject = "<" + get_default_base() + subject_value.replace(":","%3A") + ">"
                             except:
                                 subject = None
                     if "IRI" in triples_map.subject_map.term_type and "Unsafe" not in triples_map.subject_map.term_type:
@@ -5155,45 +5163,45 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             try:
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + unquote(subject_value).replace(" ","%20") + ">"
                                     else:
                                         if triples_map.triples_map_id in base_iri_list:
-                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                         elif base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value).replace(":","%3A") + ">"
+                                            subject = "<" + get_default_base() + subject_value.replace(":","%3A") + ">"
                             except:
                                 subject = None
 
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 if "http" not in subject_value:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
                                     else:
                                         if triples_map.triples_map_id in base_iri_list:
-                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                            subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                         elif base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            subject = "<" + get_default_base() + subject_value + ">"
                             except:
                                 subject = None
 
@@ -5208,15 +5216,15 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             "Incorrect format for Blank Nodes. \"/\" will be replace with \"2F\".")
                                         blank_message = False
                                 else:
-                                    subject = "_:" + encode_char(subject_value).replace("%", "")
+                                    subject = "_:" + subject_value.replace("%", "")
                                 if "." in subject:
                                     subject = subject.replace(".", "2E")
 
                             except:
                                 subject = None
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 subject = "_:" + subject_value
                             except:
@@ -5237,8 +5245,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             except:
                                 subject = None
                         else:
-                            #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                            #	if row[field] == condition:
+                            #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                            #   if row[field] == condition:
                             try:
                                 subject = "<" + subject_value + ">"
 
@@ -5254,52 +5262,52 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         if " " not in subject_value:
                             if "http" not in subject_value:
                                 if triples_map.triples_map_id in base_iri_list:
-                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                 elif base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
                                 else:
                                     if triples_map.triples_map_id in base_iri_list:
-                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                        subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                     elif base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         else:
-                            logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
+                            logger.error("<" + get_default_base() + subject_value + "> is an invalid URL")
                             subject = None
                     except:
                         subject = None
                     if triples_map.subject_map.term_type == "IRI":
                         if " " not in subject_value:
-                            subject = "<" + encode_char(subject_value) + ">"
+                            subject = "<" + subject_value + ">"
                         else:
                             subject = None
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         if "http" not in subject_value:
                             if triples_map.triples_map_id in base_iri_list:
-                                subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                             elif base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
                             else:
                                 if triples_map.triples_map_id in base_iri_list:
-                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + encode_char(subject_value) + ">"
+                                    subject = "<" + base_iri_list[triples_map.triples_map_id] + subject_value + ">"
                                 elif base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                     except:
                         subject = None
 
@@ -5329,8 +5337,8 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         subject = "\"" + triples_map.subject_map.value + "\""
                     except:
@@ -5395,7 +5403,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     except:
                         predicate = None
                 # else:
-                #	predicate = None
+                #   predicate = None
                 else:
                     try:
                         predicate = "<" + string_substitution_json(predicate_object_map.predicate_map.value, "{(.+?)}",
@@ -5409,7 +5417,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data,
                                                          "predicate", ignore, iterator)
                 # else:
-                #	predicate = None
+                #   predicate = None
                 else:
                     predicate = string_substitution_json(predicate_object_map.predicate_map.value, ".+", data,
                                                          "predicate", ignore, iterator)
@@ -5439,7 +5447,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                 elif predicate_object_map.object_map.language != None:
                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                         object += "@es"
@@ -5457,7 +5465,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                         lang = string_substitution(predicate_object_map.object_map.language_map, ".+", row, "object",
                                                ignore, triples_map.iterator)
                     if lang != None:
-                        object += "@" + lang
+                        object += "@" + language_tag(lang)
             elif predicate_object_map.object_map.mapping_type == "template":
                 try:
                     object = string_substitution_json(predicate_object_map.object_map.value, "{(.+?)}", data, "object",
@@ -5495,7 +5503,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if "http" in datatype_value:
                                        object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                     else:
-                                       object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                       object[i] = "\"" + object[i][1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                                 elif predicate_object_map.object_map.language != None:
                                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                         object[i] += "@es"
@@ -5547,7 +5555,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 if "http" in datatype_value:
                                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                 else:
-                                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                             elif predicate_object_map.object_map.language != None:
                                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                     object += "@es"
@@ -5565,7 +5573,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+",
                                                                 data, "object", ignore, iterator)
                                 if lang != None:
-                                    object += "@" + lang
+                                    object += "@" + language_tag(lang)
                 except TypeError:
                     object = None
             elif predicate_object_map.object_map.mapping_type == "reference":
@@ -5600,7 +5608,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if "http" in datatype_value:
                                        object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(datatype_value)
                                     else:
-                                       object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                                       object_list[i] = "\"" + object_list[i][1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                                 elif predicate_object_map.object_map.language != None:
                                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                         object_list[i] += "@es"
@@ -5620,17 +5628,18 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                             predicate_object_map.object_map.language_map, ".+", data, "object", ignore,
                                             iterator)[1:-1]
                                     if lang != None:
-                                        object_list[i] += "@" + lang
+                                        object_list[i] += "@" + language_tag(lang)
                                 elif predicate_object_map.object_map.term != None:
                                     if "IRI" in predicate_object_map.object_map.term:
                                         if " " not in object_list[i]:
                                             object_list[i] = "\"" + object_list[i][1:-1].replace("\\\\'", "'") + "\""
-                                            object_list[i] = "<" + encode_char(object_list[i][1:-1]) + ">"
+                                            object_list[i] = "<" + object_list[i][1:-1] + ">"
                                         else:
                                             object_list[i] = None
-                                elif is_convertible_to_int(object_list[i][1:-1]):
+                                elif new_formulation == "yes" and is_convertible_to_int(object_list[i][1:-1]):
+                                    # the natural datatype of RML-Core, not in the legacy vocabulary
                                     object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                                elif is_convertible_to_double(object_list[i][1:-1]):
+                                elif new_formulation == "yes" and is_convertible_to_double(object_list[i][1:-1]):
                                     object_list[i] = object_list[i] + "^^<http://www.w3.org/2001/XMLSchema#double>"
                                 i += 1
 
@@ -5666,7 +5675,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
-                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                         elif predicate_object_map.object_map.language != None:
                             if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                 object += "@es"
@@ -5684,17 +5693,18 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 lang = string_substitution_json(predicate_object_map.object_map.language_map, ".+", data,
                                                                 "object", ignore, iterator)
                             if lang != None:
-                                object += "@" + lang
+                                object += "@" + language_tag(lang)
                         elif predicate_object_map.object_map.term != None:
                             if "IRI" in predicate_object_map.object_map.term:
                                 if " " not in object:
                                     object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                                    object = "<" + encode_char(object[1:-1]) + ">"
+                                    object = "<" + object[1:-1] + ">"
                                 else:
                                     object = None
-                        elif is_convertible_to_int(object[1:-1]):
+                        elif new_formulation == "yes" and is_convertible_to_int(object[1:-1]):
+                            # the natural datatype of RML-Core, not in the legacy vocabulary
                             object = object + "^^<http://www.w3.org/2001/XMLSchema#integer>"
-                        elif is_convertible_to_double(object[1:-1]):
+                        elif new_formulation == "yes" and is_convertible_to_double(object[1:-1]):
                             object = object + "^^<http://www.w3.org/2001/XMLSchema#double>"
 
             elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -5874,7 +5884,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if "http" in graph:
                                         graph = "<" + graph + ">"
                                     elif base is None:
-                                        graph = " <http://example.com/base/" + graph + ">"
+                                        graph = " <" + get_default_base() + graph + ">"
                                     else:
                                         graph = "<" + base + graph + ">"
                             gather_object_values.append(object)
@@ -5888,7 +5898,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 if "http" in graph:
                                     graph = "<" + graph + ">"
                                 elif base is None:
-                                    graph = " <http://example.com/base/" + graph + ">"
+                                    graph = " <" + get_default_base() + graph + ">"
                                 else:
                                     graph = "<" + base + graph + ">"
                         gather_triples_generation(data,sp,base,gather_map_list[predicate_object_map.object_map.value],output_file_descriptor,iterator,triples_map_list,gather_map_list,graph)
@@ -5915,38 +5925,34 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 triple = triple[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
-                        if predicate[1:-1] in predicate_object_map.graph:
-                            if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
-                                if duplicate == "yes":
-                                    if predicate in general_predicates:
-                                        if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-                                            output_file_descriptor.write(triple)
-                                            g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value]: {
-                                                dic_table[subject] + "_" + dic_table[object]: ""}})
-                                            i += 1
-                                        elif dic_table[subject] + "_" + dic_table[object] not in g_triples[
-                                            dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-                                            output_file_descriptor.write(triple)
-                                            g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
-                                                {dic_table[subject] + "_" + dic_table[object]: ""})
-                                            i += 1
-                                    else:
-                                        if dic_table[predicate] not in g_triples:
-                                            output_file_descriptor.write(triple)
-                                            g_triples.update(
-                                                {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[object]: ""}})
-                                            i += 1
-                                        elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
-                                            output_file_descriptor.write(triple)
-                                            g_triples[dic_table[predicate]].update(
-                                                {dic_table[subject] + "_" + dic_table[object]: ""})
-                                            i += 1
+                        if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
+                            if duplicate == "yes":
+                                if predicate in general_predicates:
+                                    if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                        output_file_descriptor.write(triple)
+                                        g_triples.update({dic_table[predicate + "_" + predicate_object_map.object_map.value]: {
+                                            dic_table[subject] + "_" + dic_table[object]: ""}})
+                                        i += 1
+                                    elif dic_table[subject] + "_" + dic_table[object] not in g_triples[
+                                        dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                        output_file_descriptor.write(triple)
+                                        g_triples[dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                            {dic_table[subject] + "_" + dic_table[object]: ""})
+                                        i += 1
                                 else:
-                                    output_file_descriptor.write(triple)
-                                    i += 1
-                        else:
-                            output_file_descriptor.write(triple)
-                            i += 1
+                                    if dic_table[predicate] not in g_triples:
+                                        output_file_descriptor.write(triple)
+                                        g_triples.update(
+                                            {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[object]: ""}})
+                                        i += 1
+                                    elif dic_table[subject] + "_" + dic_table[object] not in g_triples[dic_table[predicate]]:
+                                        output_file_descriptor.write(triple)
+                                        g_triples[dic_table[predicate]].update(
+                                            {dic_table[subject] + "_" + dic_table[object]: ""})
+                                        i += 1
+                            else:
+                                output_file_descriptor.write(triple)
+                                i += 1
                     if predicate[1:-1] in predicate_object_map.graph:
                         triple = subject + " " + predicate + " " + object + ".\n"
                         if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
@@ -6016,40 +6022,36 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                                 else:
                                     triple = triple[:-2] + " <" + graph + ">.\n"
                                     dictionary_table_update("<" + graph + ">")
-                            if predicate[1:-1] in predicate_object_map.graph:
-                                if predicate_object_map.graph[predicate[1:-1]] == None or graph != None:
-                                    if duplicate == "yes":
-                                        if predicate in general_predicates:
-                                            if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
-                                                output_file_descriptor.write(triple)
-                                                g_triples.update({dic_table[
-                                                                      predicate + "_" + predicate_object_map.object_map.value]: {
-                                                    dic_table[subject] + "_" + dic_table[obj]: ""}})
-                                                i += 1
-                                            elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[
-                                                dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
-                                                output_file_descriptor.write(triple)
-                                                g_triples[
-                                                    dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
-                                                    {dic_table[subject] + "_" + dic_table[obj]: ""})
-                                                i += 1
-                                        else:
-                                            if dic_table[predicate] not in g_triples:
-                                                output_file_descriptor.write(triple)
-                                                g_triples.update(
-                                                    {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[obj]: ""}})
-                                                i += 1
-                                            elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
-                                                output_file_descriptor.write(triple)
-                                                g_triples[dic_table[predicate]].update(
-                                                    {dic_table[subject] + "_" + dic_table[obj]: ""})
-                                                i += 1
+                            if predicate_object_map.graph[predicate[1:-1]] == None or graph != None:
+                                if duplicate == "yes":
+                                    if predicate in general_predicates:
+                                        if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update({dic_table[
+                                                                  predicate + "_" + predicate_object_map.object_map.value]: {
+                                                dic_table[subject] + "_" + dic_table[obj]: ""}})
+                                            i += 1
+                                        elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[
+                                            dic_table[predicate + "_" + predicate_object_map.object_map.value]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[
+                                                dic_table[predicate + "_" + predicate_object_map.object_map.value]].update(
+                                                {dic_table[subject] + "_" + dic_table[obj]: ""})
+                                            i += 1
                                     else:
-                                        output_file_descriptor.write(triple)
-                                        i += 1
-                            else:
-                                output_file_descriptor.write(triple)
-                                i += 1
+                                        if dic_table[predicate] not in g_triples:
+                                            output_file_descriptor.write(triple)
+                                            g_triples.update(
+                                                {dic_table[predicate]: {dic_table[subject] + "_" + dic_table[obj]: ""}})
+                                            i += 1
+                                        elif dic_table[subject] + "_" + dic_table[obj] not in g_triples[dic_table[predicate]]:
+                                            output_file_descriptor.write(triple)
+                                            g_triples[dic_table[predicate]].update(
+                                                {dic_table[subject] + "_" + dic_table[obj]: ""})
+                                            i += 1
+                                else:
+                                    output_file_descriptor.write(triple)
+                                    i += 1
                         if predicate[1:-1] in predicate_object_map.graph:
                             triple = subject + " " + predicate + " " + obj + ".\n"
                             if predicate_object_map.graph[predicate[1:-1]] != None and "defaultGraph" not in \
@@ -6253,30 +6255,30 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
 
 def semantify_file(triples_map, triples_map_list, delimiter, output_file_descriptor, data, no_inner_cycle):
     """
-		(Private function, not accessible from outside this package)
+        (Private function, not accessible from outside this package)
 
-		Takes a triples-map rule and applies it to each one of the rows of its CSV data
-		source
+        Takes a triples-map rule and applies it to each one of the rows of its CSV data
+        source
 
-		Parameters
-		----------
-		triples_map : TriplesMap object
-			Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
-			(refer to the TriplesMap.py file in the triplesmap folder)
-		triples_map_list : list of TriplesMap objects
-			List of triples-maps parsed from current mapping being used for the semantification of a
-			dataset (mainly used to perform rr:joinCondition mappings)
-		delimiter : string
-			Delimiter value for the CSV or TSV file ("\\s" and "\\t" respectively)
-		output_file_descriptor : file object
-			Descriptor to the output file (refer to the Python 3 documentation)
+        Parameters
+        ----------
+        triples_map : TriplesMap object
+            Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
+            (refer to the TriplesMap.py file in the triplesmap folder)
+        triples_map_list : list of TriplesMap objects
+            List of triples-maps parsed from current mapping being used for the semantification of a
+            dataset (mainly used to perform rr:joinCondition mappings)
+        delimiter : string
+            Delimiter value for the CSV or TSV file ("\\s" and "\\t" respectively)
+        output_file_descriptor : file object
+            Descriptor to the output file (refer to the Python 3 documentation)
 
-		Returns
-		-------
-		An .nt file per each dataset mentioned in the configuration file semantified.
-		If the duplicates are asked to be removed in main memory, also returns a -min.nt
-		file with the triples sorted and with the duplicates removed.
-		"""
+        Returns
+        -------
+        An .nt file per each dataset mentioned in the configuration file semantified.
+        If the duplicates are asked to be removed in main memory, also returns a -min.nt
+        file with the triples sorted and with the duplicates removed.
+        """
 
     object_list = []
     subject_list = []
@@ -6347,7 +6349,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -6355,7 +6357,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         except:
                             subject = None
 
@@ -6427,7 +6429,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                                 else:
                                     if is_valid_url_syntax(subject_value):
                                         subject = "<" + subject_value + ">"
@@ -6435,13 +6437,13 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                         if base != "" and base != None:
                                             subject = "<" + base + subject_value + ">"
                                         else:
-                                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                            subject = "<" + get_default_base() + subject_value + ">"
                         else:
                             if "http" not in subject_value:
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -6449,7 +6451,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
 
                         if triples_map.subject_map.condition != "":
                             if triples_map.func_map_list != []:
@@ -6508,7 +6510,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                 if triples_map.subject_map.func_result != None and func != None and isinstance(func,dict):
                     func = func[triples_map.subject_map.func_result]
                 if func != None:
-                    if "http://" in func or "https://" in func:
+                    if "http://" in func.lower() or "https://" in func.lower():
                         subject = "<" + func + ">"
                     else:
                         subject = "<" + encode_char(func) + ">"
@@ -6541,8 +6543,8 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         subject = "\"" + triples_map.subject_map.value + "\""
                     except:
@@ -6626,7 +6628,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         except:
                             predicate = None
                     # else:
-                    #	predicate = None
+                    #   predicate = None
                     else:
                         try:
                             predicate = "<" + string_substitution(predicate_object_map.predicate_map.value, "{(.+?)}",
@@ -6640,7 +6642,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row,
                                                         "predicate", ignore, triples_map.iterator)
                     # else:
-                    #	predicate = None
+                    #   predicate = None
                     else:
                         predicate = string_substitution(predicate_object_map.predicate_map.value, ".+", row,
                                                         "predicate", ignore, triples_map.iterator)
@@ -6700,7 +6702,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                 elif predicate_object_map.object_map.language != None:
                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                         object += "@es"
@@ -6757,7 +6759,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                             if "http" in datatype_value:
                                object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                             else:
-                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                               object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value) 
                         elif predicate_object_map.object_map.language != None:
                             if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                                 object += "@es"
@@ -6843,7 +6845,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                         else:
-                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value) 
                     elif predicate_object_map.object_map.language != None:
                         if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                             object += "@es"
@@ -6887,7 +6889,7 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
                         if "IRI" in predicate_object_map.object_map.term:
                             if " " not in object:
                                 object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                                object = "<" + encode_char(object[1:-1]) + ">"
+                                object = "<" + object[1:-1] + ">"
                             else:
                                 object = None
                         elif "BlankNode" in predicate_object_map.object_map.term:
@@ -8125,28 +8127,28 @@ def semantify_file(triples_map, triples_map_list, delimiter, output_file_descrip
 def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file_descriptor, host, port, user, password,
                     dbase, predicate):
     """
-	(Private function, not accessible from outside this package)
+    (Private function, not accessible from outside this package)
 
-	Takes a triples-map rule and applies it to each one of the rows of its CSV data
-	source
+    Takes a triples-map rule and applies it to each one of the rows of its CSV data
+    source
 
-	Parameters
-	----------
-	triples_map : TriplesMap object
-		Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
-		(refer to the TriplesMap.py file in the triplesmap folder)
-	triples_map_list : list of TriplesMap objects
-		List of triples-maps parsed from current mapping being used for the semantification of a
-		dataset (mainly used to perform rr:joinCondition mappings)
-	output_file_descriptor : file object
-		Descriptor to the output file (refer to the Python 3 documentation)
+    Parameters
+    ----------
+    triples_map : TriplesMap object
+        Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
+        (refer to the TriplesMap.py file in the triplesmap folder)
+    triples_map_list : list of TriplesMap objects
+        List of triples-maps parsed from current mapping being used for the semantification of a
+        dataset (mainly used to perform rr:joinCondition mappings)
+    output_file_descriptor : file object
+        Descriptor to the output file (refer to the Python 3 documentation)
 
-	Returns
-	-------
-	An .nt file per each dataset mentioned in the configuration file semantified.
-	If the duplicates are asked to be removed in main memory, also returns a -min.nt
-	file with the triples sorted and with the duplicates removed.
-	"""
+    Returns
+    -------
+    An .nt file per each dataset mentioned in the configuration file semantified.
+    If the duplicates are asked to be removed in main memory, also returns a -min.nt
+    file with the triples sorted and with the duplicates removed.
+    """
     global blank_message
     global generated_subjects
     triples_map_triples = {}
@@ -8189,8 +8191,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                         subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         subject = "<" + subject_value + ">"
                     except:
@@ -8204,7 +8206,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -8212,19 +8214,19 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         except:
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             if "http" not in subject_value:
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -8232,7 +8234,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         except:
                             subject = None
                 elif "BlankNode" in triples_map.subject_map.term_type:
@@ -8255,8 +8257,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             subject = "_:" + subject_value
                         except:
@@ -8277,8 +8279,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             subject = "<" + subject_value + ">"
                         except:
@@ -8295,7 +8297,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -8303,9 +8305,9 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                     else:
-                        logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
+                        logger.error("<" + get_default_base() + subject_value + "> is an invalid URL")
                         subject = None
                     if triples_map.subject_map.term_type == "IRI":
                         if " " not in subject_value:
@@ -8332,14 +8334,14 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     subject = None
 
             else:
-                #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                #	if row[field] == condition:
+                #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                #   if row[field] == condition:
                 try:
                     if "http" not in subject_value:
                         if base != "" and base != None:
                             subject = "<" + base + subject_value + ">"
                         else:
-                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            subject = "<" + get_default_base() + subject_value + ">"
                     else:
                         if is_valid_url_syntax(subject_value):
                             subject = "<" + subject_value + ">"
@@ -8347,7 +8349,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                 except:
                     subject = None
 
@@ -8364,8 +8366,8 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     subject = None
 
             else:
-                #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                #	if row[field] == condition:
+                #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                #   if row[field] == condition:
                 try:
                     subject = "\"" + triples_map.subject_map.value + "\""
                 except:
@@ -8461,7 +8463,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                 if "http" in datatype_value:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                 else:
-                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
             elif predicate_object_map.object_map.language != None:
                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                     object += "@es"
@@ -8514,7 +8516,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                         else:
-                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value) 
                     elif predicate_object_map.object_map.language != None:
                         if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                             object += "@es"
@@ -8575,7 +8577,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value) 
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value) 
                 elif predicate_object_map.object_map.language != None:
                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                         object += "@es"
@@ -8598,7 +8600,7 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
                             object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                            object = "<" + encode_char(object[1:-1]) + ">"
+                            object = "<" + object[1:-1] + ">"
                         else:
                             object = None
 
@@ -9074,28 +9076,28 @@ def semantify_mysql(row, row_headers, triples_map, triples_map_list, output_file
 def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_file_descriptor, user, password, db,
                        host, predicate):
     """
-	(Private function, not accessible from outside this package)
+    (Private function, not accessible from outside this package)
 
-	Takes a triples-map rule and applies it to each one of the rows of its CSV data
-	source
+    Takes a triples-map rule and applies it to each one of the rows of its CSV data
+    source
 
-	Parameters
-	----------
-	triples_map : TriplesMap object
-		Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
-		(refer to the TriplesMap.py file in the triplesmap folder)
-	triples_map_list : list of TriplesMap objects
-		List of triples-maps parsed from current mapping being used for the semantification of a
-		dataset (mainly used to perform rr:joinCondition mappings)
-	output_file_descriptor : file object
-		Descriptor to the output file (refer to the Python 3 documentation)
+    Parameters
+    ----------
+    triples_map : TriplesMap object
+        Mapping rule consisting of a logical source, a subject-map and several predicateObjectMaps
+        (refer to the TriplesMap.py file in the triplesmap folder)
+    triples_map_list : list of TriplesMap objects
+        List of triples-maps parsed from current mapping being used for the semantification of a
+        dataset (mainly used to perform rr:joinCondition mappings)
+    output_file_descriptor : file object
+        Descriptor to the output file (refer to the Python 3 documentation)
 
-	Returns
-	-------
-	An .nt file per each dataset mentioned in the configuration file semantified.
-	If the duplicates are asked to be removed in main memory, also returns a -min.nt
-	file with the triples sorted and with the duplicates removed.
-	"""
+    Returns
+    -------
+    An .nt file per each dataset mentioned in the configuration file semantified.
+    If the duplicates are asked to be removed in main memory, also returns a -min.nt
+    file with the triples sorted and with the duplicates removed.
+    """
     triples_map_triples = {}
     generated_triples = {}
     object_list = []
@@ -9137,8 +9139,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         subject = None
 
                 else:
-                    #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                    #	if row[field] == condition:
+                    #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                    #   if row[field] == condition:
                     try:
                         subject = "<" + subject_value + ">"
 
@@ -9153,7 +9155,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -9161,19 +9163,19 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
                         except:
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             if "http" not in subject_value:
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                             else:
                                 if is_valid_url_syntax(subject_value):
                                     subject = "<" + subject_value + ">"
@@ -9181,7 +9183,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                     if base != "" and base != None:
                                         subject = "<" + base + subject_value + ">"
                                     else:
-                                        subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                        subject = "<" + get_default_base() + subject_value + ">"
 
                         except:
                             subject = None
@@ -9206,8 +9208,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             subject = "_:" + subject_value
                         except:
@@ -9229,8 +9231,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             subject = None
 
                     else:
-                        #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                        #	if row[field] == condition:
+                        #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                        #   if row[field] == condition:
                         try:
                             subject = "<" + subject_value + ">"
                         except:
@@ -9247,7 +9249,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                         else:
                             if is_valid_url_syntax(subject_value):
                                 subject = "<" + subject_value + ">"
@@ -9255,9 +9257,9 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                 if base != "" and base != None:
                                     subject = "<" + base + subject_value + ">"
                                 else:
-                                    subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                    subject = "<" + get_default_base() + subject_value + ">"
                     else:
-                        logger.error("<http://example.com/base/" + subject_value + "> is an invalid URL")
+                        logger.error("<" + get_default_base() + subject_value + "> is an invalid URL")
                         subject = None
                 except:
                     subject = None
@@ -9267,21 +9269,21 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             temp = encode_char(subject_value.replace("http:", ""))
                             subject = "<" + "http:" + temp + ">"
                         else:
-                            subject = "<" + encode_char(subject_value) + ">"
+                            subject = "<" + subject_value + ">"
                     else:
                         subject = None
                 elif "BlankNode" in triples_map.subject_map.term_type:
                     subject = "_:" + subject_value
 
             else:
-                #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                #	if row[field] == condition:
+                #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                #   if row[field] == condition:
                 try:
                     if "http" not in subject_value:
                         if base != "" and base != None:
                             subject = "<" + base + subject_value + ">"
                         else:
-                            subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                            subject = "<" + get_default_base() + subject_value + ">"
                     else:
                         if is_valid_url_syntax(subject_value):
                             subject = "<" + subject_value + ">"
@@ -9289,7 +9291,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             if base != "" and base != None:
                                 subject = "<" + base + subject_value + ">"
                             else:
-                                subject = "<" + "http://example.com/base/" + encode_char(subject_value) + ">"
+                                subject = "<" + get_default_base() + subject_value + ">"
                 except:
                     subject = None
 
@@ -9306,8 +9308,8 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     subject = None
 
             else:
-                #	field, condition = condition_separetor(triples_map.subject_map.condition)
-                #	if row[field] == condition:
+                #   field, condition = condition_separetor(triples_map.subject_map.condition)
+                #   if row[field] == condition:
                 try:
                     subject = "\"" + triples_map.subject_map.value + "\""
                 except:
@@ -9417,7 +9419,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                 if "http" in datatype_value:
                    object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                 else:
-                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                   object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
             elif predicate_object_map.object_map.language != None:
                 if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                     object += "@es"
@@ -9470,7 +9472,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         if "http" in datatype_value:
                            object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                         else:
-                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                           object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                     elif predicate_object_map.object_map.language != None:
                         if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                             object += "@es"
@@ -9531,7 +9533,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     if "http" in datatype_value:
                        object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(datatype_value)
                     else:
-                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format("http://example.com/base/" + datatype_value)
+                       object = "\"" + object[1:-1] + "\"" + "^^<{}>".format(get_default_base() + datatype_value)
                 elif predicate_object_map.object_map.language != None:
                     if "spanish" == predicate_object_map.object_map.language or "es" == predicate_object_map.object_map.language:
                         object += "@es"
@@ -9554,7 +9556,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                     if "IRI" in predicate_object_map.object_map.term:
                         if " " not in object:
                             object = "\"" + object[1:-1].replace("\\\\'", "'") + "\""
-                            object = "<" + encode_char(object[1:-1]) + ">"
+                            object = "<" + object[1:-1] + ">"
                         else:
                             object = None
         elif predicate_object_map.object_map.mapping_type == "parent triples map":
@@ -9601,7 +9603,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                     hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map,
                                                    parent_map, namespace)
                             else:
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 if triples_map_element.query != None and triples_map_element.query != "None":
                                     cursor.execute(triples_map_element.query)
@@ -9627,7 +9629,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         if predicate_object_map.object_map.parent != None:
                             if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[
                                 0] not in join_table:
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 if triples_map_element.tablename != "None":
                                     database, query_list = translate_postgressql(triples_map_element)
@@ -9652,7 +9654,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             try:
                                 database, query_list = translate_postgressql(triples_map)
                                 database2, query_list_origin = translate_postgressql(triples_map_element)
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 for query in query_list:
                                     for q in query_list_origin:
@@ -9933,6 +9935,8 @@ def semantify(config_path, log_path='error.log'):
         config.read(config_path)
 
     start_time = time.time()
+
+    set_default_base(config["datasets"].get("base_iri"))
 
     global duplicate
     duplicate = config["datasets"]["remove_duplicate"]
@@ -10466,7 +10470,7 @@ def semantify(config_path, log_path='error.log'):
                                                                 sorted_sources[source_type][source][
                                                                     triples_map].subject_map.rdf_class != [None] or \
                                                                 sorted_sources[source_type][source][
-                                                                    triples_map].subject_map.subject_mapping_type == "	":
+                                                                    triples_map].subject_map.subject_mapping_type == "  ":
                                                             with open(source, "r", encoding="utf-8") as input_file_descriptor:
                                                                 if ".csv" in source:
                                                                     if source in delimiter:
@@ -12356,6 +12360,7 @@ def semantify(config_path, log_path='error.log'):
                                 elif source_type == "postgres":
                                     for source in sorted_sources[source_type]:
                                         db = psycopg2.connect(host=config[dataset_i]["host"],
+                                                              port=config[dataset_i].get("port", "5432"),
                                                               user=config[dataset_i]["user"],
                                                               password=config[dataset_i]["password"],
                                                               dbname=config[dataset_i]["db"])
@@ -14809,6 +14814,7 @@ def semantify(config_path, log_path='error.log'):
                                 elif source_type == "postgres":
                                     for source in sorted_sources[source_type]:
                                         db = psycopg2.connect(host=config[dataset_i]["host"],
+                                                              port=config[dataset_i].get("port", "5432"),
                                                               user=config[dataset_i]["user"],
                                                               password=config[dataset_i]["password"],
                                                               dbname=config[dataset_i]["db"])
