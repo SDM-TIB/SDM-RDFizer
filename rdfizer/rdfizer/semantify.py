@@ -5925,7 +5925,7 @@ def semantify_json(triples_map, triples_map_list, delimiter, output_file_descrip
                             else:
                                 triple = triple[:-2] + " <" + graph + ">.\n"
                                 dictionary_table_update("<" + graph + ">")
-                        if (predicate_object_map.graph[predicate[1:-1]] == None or graph != None) and "Literal" != str(graph):
+                        if (predicate[1:-1] not in predicate_object_map.graph or graph != None) and "Literal" != str(graph):
                             if duplicate == "yes":
                                 if predicate in general_predicates:
                                     if dic_table[predicate + "_" + predicate_object_map.object_map.value] not in g_triples:
