@@ -226,7 +226,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 					if base != "" and base != None:
 						object = "<" + base + "base/" + object + ">"
 					else:
-						object = "<http://example.com/base/" +  object + ">"
+						object = "<" + get_default_base() +  object + ">"
 			elif gather_map.value_type == "blank_reference":
 				object = "_:" + string_substitution_json(gather_map.value, ".+", data[0], "subject", "yes", iterator)[1:-1]
 			elif gather_map.value_type == "blank_template":
@@ -240,7 +240,7 @@ def gather_triples_generation(data, subject_predicate, base, gather_map, output_
 					if base != "" and base != None:
 						object = "<" + base + "base/" + object + ">"
 					else:
-						object = "<http://example.com/base/" +  object + ">"
+						object = "<" + get_default_base() +  object + ">"
 			elif gather_map.value_type == "blank_reference":
 				object = "_:" + string_substitution_json(gather_map.value, ".+", data, "subject", "yes", iterator)[1:-1]
 			elif gather_map.value_type == "blank_template":
