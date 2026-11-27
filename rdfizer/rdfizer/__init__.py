@@ -9587,7 +9587,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                                     hash_maker_xml(child_root, triples_map_element, predicate_object_map.object_map,
                                                    parent_map, namespace)
                             else:
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 if triples_map_element.query != None and triples_map_element.query != "None":
                                     cursor.execute(triples_map_element.query)
@@ -9613,7 +9613,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                         if predicate_object_map.object_map.parent != None:
                             if triples_map_element.triples_map_id + "_" + predicate_object_map.object_map.child[
                                 0] not in join_table:
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 if triples_map_element.tablename != "None":
                                     database, query_list = translate_postgressql(triples_map_element)
@@ -9638,7 +9638,7 @@ def semantify_postgres(row, row_headers, triples_map, triples_map_list, output_f
                             try:
                                 database, query_list = translate_postgressql(triples_map)
                                 database2, query_list_origin = translate_postgressql(triples_map_element)
-                                db_element = psycopg2.connect(host=host, user=user, password=password, dbname=db)
+                                db_element = psycopg2.connect(host=host, port=port, user=user, password=password, dbname=db)
                                 cursor = db_element.cursor()
                                 for query in query_list:
                                     for q in query_list_origin:
@@ -12344,6 +12344,7 @@ def semantify(config_path, log_path='error.log'):
                                 elif source_type == "postgres":
                                     for source in sorted_sources[source_type]:
                                         db = psycopg2.connect(host=config[dataset_i]["host"],
+                                                              port=config[dataset_i].get("port", "5432"),
                                                               user=config[dataset_i]["user"],
                                                               password=config[dataset_i]["password"],
                                                               dbname=config[dataset_i]["db"])
@@ -14797,6 +14798,7 @@ def semantify(config_path, log_path='error.log'):
                                 elif source_type == "postgres":
                                     for source in sorted_sources[source_type]:
                                         db = psycopg2.connect(host=config[dataset_i]["host"],
+                                                              port=config[dataset_i].get("port", "5432"),
                                                               user=config[dataset_i]["user"],
                                                               password=config[dataset_i]["password"],
                                                               dbname=config[dataset_i]["db"])
